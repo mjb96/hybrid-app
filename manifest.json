@@ -1,7 +1,7 @@
 {
-  "short_name": "Helyx",
-  "name": "Helyx — Train Smarter",
-  "description": "Hybrid strength and running training platform. Track lifts, runs, recovery and fasting.",
+  "short_name": "Helyx Strength",
+  "name": "Helyx \u2014 Strength Log",
+  "description": "Log strength workouts, track bodyweight and follow progress towards your lifting goals.",
   "icons": [
     {
       "src": "./icon-512.png",
@@ -22,6 +22,10 @@
   "theme_color": "#020408",
   "display": "standalone",
   "orientation": "portrait",
-  "categories": ["health", "fitness", "sports"],
+  "categories": [
+    "health",
+    "fitness",
+    "sports"
+  ],
   "prefer_related_applications": false
 }

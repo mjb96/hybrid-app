@@ -3321,3 +3321,12 @@ testable on its own.
 - **2026-07-24 — Programme editor and exercise discovery.** Added mobile
   keyboard-safe selection, preview/logger parity, active-program edit
   reconciliation, and home-gym catalogue coverage.
+
+
+## 2026-11-03 — Strength-first direction
+
+User-approved direction: simple strength logging, bodyweight and concrete strength goals. This supersedes the hybrid-first navigation proposals above. Main destinations are Today, Train, Progress, Bodyweight and Goals; Plans remains available from Today and Train. Existing running history and optional activity tools remain available.
+
+Implemented: strength-first home, calendar-window weight means, editable weigh-ins, actual-set goal completion, exercise/date/metric comparisons, relative-strength matching to preceding weigh-ins, muscle-group set/frequency breakdown and source-record drill-down. Uses existing workout storage, calendar deduplication and shared e1RM rules; new goal settings are additive. No chat ingestion or Excel synchronization is introduced.
+
+Validation and remaining limitations are documented in docs/STRENGTH_APP_GUIDE.md. Remote publishing and native Android release remain separate steps.

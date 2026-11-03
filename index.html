@@ -7,7 +7,7 @@
        store-review heuristics. Modern mobile browsers no longer double-tap-zoom
        form fields, so nothing here needs the old lock. -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Helyx</title>
+  <title>Helyx Strength</title>
 
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#070a12">
@@ -413,6 +413,7 @@
     .ws-session-tag--run { background: rgba(236,72,153,0.2); color: #f472b6; }
     .ws-session-detail { font-size: 0.75rem; color: rgba(255,255,255,0.65); }
   </style>
+  <link rel="stylesheet" href="css/strength-app.css">
 </head>
 <body>
 
@@ -482,7 +483,8 @@
 
   <main id="app-root">
 
-    <section id="view-home" class="view-container active" aria-label="Home Dashboard">
+    <section id="view-home" class="view-container active" aria-label="Today">
+      <div id="strengthHome"></div><div class="sf-legacy-home" hidden>
       
       <div class="home-header">
         <div class="home-header-meta">
@@ -593,6 +595,7 @@
         <span class="btn-history-arrow">→</span>
       </button>
 
+      </div>
     </section>
 
     <section id="view-workout" class="view-container" aria-label="Train">
@@ -1080,6 +1083,8 @@
 
     </section>
 
+    <section id="view-bodyweight" class="view-container" aria-label="Bodyweight"></section>
+    <section id="view-goals" class="view-container" aria-label="Goals"></section>
     <section id="view-program" class="view-container" aria-label="Plans">
 
       <!-- ═══════ LIBRARY SCREEN (default entry) ═══════ -->
@@ -1303,7 +1308,7 @@
         <div class="ob-entry-panel" id="obRecoveryGateway">
           <div class="ob-emoji">⚡</div>
           <h1 class="ob-heading">Welcome to<br>Helyx</h1>
-          <p class="ob-sub">Build strength. Run faster. Keep your training history yours.</p>
+          <p class="ob-sub">Log your lifts. Track your progress. Keep your training history yours.</p>
 
           <button class="ob-cta ob-entry-primary" data-action="ob-start-new">
             <span>Set up Helyx</span>
@@ -1330,7 +1335,7 @@
           <button class="ob-back-link ob-entry-back" data-action="ob-back-recovery">← Back to restore options</button>
           <div class="ob-emoji">⚡</div>
           <h1 class="ob-heading">Create your<br>Helyx profile</h1>
-          <p class="ob-sub">Build strength. Run faster. Let's set you up.</p>
+          <p class="ob-sub">Build strength. Track your progress. Let's set you up.</p>
           <div class="ob-field">
             <label class="ob-label" for="obName">What's your name?</label>
             <input type="text" id="obName" class="ob-input" placeholder="Your name" autocomplete="given-name">
@@ -1346,12 +1351,12 @@
         <h1 class="ob-heading">What's your<br>main goal?</h1>
         <p class="ob-sub">We'll pick the right program for you.</p>
         <div class="ob-goal-grid">
-          <button class="ob-goal-btn" data-action="ob-goal" data-goal="strength">
+          <button class="ob-goal-btn active" data-action="ob-goal" data-goal="strength">
             <span class="ob-goal-icon">🏋️</span>
             <span class="ob-goal-name">Strength First</span>
             <span class="ob-goal-desc">Build muscle &amp; strength, light cardio</span>
           </button>
-          <button class="ob-goal-btn active" data-action="ob-goal" data-goal="hybrid">
+          <button class="ob-goal-btn" data-action="ob-goal" data-goal="hybrid">
             <span class="ob-goal-icon">⚡</span>
             <span class="ob-goal-name">True Hybrid</span>
             <span class="ob-goal-desc">Balance lifting and running</span>
@@ -1463,7 +1468,7 @@
       <div class="ob-card">
         <div class="ob-emoji">☀️</div>
         <h1 class="ob-heading">Meet your<br>daily coach</h1>
-        <p class="ob-sub">Every morning: your Hybrid Score, today's session and one mission — delivered before you train.</p>
+        <p class="ob-sub">A reminder for your planned training, so logging becomes a habit.</p>
         <button class="ob-cta" data-action="ob-notif-enable">Enable morning briefings 🔔</button>
         <button class="ob-skip" data-action="ob-notif-skip">Maybe later</button>
         <button class="ob-back-link" data-action="ob-back" data-to="5">← Back</button>
@@ -1473,9 +1478,9 @@
     <!-- Step 7: Provisional Hybrid Score reveal (V2-2 — the instant wow) -->
     <div class="ob-step" id="ob-step-7">
       <div class="ob-card">
-        <p class="ob-sub" style="margin-bottom:16px;">Here's your starting Hybrid Score</p>
+        <p class="ob-sub" style="margin-bottom:16px;">Your strength log starts here</p>
         <div id="obScoreReveal" class="ob-score-reveal"></div>
-        <p class="ob-sub" style="margin-top:16px;">Provisional — it sharpens into the real thing as you log sessions and check-ins.</p>
+        <p class="ob-sub" style="margin-top:16px;">Your completed sets and weigh-ins power your progress charts.</p>
         <button class="ob-cta" data-action="ob-finish" style="margin-top:20px;">Enter Helyx →</button>
       </div>
     </div>
@@ -1885,10 +1890,11 @@
   </section>
 
   <nav class="bottom-nav" aria-label="Main Navigation">
-    <button class="nav-item active" data-target="home" data-action="switch-tab" aria-current="page"><span class="icon" data-icon="home" aria-hidden="true"></span><span>Home</span></button>
+    <button class="nav-item active" data-target="home" data-action="switch-tab" aria-current="page"><span class="icon" data-icon="home" aria-hidden="true"></span><span>Today</span></button>
     <button class="nav-item" data-target="workout" data-action="switch-tab"><span class="icon" data-icon="dumbbell" aria-hidden="true"></span><span>Train</span></button>
     <button class="nav-item" data-target="analytics" data-action="switch-tab"><span class="icon" data-icon="chart" aria-hidden="true"></span><span>Progress</span></button>
-    <button class="nav-item" data-target="program" data-action="switch-tab"><span class="icon" data-icon="clipboard" aria-hidden="true"></span><span>Plans</span></button>
+    <button class="nav-item" data-target="bodyweight" data-action="switch-tab"><span class="icon" data-icon="activity" aria-hidden="true"></span><span>Bodyweight</span></button>
+    <button class="nav-item" data-target="goals" data-action="switch-tab"><span class="icon" data-icon="target" aria-hidden="true"></span><span>Goals</span></button>
   </nav>
 
   <!-- Program Rating Modal -->

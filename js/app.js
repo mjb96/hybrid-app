@@ -1,3 +1,4 @@
+import { initStrengthApp, renderStrengthScreen } from './strength-app/view.js';
 // ==========================================
 // CLEANED CORE PROTOCOL ROUTER (app.js)
 // ==========================================
@@ -46,7 +47,7 @@ import { initSentry } from './monitoring/sentry.js';
 import { SENTRY_DSN, SENTRY_RELEASE } from './monitoring/sentry-config.js';
 
 import { initEngine, shouldSuggestDeload, paceSecondsPerKm } from './engine.js';
-import { initHome, renderHome, openFastingDetail, answerCoachOnHome } from './home.js';
+import { initHome, renderHome as renderLegacyHome, openFastingDetail, answerCoachOnHome } from './home.js';
 import { computeDashboardModel } from './home/dashboard-model.js';
 import { buildTrainLanding } from './train/train-landing.js';
 import { renderTrainLanding } from './train/view-train-landing.js';
@@ -104,6 +105,11 @@ import {
   clearActiveOneOffSession, createOneOffStrengthSession,
 } from './workout/one-off-session.js';
 import { initAutomaticBackups, checkDailyAutomaticBackup } from './portability/auto-backup.js';
+
+function renderHome() {
+  renderStrengthScreen(document.getElementById('strengthHome'), 'home', appState, getProgramById(appState.activeProgramId));
+}
+initStrengthApp({ getState: () => appState, save: () => saveStateToLocalStorage(true), refresh: hydrateCurrentView, message: showToast });
 
 document.addEventListener('app:storage-loaded', () => {
   try {
@@ -540,6 +546,9 @@ export function hydrateCurrentView() {
     onWorkoutTabActivated();
   }
   else if (activeTab === 'analytics') safeRenderExecution(renderAnalytics, "Performance Matrix Render");
+  else if (activeTab === 'bodyweight' || activeTab === 'goals') {
+    renderStrengthScreen(document.getElementById('view-' + activeTab), activeTab, appState, getProgramById(appState.activeProgramId));
+  }
   else if (activeTab === 'profile') safeRenderExecution(renderAthleteProfile, "Athlete Profile Render");
   else if (activeTab === 'program') {
     const wkSelect = document.getElementById('globalWeekSelect');

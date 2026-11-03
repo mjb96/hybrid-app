@@ -78,8 +78,8 @@ const PROGRAM_META = {
   nsuns_531:           { name: 'nSuns 5/3/1',                   desc: 'Autoregulated strength + accessory work' },
 };
 
-let _selectedGoal    = 'hybrid';
-let _selectedProgram = 'hybrid_engine';
+let _selectedGoal    = 'strength';
+let _selectedProgram = 'ppl_hypertrophy';
 let _weightUnit      = 'kg';
 let _distUnit        = 'km';
 let _fitnessLevel    = 'intermediate';
@@ -217,12 +217,7 @@ export function handleOnboardingAction(action, target) {
 function _revealProvisionalScore() {
   const mount = document.getElementById('obScoreReveal');
   if (mount) {
-    const r = provisionalScore({
-      level: _fitnessLevel,
-      frequency: _weeklyFrequency,
-      recovery: _recoveryFeel,
-    });
-    mount.innerHTML = heroHTML(r, { showAction: false });
+    mount.innerHTML = '<p>Your log is ready. Complete your first workout, add a weigh-in, and set a strength goal. Your progress will come from the work you record.</p>';
   }
   _showStep(7);
 }

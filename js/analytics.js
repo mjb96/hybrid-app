@@ -1,3 +1,4 @@
+import { renderStrengthScreen } from './strength-app/view.js';
 // ==========================================
 // PERFORMANCE MATRIX — analytics.js (orchestrator)
 // ==========================================
@@ -386,14 +387,7 @@ export function renderAnalytics() {
       const days = _getDays();
       const program = getProgramById(st.activeProgramId);
       const dashboard = computeDashboardModel(st, days, program, days[0] || 'mon');
-      renderProgressHub(hubEl, buildProgressLanding(st, {
-        days,
-        program,
-        readiness: dashboard.ready,
-        // Series included: the hub's Running card draws a trend spark from the
-        // metric engine's own weekly points rather than computing a second one.
-        runningMetric: (id) => buildRunningMetricDetail(st, id, { range: '12w' }),
-      }));
+      renderStrengthScreen(hubEl, 'progress', st, program);
       break;
     }
     // V2 (S2): the Review screen — weekly-review (Overview) + weekly-summary and

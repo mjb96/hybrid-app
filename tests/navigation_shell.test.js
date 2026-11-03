@@ -8,16 +8,17 @@ function mainNavigationMarkup() {
   return index.match(/<nav class="bottom-nav"[\s\S]*?<\/nav>/)?.[0] || '';
 }
 
-test('the product shell has four intent-led destinations', () => {
+test('the product shell has five strength-focused destinations', () => {
   const navigation = mainNavigationMarkup();
   const items = [...navigation.matchAll(/<button class="nav-item[^"]*"[^>]*data-target="([^"]+)"[\s\S]*?<span>([^<]+)<\/span><\/button>/g)]
     .map((match) => ({ target: match[1], label: match[2] }));
 
   assert.deepEqual(items, [
-    { target: 'home', label: 'Home' },
+    { target: 'home', label: 'Today' },
     { target: 'workout', label: 'Train' },
     { target: 'analytics', label: 'Progress' },
-    { target: 'program', label: 'Plans' },
+    { target: 'bodyweight', label: 'Bodyweight' },
+    { target: 'goals', label: 'Goals' },
   ]);
   assert.doesNotMatch(navigation, /nav-fab|open-quick-start/);
 });

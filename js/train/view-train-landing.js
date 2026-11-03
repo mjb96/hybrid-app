@@ -77,6 +77,7 @@ export function renderTrainLanding(container, model) {
       <span class="tl-kicker">Train</span>
     </div>
     ${todayCardHTML(model.today, model.resumable)}
-    ${quickStartHTML(model.quickStart)}
+    <div class="sf-actions"><button class="sf-button" data-action="start-empty-workout">Start empty workout</button><button class="sf-button sf-quiet" data-action="switch-tab" data-target="program">Plans & programmes</button><button class="sf-button sf-quiet" data-action="open-activities">Training history</button></div>
+    <details class="sf-card"><summary>Other activities</summary>${quickStartHTML(model.quickStart.filter(a => a.id !== 'workout'))}</details>
     ${recentHTML(model.recent, model.hasHistory)}`;
 }

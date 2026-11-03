@@ -16,7 +16,7 @@
 // (a node --test), so a newly-added, offline-reachable module can never again
 // be silently omitted from the cache.
 // ==========================================
-const CACHE_NAME = 'helyx-v122-ha9231bb5cc50';
+const CACHE_NAME = 'helyx-v122-h56945766f441';
 
 // GENERATED — do not hand-edit. Run: node scripts/gen-precache.mjs
 const REQUIRED_ASSETS = [
@@ -214,6 +214,8 @@ const REQUIRED_ASSETS = [
   "./js/state/supabase.js",
   "./js/state/sync-conflict-ui.js",
   "./js/state/sync-guard.js",
+  "./js/strength-app/model.js",
+  "./js/strength-app/view.js",
   "./js/strength/duration.js",
   "./js/strength/e1rm.js",
   "./js/sw-reload.js",
