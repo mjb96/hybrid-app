@@ -6,7 +6,8 @@
 - **Train:** enter weight and reps, then tick the set complete. Existing workout plans and history remain available. Other activities are tucked into a disclosure.
 - **Progress:** choose dates, exercise, comparison exercise and metric. Select a chart-date button or training-date tile to inspect its underlying sets. Detailed volume and activity history remain available.
 - **Bodyweight:** save a dated measurement, view its trend and seven-calendar-day means. Saving the same date corrects that measurement. Expand the history to edit an earlier date.
-- **Goals:** set one target weight and repetition count per exercise, plus an optional bodyweight target. Edit a goal without changing training history.
+- **Programs:** browse all existing plans from the main navigation.
+- **Progress → Goals:** set one target weight and repetition count per exercise, plus an optional bodyweight target. Edit a goal without changing training history.
 
 ## Calculation rules
 

@@ -18,7 +18,7 @@ test('the product shell has five strength-focused destinations', () => {
     { target: 'workout', label: 'Train' },
     { target: 'analytics', label: 'Progress' },
     { target: 'bodyweight', label: 'Bodyweight' },
-    { target: 'goals', label: 'Goals' },
+    { target: 'program', label: 'Programs' },
   ]);
   assert.doesNotMatch(navigation, /nav-fab|open-quick-start/);
 });
