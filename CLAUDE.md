@@ -96,8 +96,8 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   Settings palette buttons persist `settings.palette`.
 - Exercise catalogue: the original 157 are `CORE_EXERCISES`; `js/exercises/opengym-catalogue.js`
   adds ~5,555 openGym catalogue text entries (openGym AGPL-3.0 + ExerciseDB v1 MIT, no media) imported by
-  `scripts/import-opengym-catalogue.mjs`. Exclude openGym's `textSource: exercisedb`
-  rows and all Gym-visual media; see NOTICE.md and docs/EXERCISE_LIBRARY.md.
+  `scripts/import-opengym-catalogue.mjs`. `OPEN_GYM_ID_NAMES` resolves plan-file ids.
+  Never include Gym-visual media; see NOTICE.md and docs/EXERCISE_LIBRARY.md.
 - Equipment profiles: `js/equipment-profiles.js` owns
   `settings.equipmentProfiles` (array of
   `{ id, name, equipment, bandWeights, plateSetup }`) plus
