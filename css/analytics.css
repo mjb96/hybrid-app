@@ -1343,7 +1343,17 @@ html[data-theme="light"] .analytics-chart-wrap {
   }
 }
 
-.hub-head { margin: 4px 0 18px; }
+.hub-head {
+  margin: 4px 0 18px;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+}
+.hub-customize-btn {
+  flex: 0 0 auto; min-height: 44px; padding: 0 12px;
+  border: 1px solid var(--border-default); border-radius: 11px;
+  background: var(--overlay-sm, rgba(255,255,255,.04));
+  color: var(--text-secondary); font: inherit; font-size: .72rem; font-weight: 750;
+  cursor: pointer;
+}
 .hub-title {
   font-size: 1.6rem;
   font-weight: 800;

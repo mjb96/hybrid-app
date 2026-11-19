@@ -346,18 +346,16 @@ function recoveryDomain(readiness) {
 
 /**
  * Secondary destinations. These stay one tap away but lose their equal footing
- * with the four headline domains: Hybrid Score is an optional synthesis rather
- * than the definition of progress (roadmap §3B), and Fasting only appears for
- * users who actually fast.
+ * with the four headline domains. Hybrid Score is not a destination: it is an
+ * opaque composite that competed with readiness, load and PRs (roadmap §6).
+ * Fasting only appears for users who actually fast.
  * @param {any} state
  */
 export function secondaryDestinations(state) {
   // Deliberately NOT listing Review here: the Consistency domain card already
   // owns that destination, and two entries to one screen is the duplicate
   // ownership the roadmap's Phase 0 audit set out to remove.
-  const items = [
-    { id: 'hybrid-score', title: 'Hybrid Score', desc: 'Optional synthesis of strength, running and recovery' },
-  ];
+  const items = [];
   if (moduleEnabled(state, 'fasting') && fastingIsEnabled(state)) {
     items.push({ id: 'fasting', title: 'Fasting', desc: 'Your fast, protocols and metabolic stages' });
   }

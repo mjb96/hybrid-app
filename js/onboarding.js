@@ -6,7 +6,6 @@ import { requestNotificationPermission } from './notifications.js';
 import { provisionalScore } from './onboarding/provisional-score.js';
 import { recommendStarterPrograms } from './onboarding/starter-programs.js';
 import { difficultyDisclosure, onboardingSettings } from './onboarding/preferences.js';
-import { heroHTML } from './brain/hybrid-score/ui.js';
 import { todayKey } from './dates.js';
 import { completeRecoveryGate } from './state/recovery-gate.js';
 
@@ -198,33 +197,18 @@ export function handleOnboardingAction(action, target) {
     document.querySelectorAll('[data-action="ob-dist-unit"]').forEach(b => b.classList.remove('active'));
     target.classList.add('active');
   } else if (action === 'ob-notif-enable') {
-    // Daily-coach step: ask for the OS permission, then reveal the provisional
-    // Score either way — a denial must never trap the user in onboarding.
-    // Granting arms the morning briefing reminder (notifications.js _armAll).
+    // Daily-coach step: ask for the OS permission, then finish either way — a
+    // denial must never trap the user in onboarding. Granting arms the morning
+    // briefing reminder (notifications.js _armAll).
     target.disabled = true;
     requestNotificationPermission()
       .catch(() => ({ granted: false }))
-      .then(() => _revealProvisionalScore());
+      .then(() => _finish());
   } else if (action === 'ob-notif-skip') {
-    _revealProvisionalScore();
+    _finish();
   } else if (action === 'ob-finish') {
     _finish();
   }
-}
-
-// V2-2 — the finale: turn the three self-reports into an instant Hybrid Score,
-// rendered in the exact card language they'll meet on Home, before they enter.
-function _revealProvisionalScore() {
-  const mount = document.getElementById('obScoreReveal');
-  if (mount) {
-    const r = provisionalScore({
-      level: _fitnessLevel,
-      frequency: _weeklyFrequency,
-      recovery: _recoveryFeel,
-    });
-    mount.innerHTML = heroHTML(r, { showAction: false });
-  }
-  _showStep(7);
 }
 
 function _finish() {

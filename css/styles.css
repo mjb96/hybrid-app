@@ -4932,8 +4932,6 @@ html[data-theme="light"] .home-week-progress__track { background: rgba(0,0,0,0.1
 }
 /* V2-2 — provisional Score reveal: let the Home hero card render at full width
    inside the onboarding card, no extra chrome (it brings its own). */
-.ob-score-reveal { width: 100%; }
-.ob-score-reveal .hs-hero { cursor: default; }
 
 /* ==========================================================================
    LIGHT MODE OVERRIDES — Counters the dark upgrade block above
@@ -9566,6 +9564,37 @@ html[data-theme="dark"][data-palette="ember"] {
   --color-green:    #10b981;
   --glass-border:   rgba(245, 237, 228, 0.12);
 }
+
+/* Home card customization */
+.home-header-actions { display: flex; align-items: center; gap: 8px; }
+.home-customize-btn {
+  width: 44px; height: 44px; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  background: var(--overlay-sm, rgba(255,255,255,.04));
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.home-customize-btn .ic { width: 18px; height: 18px; }
+.home-customize-btn:active { transform: scale(.94); }
+.home-card-hidden { display: none !important; }
+
+.customize-sub {
+  margin: 0 0 10px; color: var(--text-muted);
+  font-size: .76rem; line-height: 1.45;
+}
+.customize-list { display: grid; gap: 2px; max-height: 52vh; overflow-y: auto; margin-bottom: 10px; }
+.customize-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  min-height: 58px; padding: 8px 2px;
+  border-bottom: 1px solid var(--border-subtle, rgba(148,163,184,.10));
+}
+.customize-row:last-child { border-bottom: 0; }
+.customize-row__copy { display: grid; gap: 2px; min-width: 0; }
+.customize-row .settings-switch { min-width: 44px; min-height: 44px; justify-content: flex-end; }
+.customize-row__label { color: var(--text-primary); font-size: .82rem; font-weight: 750; }
+.customize-row__note { color: var(--text-muted); font-size: .7rem; line-height: 1.35; }
 
 /* Home bodyweight card — compact chart + one-tap prefilled log. */
 .home-bw {

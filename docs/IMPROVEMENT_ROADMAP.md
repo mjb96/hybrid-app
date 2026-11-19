@@ -1626,6 +1626,15 @@ testable on its own.
 
 ## 12. Session log
 
+- **2026-11-20 — Home/Progress customization and Hybrid Score removal.**
+  - `settings.ui` now stores hidden optional cards for Home and Progress. A
+    shared Customize sheet on both surfaces persists changes, applies them live
+    and resets to default; v12 seeds the empty preference. Pinned: safety flags,
+    Today, quick actions and navigation.
+  - Removed Hybrid Score from the Progress secondary destinations, the weekly
+    review hero/arc/share card and the onboarding finale. The computation and
+    recorded history remain available for the morning briefing/notifications
+    during the one-release compatibility window.
 - **2026-11-20 — Midnight theme, Home bodyweight card, In Focus removed.**
   - `js/theme.js` adds the icon palette (Midnight: navy, steel, cyan, lime) as
     the default for dark/system profiles, with Slate/Forest/Ember alternatives

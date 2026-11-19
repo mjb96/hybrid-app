@@ -407,7 +407,7 @@ export function renderAnalytics() {
         // Series included: the hub's Running card draws a trend spark from the
         // metric engine's own weekly points rather than computing a second one.
         runningMetric: (id) => buildRunningMetricDetail(st, id, { range: '12w' }),
-      }));
+      }), st.settings?.ui?.progress?.hidden || []);
       break;
     }
     // V2 (S2): the Review screen — weekly-review (Overview) + weekly-summary and
