@@ -1637,7 +1637,10 @@ testable on its own.
     preview and confirmation. Cardio rows are counted and skipped in this pass.
   - Tests cover quoted CSV, OpenGym/Strong/Hevy headers, unit conversion,
     warm-ups, archived-week mapping and idempotency.
-  - Next: bodyweight CSV import and a run/cardio import pass.
+  - Bodyweight CSV import followed: `import-body-csv.js` reads the
+    `date,weight_kg` export, keeps the last reading per day, converts units and
+    never overwrites an existing date. Settings auto-detects workout vs body file.
+  - Next: a run/cardio import pass.
 - **2026-11-19 — Supabase removed; the app is local-only.**
   - Deleted the Supabase client, auth/sync/conflict modules, cloud recovery
     snapshots, account UI, edge function and RLS SQL. `package.json` no longer
