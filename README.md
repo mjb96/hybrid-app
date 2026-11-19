@@ -36,9 +36,9 @@ the same training picture.
 - **Offline-first** — the PWA precaches its runtime and keeps training data on
   the device. There is no account, server or cloud sync; JSON/CSV export and
   Android automatic backups move data deliberately.
-- **Import your history** — bring workout history from OpenGym, Strong or Hevy
-  CSV exports (strength sets; cardio rows are skipped for now), with no account
-  or server involved.
+- **Import your history** — bring workout history and bodyweight from OpenGym,
+  Strong or Hevy CSV exports. Strength sets and weigh-ins import directly; cardio
+  rows are skipped for now. No account or server involved.
 - **Durable on Android** — the shell mirrors the same state into app-private
   storage, so WebView eviction or a full localStorage quota does not lose the
   last change; a failed write is reported instead of silently claiming success.
@@ -93,8 +93,9 @@ python3 -m http.server 8770 --bind 127.0.0.1
 Open <http://127.0.0.1:8770/>.
 
 The first launch runs onboarding. No account is required. Use **Restore backup
-file** for a Helyx JSON export, or **Settings → Data & backup → Import Workout
-History (CSV)** for an OpenGym/Strong/Hevy export. All logging works offline.
+file** for a Helyx JSON export, or **Settings → Data & backup → Import from
+Another App (CSV)** for an OpenGym/Strong/Hevy workout or bodyweight export. All
+logging works offline.
 
 ## Verification
 
@@ -161,8 +162,8 @@ data.
 - The hosted PWA is a preview; Android is the primary offline target.
 - There is no account system and no cloud sync. Moving data between devices is
   a JSON export/import or the Android automatic-backup folder.
-- CSV import currently handles strength sets; cardio rows are skipped until the
-  run-import pass lands.
+- Workout CSV import covers strength sets and bodyweight. Cardio rows are
+  skipped; there is no cardio import planned right now.
 - There is no iOS project; iOS and billing are out of scope.
 - The legal documents in `docs/legal/` are drafts with placeholders and are not
   legal advice.

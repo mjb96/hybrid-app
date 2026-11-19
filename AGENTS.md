@@ -19,8 +19,10 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   for OpenGym/Strong/Hevy one-row-per-set CSV (no OpenGym code copied). It writes
   archived `arch:import:<id>` weeks with a stable `sessionId`, leaves the active
   program alone, and imports strength sets only; cardio rows are counted and
-  skipped until a run-import pass exists. `handleExternalCsvFile` in settings
-  previews then applies it; re-importing the same file is idempotent.
+  skipped (no cardio import is planned right now). `import-body-csv.js` reads the
+  `date,weight_kg` body export into `bodyWeightLog`, skipping existing dates.
+  `handleExternalCsvFile` auto-detects the file type, previews it and applies it;
+  re-importing the same file is idempotent.
 - Program-run isolation: every program run has a stable `state.activeActivationId`
   (`js/state/activation-identity.js`) and each week is stamped `week.activationId`. A
   switch/restart calls `startProgramActivation` (state.js) → `beginActivation` +
