@@ -8,7 +8,7 @@
 // =============================================================================
 import { dayVolume, isValidWorkingSet } from '../set-utils.js';
 import { runDaySummary } from '../state/run-sessions.js';
-import { addDaysISO, localDayKey } from '../dates.js';
+import { addDaysISO, localDayKey, startOfProgramWeek } from '../dates.js';
 
 const num = (v) => parseFloat(v) || 0;
 const DAY_ORDER = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
@@ -37,7 +37,9 @@ function completedSetCount(lifts) {
 // when the anchor instant itself is unreadable.
 export function resolveSlotDate(state, weekNum, dayIdx, storedDate) {
   if (storedDate) return storedDate;
-  const baseKey = localDayKey(state?.weekStartedAt || new Date());
+  // Older state stored the activation day (often Friday) as the anchor. The
+  // slot model is Monday-indexed, so normalize on read as well as on write.
+  const baseKey = startOfProgramWeek(state?.weekStartedAt || new Date());
   if (!baseKey) return null;
   const curWk = parseInt(state?.currentWeek, 10) || 1;
   const offset = -((curWk - (weekNum || 1)) * 7) + dayIdx;

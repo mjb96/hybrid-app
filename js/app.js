@@ -96,7 +96,7 @@ import { renderRunMap } from './workout-map.js';
 import { orderedLiftNames } from './workout-order.js';
 import { isCompletedSet } from './set-utils.js';
 import { strengthDayStats } from './analytics/weekly-aggregate.js';
-import { dateKey, todayKey, todayProgramDay } from './dates.js';
+import { dateKey, todayKey, todayProgramDay, startOfProgramWeek, localDayKey, daysBetween, addDaysISO } from './dates.js';
 import { resolveDateToSlot, resolveSlotDate } from './analytics/logged-days.js';
 import { newRunSessionId, runDaySummary, upsertRunSession, findImportedRunSession } from './state/run-sessions.js';
 import { FASTING_ACTIONS, handleFastingClickAction } from './fasting/fasting-actions.js';
@@ -471,7 +471,7 @@ function applyProgramSwitch(newProgramId, startWeek = 1) {
   // A freshly-activated program begins at the chosen week (Week 1 by default),
   // not wherever the previous program happened to be.
   appState.currentWeek = String(Math.max(1, parseInt(String(startWeek), 10) || 1));
-  appState.weekStartedAt = new Date().toISOString();
+  appState.weekStartedAt = startOfProgramWeek();
   // Begin a NEW program activation (a distinct run, even when restarting the same
   // program) and archive every numeric week owned by the previous run: its logged
   // history is preserved in the archive (still counted by date-based analytics/PRs)
@@ -517,7 +517,8 @@ export function handleMacroWeekSwitch() {
   if (!weekSelectElement) return;
   
   appState.currentWeek = weekSelectElement.value;
-  appState.weekStartedAt = new Date().toISOString(); 
+  appState.weekStartedAt = startOfProgramWeek();
+  appState.weekAdvanceSnoozedUntil = null; 
   saveStateToLocalStorage(true);
   
   verifyWeekStorageSchema(appState.currentWeek);
@@ -804,7 +805,8 @@ export function confirmWeekAdvance() {
   modal.classList.remove('active');
   if (nextWeekString) {
     appState.currentWeek = nextWeekString;
-    appState.weekStartedAt = new Date().toISOString(); 
+    appState.weekStartedAt = startOfProgramWeek();
+    appState.weekAdvanceSnoozedUntil = null; 
     verifyWeekStorageSchema(appState.currentWeek);
     saveStateToLocalStorage(true);
     hydrateCurrentView();
@@ -816,12 +818,11 @@ export function confirmWeekAdvance() {
 
 export function cancelWeekAdvance() {
   const modal = document.getElementById('weekAdvanceModal');
-  if (!modal) return;
-  modal.classList.remove('active');
-  const today = new Date();
-  const fallbackDate = new Date();
-  fallbackDate.setDate(today.getDate() - 4); 
-  appState.weekStartedAt = fallbackDate.toISOString();
+  if (modal) modal.classList.remove('active');
+  // Keep the schedule anchored to this calendar week's Monday. The old code
+  // moved the anchor back four days, which shifted every weekday label.
+  appState.weekStartedAt = startOfProgramWeek();
+  appState.weekAdvanceSnoozedUntil = addDaysISO(todayKey(), 3);
   saveStateToLocalStorage(true);
 }
 
@@ -1659,35 +1660,34 @@ setImportSuccessCallback(() => hydrateCurrentView());
 function checkForAutomaticWeekAdvance() {
   if (appState.settings?.autoAdvanceWeek === false) return;
   if (!appState.weekStartedAt) {
-    appState.weekStartedAt = new Date().toISOString();
+    appState.weekStartedAt = startOfProgramWeek();
     saveStateToLocalStorage(true);
     return;
   }
-  const startDate = new Date(appState.weekStartedAt);
-  const today = new Date();
-  if (today <= startDate) return;
+  const today = todayKey();
+  if (appState.weekAdvanceSnoozedUntil && today < appState.weekAdvanceSnoozedUntil) return;
+  const startKey = localDayKey(appState.weekStartedAt);
+  const diffDays = startKey ? daysBetween(startKey, today) : null;
+  if (diffDays == null || diffDays < 7) return;
 
-  const diffDays = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
-  if (diffDays >= 7) {
-    const currentWeekNumeric = parseInt(appState.currentWeek, 10);
-    const activeProgram = getProgramById(appState.activeProgramId);
-    const maxWeek = activeProgram.totalWeeks || 12;
+  const currentWeekNumeric = parseInt(appState.currentWeek, 10);
+  const activeProgram = getProgramById(appState.activeProgramId);
+  const maxWeek = activeProgram.totalWeeks || 12;
 
-    if (currentWeekNumeric >= maxWeek) {
-      appState.weekStartedAt = new Date().toISOString();
-      saveStateToLocalStorage(true);
-      return;
-    }
+  if (currentWeekNumeric >= maxWeek) {
+    appState.weekStartedAt = startOfProgramWeek();
+    saveStateToLocalStorage(true);
+    return;
+  }
 
-    const nextWeekString = (currentWeekNumeric + 1).toString();
-    const modal = document.getElementById('weekAdvanceModal');
-    const msgEl = document.getElementById('weekAdvanceMessage');
-    
-    if (modal && msgEl) {
-      msgEl.textContent = `It's been ${diffDays} days since you started Week ${appState.currentWeek}. Start Week ${nextWeekString}?`;
-      modal.setAttribute('data-pending-week', nextWeekString);
-      modal.classList.add('active');
-    }
+  const nextWeekString = (currentWeekNumeric + 1).toString();
+  const modal = document.getElementById('weekAdvanceModal');
+  const msgEl = document.getElementById('weekAdvanceMessage');
+
+  if (modal && msgEl) {
+    msgEl.textContent = `It's been ${diffDays} days since you started Week ${appState.currentWeek}. Start Week ${nextWeekString}?`;
+    modal.setAttribute('data-pending-week', nextWeekString);
+    modal.classList.add('active');
   }
 }
 

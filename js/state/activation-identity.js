@@ -28,6 +28,7 @@
 // Pure — no DOM, no module state, unit-tested in tests/program_isolation.test.js.
 // =============================================================================
 import { runDaySummary } from './run-sessions.js';
+import { startOfProgramWeek } from '../dates.js';
 
 const DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 const ARCHIVE_PREFIX = 'arch:';
@@ -195,7 +196,7 @@ export function resumeActivation(state, activationId, resumedAt = new Date().toI
   target.resumeCount = Math.max(0, Number(target.resumeCount) || 0) + 1;
   state.activeProgramId = target.programId;
   state.currentWeek = String(Math.max(1, parseInt(String(target.lastWeek || target.startWeek), 10) || 1));
-  state.weekStartedAt = resumedAt;
+  state.weekStartedAt = startOfProgramWeek(resumedAt);
   return { ok: true, activation: target, restored };
 }
 

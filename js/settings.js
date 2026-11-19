@@ -8,7 +8,7 @@ import { parseImport } from './state/route-portability.js';
 import { CURRENT_SCHEMA_VERSION, isStateMigrationError, migrateState } from './state/migrations.js';
 import { APP_VERSION } from './constants.js';
 import { setRestTiers, setRestTimerEnabled, setRestOverrides, initRestPersistence } from './timers.js';
-import { todayKey } from './dates.js';
+import { todayKey, startOfProgramWeek } from './dates.js';
 import { parseWorkoutCsv, applyWorkoutCsvImport, CSV_IMPORT_LIMITS, decodeCsvBytes } from './portability/import-workout-csv.js';
 import { moduleEnabled, setModuleEnabled, applyModuleVisibility } from './modules.js';
 import * as equipmentProfiles from './equipment-profiles.js';
@@ -544,7 +544,8 @@ export function stepCurrentWeek(delta) {
   const next = Math.max(1, Math.min(maxWeek, current + delta));
   if (next === current) return;
   appState.currentWeek = next.toString();
-  appState.weekStartedAt = new Date().toISOString();
+  appState.weekStartedAt = startOfProgramWeek();
+  appState.weekAdvanceSnoozedUntil = null;
   saveStateToLocalStorage(true);
   const el = document.getElementById('settingsCurrentWeek');
   if (el) el.textContent = next;

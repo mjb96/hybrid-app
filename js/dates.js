@@ -66,6 +66,28 @@ export function localDayKey(value, tz = DEFAULT_TZ) {
   }
 }
 
+/**
+ * Monday of the calendar week containing `value`, as a YYYY-MM-DD key.
+ *
+ * Program slots are Monday-indexed (`DAY_ORDER` in week-strip/logged-days), so
+ * this is the only safe anchor for `resolveSlotDate`. Storing the activation day
+ * itself (e.g. Friday) as `weekStartedAt` shifted every weekday: Monday 20 Nov
+ * became "today" on Friday 20 Nov.
+ *
+ * Date-only values are kept as intentional calendar days; timestamps are
+ * resolved in `tz` first.
+ * @param {unknown} [value]
+ * @param {string} [tz]
+ */
+export function startOfProgramWeek(value = new Date(), tz = DEFAULT_TZ) {
+  const key = localDayKey(value, tz);
+  if (!key) return null;
+  const [y, m, d] = key.split('-').map(Number);
+  const dow = new Date(Date.UTC(y, m - 1, d, 12)).getUTCDay();
+  const offset = dow === 0 ? -6 : 1 - dow;
+  return addDaysISO(key, offset);
+}
+
 // Returns YYYY-MM-DD for today in the given timezone.
 export function todayKey(tz = DEFAULT_TZ, now = new Date()) {
   const key = localDayKey(now, tz);

@@ -58,6 +58,21 @@ test('a completed run counts as done and respects the week start', () => {
   delete state.weeks['1'].runSessions.thu;
 });
 
+test('a mid-week anchor does not relabel Friday as Monday', () => {
+  const anchored = {
+    currentWeek: '1',
+    weekStartedAt: '2026-11-20', // Friday: the activation day, not the Monday anchor
+    settings: { weekStartDay: 'mon' },
+    weeks: { '1': { dates: {}, lifts: {}, runSessions: {} } },
+  };
+  const strip = buildHomeWeekStrip({ state: anchored, program, days, today: '2026-11-20' });
+  const byDay = Object.fromEntries(strip.days.map((day) => [day.day, day]));
+  assert.equal(byDay.mon.date, '2026-11-16');
+  assert.equal(byDay.fri.date, '2026-11-20');
+  assert.equal(byDay.fri.status, 'today');
+  assert.equal(byDay.mon.status, 'missed');
+});
+
 test('a rest-only week reports no plan percentage', () => {
   const restProgram = { days: Object.fromEntries(days.map((d) => [d, { title: 'Rest', lifts: [], runs: 'Rest' }])) };
   const restState = { currentWeek: '1', settings: { weekStartDay: 'mon' }, weeks: { '1': { dates: Object.fromEntries(days.map((d, i) => [d, `2026-11-${16 + i}`])) } } };

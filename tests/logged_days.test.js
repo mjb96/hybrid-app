@@ -39,6 +39,15 @@ test('resolveDateToSlot: maps the LOCAL today to the current-week slot in any zo
   assert.equal(resolveSlotDate(state, slot.weekNum, slot.dayIdx, null), today);
 });
 
+test('resolveSlotDate: a mid-week anchor still maps Monday..Sunday correctly', () => {
+  // The activation-day bug: Friday 20 Nov was stored as the anchor, so Monday
+  // received Friday's date and appeared to be "today".
+  const state = { currentWeek: '1', weekStartedAt: '2026-11-20' };
+  assert.equal(resolveSlotDate(state, 1, 0, null), '2026-11-16');
+  assert.equal(resolveSlotDate(state, 1, 4, null), '2026-11-20');
+  assert.equal(resolveDateToSlot(state, '2026-11-20')?.day, 'fri');
+});
+
 test('resolveDateToSlot: exact inverse of resolveSlotDate across weeks', () => {
   const state = { currentWeek: '3', weekStartedAt: '2026-07-06' }; // week 3 Monday
   // Round-trips for every slot from week 1 to the current week.
