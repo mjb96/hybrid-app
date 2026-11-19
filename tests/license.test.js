@@ -50,3 +50,12 @@ test('Settings exposes the AGPL source link for network users', () => {
   assert.match(html, /GitHub · AGPL-3\.0/);
   assert.match(html, /rel="noopener noreferrer"/);
 });
+
+test('Settings carries the ExerciseDB MIT notice and openGym attribution', () => {
+  const html = read('index.html');
+  assert.match(html, /Exercise data licences/);
+  assert.match(html, /ExerciseDB v1/);
+  assert.match(html, /Hasan Emir Yıldırım/);
+  assert.match(html, /Permission is hereby granted, free of charge/);
+  assert.match(html, /github\.com\/DuarteSantos8\/openGym/);
+});
