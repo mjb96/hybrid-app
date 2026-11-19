@@ -368,6 +368,45 @@ test('suggestProgression: completed target can progress when optional RPE is abs
   assert.equal(p.weight, 62.5);
 });
 
+test('suggestProgression: linear holds the load on a missed target', () => {
+  const sets = [{ w: '100', r: '4', rpe: '8' }];
+  const p = suggestProgression(sets, 5, { increment: 2.5, style: 'linear' });
+  assert.equal(p.action, 'hold');
+  assert.equal(p.weight, 100);
+  assert.equal(p.reps, 5);
+  assert.match(p.rationale, /linear/i);
+});
+
+test('suggestProgression: linear adds load when every top set hits', () => {
+  const sets = [{ w: '100', r: '5', rpe: '7' }, { w: '100', r: '5', rpe: '7' }];
+  const p = suggestProgression(sets, 5, { increment: 2.5, style: 'linear', hardRpe: 8.5 });
+  assert.equal(p.action, 'load-up');
+  assert.equal(p.weight, 102.5);
+});
+
+test('suggestProgression: rep-first builds two reps past target before loading', () => {
+  const atTarget = suggestProgression([{ w: '100', r: '5', rpe: '7' }], 5, { increment: 2.5, style: 'rep-first' });
+  assert.equal(atTarget.action, 'rep-up');
+  assert.equal(atTarget.weight, 100);
+  assert.equal(atTarget.reps, 6);
+
+  const onePast = suggestProgression([{ w: '100', r: '6', rpe: '7' }], 5, { increment: 2.5, style: 'rep-first' });
+  assert.equal(onePast.action, 'rep-up');
+  assert.equal(onePast.reps, 7);
+
+  const twoPast = suggestProgression([{ w: '100', r: '7', rpe: '7' }], 5, { increment: 2.5, style: 'rep-first' });
+  assert.equal(twoPast.action, 'load-up');
+  assert.equal(twoPast.weight, 102.5);
+  assert.equal(twoPast.reps, 5);
+});
+
+test('suggestProgression: unknown or zero-target styles keep double progression', () => {
+  const unknown = suggestProgression([{ w: '100', r: '5', rpe: '7' }], 5, { style: 'mystery' });
+  assert.equal(unknown.action, 'load-up');
+  const noTarget = suggestProgression([{ w: '100', r: '5', rpe: '7' }], 0, { style: 'rep-first' });
+  assert.equal(noTarget.action, 'load-up');
+});
+
 test('computeDiagnosticForLift: surfaces a load-up progression from last session', () => {
   const sets = [{ w: '80', r: '5', c: true, rpe: '7' }, { w: '80', r: '5', c: true, rpe: '7' }];
   initEngine(() => makeDiagState(sets), () => DAYS);
@@ -376,6 +415,19 @@ test('computeDiagnosticForLift: surfaces a load-up progression from last session
   assert.equal(r.progression.action, 'load-up');
   assert.equal(r.suggestedWeight, 82.5);
   assert.equal(r.suggestedReps, 5);
+});
+
+test('computeDiagnosticForLift: carries the program progression style into the suggestion', () => {
+  const sets = [{ w: '80', r: '5', c: true, rpe: '7' }, { w: '80', r: '5', c: true, rpe: '7' }];
+  initEngine(() => makeDiagState(sets), () => DAYS);
+  const repFirst = computeDiagnosticForLift('2', 'mon', 'Squat', 5, { progressionStyle: 'rep-first' });
+  assert.equal(repFirst.progression.action, 'rep-up');
+  assert.equal(repFirst.progression.reps, 6);
+  assert.equal(repFirst.progression.weight, 80);
+
+  const linearClean = computeDiagnosticForLift('2', 'mon', 'Squat', 5, { progressionStyle: 'linear' });
+  assert.equal(linearClean.progression.action, 'load-up');
+  assert.equal(linearClean.progression.weight, 82.5);
 });
 
 test('computeDiagnosticForLift: warm-up-only history yields no progression', () => {

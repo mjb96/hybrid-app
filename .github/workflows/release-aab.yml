@@ -88,7 +88,13 @@ jobs:
           export VERSION_NAME="${INPUT_VERSION_NAME:-1.0.$VERSION_CODE}"
           echo "Building versionName=$VERSION_NAME versionCode=$VERSION_CODE"
           # bundleRelease → .aab for Play; assembleRelease → signed .apk for sideload testing.
-          gradle assembleRelease bundleRelease --no-daemon
+          # Retry once: Maven Central/the Actions cache can return transient
+          # 429/5xx responses that leave common dependencies unresolved.
+          if ! gradle assembleRelease bundleRelease --no-daemon; then
+            echo "::warning::Release build failed; retrying once for a transient dependency or cache error."
+            sleep 20
+            gradle assembleRelease bundleRelease --no-daemon
+          fi
 
       - name: Upload AAB artifact (Play upload)
         uses: actions/upload-artifact@v7

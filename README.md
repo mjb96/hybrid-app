@@ -42,6 +42,9 @@ the same training picture.
   Each profile stores its own bar weight and plate denominations; the active
   profile drives program fit, exercise swaps and optional per-side plate hints
   in the workout logger. Switching takes one tap in Settings.
+- **Progression styles** — custom programs can choose Double, Linear or Rep-first
+  coaching. The suggested next load follows that program's style while keeping
+  RPE, fatigue, cutting and stall safeguards.
 - **Import your history** — bring workout history and bodyweight from OpenGym,
   Strong or Hevy CSV exports. Strength sets and weigh-ins import directly; cardio
   rows are skipped for now. No account or server involved.

@@ -2407,6 +2407,11 @@ html[data-theme="light"] .create-cta-inner {
 }
 .program-editor__mode-note { margin: 12px 0 0; color: var(--text-muted); font-size: .7rem; line-height: 1.5; }
 
+.program-editor__coach-style { margin-bottom: 18px; }
+.program-editor__coach-style > p {
+  max-width: 520px; margin: 4px 0 10px; color: var(--text-secondary);
+  font-size: .76rem; line-height: 1.5;
+}
 .program-editor__shape-list { display: flex; flex-direction: column; gap: 8px; }
 .program-editor__shape {
   display: grid; gap: 3px; text-align: left; padding: 12px 14px; min-height: var(--touch-target);
