@@ -25,7 +25,7 @@ both are idempotent.
    SUPABASE_ANON_KEY="<anon key from js/state/supabase.js>" \
    A_EMAIL="a@example.com" A_PASSWORD="…" \
    B_EMAIL="b@example.com" B_PASSWORD="…" \
-   node scripts/rls-adversarial-test.mjs
+   node scripts/rls-adversarial-check.mjs
    ```
    Exit `0` + `✅ PASS` = isolation proven. Any `❌ FAIL` = leak, do not ship.
 

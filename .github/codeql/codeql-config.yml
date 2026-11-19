@@ -1,0 +1,8 @@
+name: Helyx CodeQL config
+
+paths-ignore:
+  - js/vendor
+  - tests
+  - scripts
+  - android/app/build
+  - android/.gradle
