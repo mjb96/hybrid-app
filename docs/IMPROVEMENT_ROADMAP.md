@@ -1626,6 +1626,14 @@ testable on its own.
 
 ## 12. Session log
 
+- **2026-11-20 — Extended exercise catalogue text.**
+  - Imported 4,282 openGym-authored exercises with instructions
+    (`textSource: "opengym"`, AGPL-3.0) into the searchable/picker catalogue.
+    `exercisedb` rows and all media are excluded; attribution is in NOTICE.md.
+  - Mapping normalises names, equipment, muscles, movement and category into the
+    existing openHybrid contract; imported entries remain unreviewed (no invented
+    difficulty or safety notes).
+  - Added attribution/provenance docs and a catalogue contract test.
 - **2026-11-20 — Warm-up ramp, muscle load and bodyweight export.**
   - Optional warm-up ramp: editable 40/60/80% rows above the bar, rounded to
     the active profile's plates/pair counts, inserted once after the first

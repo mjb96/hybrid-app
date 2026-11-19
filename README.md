@@ -25,8 +25,9 @@ the same training picture.
   training strip, one coach insight and quick actions. Deep charts stay in
   Progress and the secondary In Focus section.
 - **Strength logging** — routines, set types, RPE/RIR, rest timers, supersets,
-  exercise swaps, plate math, estimated 1RM and PRs. An optional warm-up ramp
-  adds editable 40/60/80% sets once you enter the first working weight.
+  exercise swaps, plate math, estimated 1RM and PRs. A 4,400+ exercise catalogue
+  (openGym text, AGPL, no media) backs search and imports. An optional warm-up
+  ramp adds editable 40/60/80% sets once you enter the first working weight.
 - **Running** — manual entries, native GPS tracking with a route map, splits,
   FIT-file import and run analytics.
 - **Recovery and load** — readiness, training load, ACWR and a weekly review.

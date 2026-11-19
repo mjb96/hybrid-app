@@ -1,4 +1,5 @@
 // @ts-check
+import { OPENGYM_EXERCISES } from './opengym-catalogue.js';
 // Canonical exercise identity and muscle-volume attribution.
 //
 // Stored workouts intentionally keep their original display-name keys. This
@@ -132,7 +133,7 @@ const REVIEWED = (instructions, difficulty, safetyNotes) => ({
 
 // A credit is an estimate, not an anatomical involvement list: 1.0 dominant,
 // 0.5 meaningful secondary, 0.25 minor contribution, stabilisers omitted.
-export const EXERCISES = Object.freeze([
+export const CORE_EXERCISES = Object.freeze([
   // Chest and pressing
   P('barbell_bench_press', 'Barbell Bench Press', ['Bench Press'], { chest: 1, triceps: .5, front_delts: .25 }, { movement: 'horizontal_push', equipment: ['barbell', 'bench'], compound: true,
     ...REVIEWED(
@@ -747,6 +748,8 @@ export function normaliseExerciseName(value) {
     .trim();
 }
 
+export const EXERCISES = Object.freeze([...CORE_EXERCISES, ...OPENGYM_EXERCISES]);
+
 const BY_ID = new Map(EXERCISES.map((item) => [item.id, item]));
 const BY_NAME = new Map();
 for (const item of EXERCISES) {
@@ -809,7 +812,10 @@ export function searchExercises(query, limit = 40) {
 export function browseExercises({ query = '', category = '', equipment = '', muscleGroup = '' } = {}, limit = 80) {
   const source = String(query || '').trim()
     ? searchExercises(query, EXERCISES.length)
-    : [...EXERCISES].sort((a, b) => a.name.localeCompare(b.name));
+    // Reviewed core lifts first, then the imported text catalogue. A muscle or
+    // equipment filter must not bury Bench Press under 4,000 alphabetically
+    // earlier stretches.
+    : [...EXERCISES].sort((a, b) => (a.sourceId ? 1 : 0) - (b.sourceId ? 1 : 0) || a.name.localeCompare(b.name));
   return source
     .filter((item) => !category || item.category === category)
     .filter((item) => !equipment || item.equipment.includes(equipment))

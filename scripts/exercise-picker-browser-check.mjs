@@ -112,8 +112,12 @@ try {
     '#builderExerciseResults [data-action="b-pick-exercise"]',
     (buttons) => buttons.map((button) => button.getAttribute('data-name')),
   );
-  ok(builderEzNames.length === 16, `program picker lists all 16 EZ-bar exercises (${builderEzNames.length})`);
-  ok(builderEzNames.every((name) => name?.startsWith('EZ-Bar')), 'program picker EZ filter excludes straight-bar variations');
+  ok(builderEzNames.length >= 16, `program picker lists the core EZ-bar exercises plus imports (${builderEzNames.length})`);
+  const builderEzEquipment = await page.evaluate(async (names) => {
+    const catalog = await import('./js/exercises/catalog.js');
+    return names.map((name) => catalog.resolveExercise(name)?.equipment || []);
+  }, builderEzNames);
+  ok(builderEzEquipment.every((equipment) => equipment.includes('ezBar')), 'program picker EZ filter excludes straight-bar variations');
   ok(builderEzNames.includes('EZ-Bar Romanian Deadlift') && builderEzNames.includes('EZ-Bar Floor Press'), 'program picker spans legs and chest');
 
   // Details open above the picker and expose every new editorial field.
@@ -198,8 +202,12 @@ try {
     '#elList [data-action="el-pick"]',
     (buttons) => buttons.map((button) => button.getAttribute('data-exname')),
   );
-  ok(workoutEzNames.length === 16, `workout picker lists all 16 EZ-bar exercises (${workoutEzNames.length})`);
-  ok(workoutEzNames.every((name) => name?.startsWith('EZ-Bar')), 'workout picker EZ filter excludes other equipment');
+  ok(workoutEzNames.length >= 16, `workout picker lists the core EZ-bar exercises plus imports (${workoutEzNames.length})`);
+  const workoutEzEquipment = await page.evaluate(async (names) => {
+    const catalog = await import('./js/exercises/catalog.js');
+    return names.map((name) => catalog.resolveExercise(name)?.equipment || []);
+  }, workoutEzNames);
+  ok(workoutEzEquipment.every((equipment) => equipment.includes('ezBar')), 'workout picker EZ filter excludes other equipment');
   await page.fill('#elSearchInput', 'zercher');
   await page.waitForTimeout(100);
   ok(await page.getAttribute('#elList [data-action="el-pick"]', 'data-exname') === 'EZ-Bar Zercher Squat', 'workout search and equipment filter compose');
