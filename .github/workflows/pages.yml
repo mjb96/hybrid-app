@@ -96,7 +96,7 @@ jobs:
         id: deploy
         if: steps.upload.outcome == 'success' || steps.upload_retry.outcome == 'success'
         continue-on-error: true
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
 
       - name: Pause before Deploy retry
         if: steps.deploy.outcome == 'failure'
@@ -104,7 +104,7 @@ jobs:
       - name: Deploy to GitHub Pages (auto-retry)
         id: deploy_retry
         if: steps.deploy.outcome == 'failure'
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
 
       # Fail the job unless the deploy ultimately succeeded. Because each stage
       # only runs when the previous one succeeded, a both-attempts failure in
