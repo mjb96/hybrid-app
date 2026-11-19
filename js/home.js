@@ -17,10 +17,10 @@ import { shouldSuggestDeload } from './engine.js';
 import { computeDashboardModel } from './home/dashboard-model.js';
 import { renderActivityCalendar } from './home/activity-calendar.js';
 import { initFastingCard } from './home/fasting-card.js';
-import { initWeeklyFitnessGraph, refreshWeeklyFitnessGraph } from './home/weekly-fitness-graph.js';
 import { setHTML } from './ui/render.js';
 import { escapeHtml } from './util.js';
 import { buildHomeWeekStrip } from './home/week-strip.js';
+import { renderHomeBodyweight } from './home/bodyweight-card.js';
 import { reportHandledError, renderSafely } from './monitoring/report-error.js';
 import { todayKey } from './dates.js';
 import { buildVolumeGuideModel, hasExplicitMusclePriorities } from './analytics/volume-guide.js';
@@ -29,16 +29,11 @@ let _getState;
 let _getSelectedDay;
 let _getDays;
 
-let _strengthGraph = null;
-let _runGraph = null;
-
 export function initHome(getStateFn, getSelectedDayFn, getDaysFn) {
   _getState = getStateFn;
   _getSelectedDay = getSelectedDayFn;
   _getDays = getDaysFn;
   initFastingCard(getStateFn);
-  _strengthGraph = initWeeklyFitnessGraph('strengthBarChart', 'strength', getStateFn);
-  _runGraph = initWeeklyFitnessGraph('runBarChart', 'running', getStateFn);
 }
 
 export { openFastingDetail, closeFastingDetail, openHistoryEditPanel, closeHistoryEditPanel } from './home/fasting-card.js';
@@ -373,6 +368,7 @@ export function renderHome() {
 
   renderHomeGreeting(appState);
   renderHomeWeek(appState, activeProgram);
+  renderHomeBodyweight(document.getElementById('homeBodyweightCard'), appState);
   renderHomeInsight(model, appState);
 
   // V2 (S4): engine stall alerts move off Home — the one-hero Home keeps only
@@ -380,9 +376,6 @@ export function renderHome() {
   // in the workout cockpit where they're actionable.
   const engineAlertCard = document.getElementById('homeEngineAlertCard');
   if (engineAlertCard) engineAlertCard.style.display = 'none';
-
-  if (_strengthGraph) refreshWeeklyFitnessGraph('strengthBarChart');
-  if (_runGraph) refreshWeeklyFitnessGraph('runBarChart');
 
   const scoreResult = renderHybridScoreHome(appState, model);
 

@@ -14,7 +14,7 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
 - `npm run typecheck` — tsc over jsconfig
 - `npm run smoke` — scripts/smoke.mjs (jsdom import + home render)
 - `npm run icons:gen` — regenerate PWA/Android icons from `assets/brand/icon.svg`
-- `npm run browser:verify` — 37 real-Chromium product checks through a parallel
+- `npm run browser:verify` — 36 real-Chromium product checks through a parallel
   worker pool (3 workers by default; `-- --serial` for one-at-a-time debugging,
   `-- --concurrency=N` to pin workers, `-- --timeout=N` for the 180 s per-check
   kill, `-- --retries=N` for the default single retry after a timeout)
@@ -69,6 +69,10 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   `computeDiagnosticForLift(..., { progressionStyle })` forwards it to
   `suggestProgression`, and the program editor's Progression tab exposes the
   choice. RPE/fatigue/cut/stall holds still take precedence in every style.
+- Themes: `js/theme.js` owns the palette id; CSS owns the colours. Midnight is
+  the icon-derived default for dark/system profiles (schema v10 seeds it), with
+  Slate/Forest/Ember alternatives. Light keeps its own variable block. The
+  Settings palette buttons persist `settings.palette`.
 - Exercise catalogue: the original 157 are `CORE_EXERCISES`; `js/exercises/opengym-catalogue.js`
   adds ~4,280 openGym-authored text entries (AGPL-3.0, no media) imported by
   `scripts/import-opengym-catalogue.mjs`. Exclude openGym's `textSource: exercisedb`
@@ -89,20 +93,23 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   Equipment switches, adds, renames and deletes profiles (the last cannot be
   deleted). v6→v7 seeds the optional inventory shape; v5→v6 seeded the first
   profile from the legacy kit.
-- Home decision surface: `index.html` keeps one Today card (`#homeTodayCard`),
-  a generated week strip (`js/home/week-strip.js` → `#homeWeekDays`), one coach
-  insight from `model.topInsight`, and a 2×2 quick-action grid. The In Focus
-  charts remain below the decision surface for existing deep-link/attribution
-  contracts; do not move them above Today. Week-strip cells are 44px minimum and
-  open Activities for the selected date. Keep `#homePrimaryCta`, `.btn-history-link`
-  and `.log-run-fab` in the Home DOM — browser checks measure them.
+- Home decision surface: `index.html` puts the generated week strip
+  (`js/home/week-strip.js` → `#homeWeekDays`) first, then one compact Today card
+  (`#homeTodayCard`, rendered by `js/home/today-card.js`). The card keeps the
+  eyebrow/title/meta/short guidance and one primary action; it deliberately
+  omits the state pill, score row and evidence drawer. Below it sit the compact
+  bodyweight card (`js/home/bodyweight-card.js` → `#homeBodyweightCard`) with
+  one-tap prefilled logging, one coach insight from `model.topInsight`, and a
+  2×2 quick-action grid. The In Focus cards and their graph module were removed;
+  deep charts live in Progress. Keep `#homePrimaryCta`, `.btn-history-link` and
+  the Run quick action in the Home DOM — browser checks measure them.
 - Weekly analytics attribution: `state.currentWeek` is a PROGRAM-week counter that only
   advances on an explicit step / confirmed auto-advance — it is NOT the calendar week.
   So "this week" analytics must NOT read `weeks[currentWeek]` directly (that leaked a
   frozen program week's stale training into the current week). `js/analytics/weekly-aggregate.js`
   is the canonical source: it buckets every logged day by its real stamped `.dates[day]`
   into Monday-based CALENDAR weeks (`buildCalendarWeekStrength`, `collectCalendarWeek`,
-  `weekStartOf`, `localDayKey`). The In Focus graph (`buildWeekChart`) + strength detail +
+  `weekStartOf`, `localDayKey`). The Progress strength/running charts (`buildWeekChart`) + detail +
   the At-a-Glance Weekly Volume tile (`model.calendarWeek`) all consume it, so an empty
   current calendar week is a true zero and the week label is the real Mon–Sun range, never
   derived from the activity records. The strength/running **detail week navigator**
@@ -170,8 +177,8 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   `elementFromPoint` rather than reading CSS, so it must `scrollIntoView` each
   control first — without that everything is below the fold, every probe returns
   null and the check quietly degrades to trusting the declaration. A point
-  outside the viewport is UNKNOWN, not unreachable (one pair of In Focus week
-  arrows sits at x≈615 inside a horizontal scroller).
+  outside the viewport is UNKNOWN, not unreachable (for example a control inside
+  a horizontal scroller).
 - Performance: `scripts/performance-baseline.mjs` (`npm run perf:baseline`) is the
   baseline harness — three full boots, one with five years of history (260 weeks,
   ~20,800 sets). It asserts ONLY machine-independent facts: first paint is not

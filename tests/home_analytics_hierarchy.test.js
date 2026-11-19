@@ -5,10 +5,15 @@ import { readFile } from 'node:fs/promises';
 const indexHTML = await readFile(new URL('../index.html', import.meta.url), 'utf8');
 const dashboardSource = await readFile(new URL('../js/dashboard.js', import.meta.url), 'utf8');
 
-test('Home preserves both owner-preferred In Focus cards', () => {
-  assert.match(indexHTML, /id="strengthBarChart"/);
-  assert.match(indexHTML, /id="runBarChart"/);
-  assert.match(indexHTML, />In Focus</);
+test('This week leads Home, then the compact Today card', () => {
+  const weekAt = indexHTML.indexOf('id="homeWeekStrip"');
+  const todayAt = indexHTML.indexOf('id="homeTodayCard"');
+  assert.ok(weekAt > 0, 'Home renders the week strip');
+  assert.ok(todayAt > weekAt, 'Today follows the week strip');
+  assert.match(indexHTML, /id="homeQuickActions"/);
+  assert.doesNotMatch(indexHTML, /id="strengthBarChart"/);
+  assert.doesNotMatch(indexHTML, /id="runBarChart"/);
+  assert.doesNotMatch(indexHTML, />In Focus</);
 });
 
 test('Home removes the repeated At-a-Glance grid', () => {

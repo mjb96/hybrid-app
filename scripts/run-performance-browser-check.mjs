@@ -69,9 +69,14 @@ try {
       if (message.type() === 'error' && !/frame-ancestors.*ignored.*meta/i.test(message.text()) && !/net::ERR_/.test(message.text())) errors.push(message.text());
     });
     await page.goto(BASE, { waitUntil: 'networkidle' });
-    // Click the card label (not the mini bar chart, whose bars open that day's
-    // Activities by design) so the tap bubbles to the card's open-analytics.
-    await page.click('.home-metric-card--run .hmcard-label');
+    // Home no longer carries the In Focus run card. Enter through Progress →
+    // Running → Run performance, the path users have now.
+    await page.click('.nav-item[data-target="analytics"]');
+    await page.waitForSelector('#view-analytics.active');
+    await page.waitForSelector('#analytics-hub.active');
+    await page.click('#analytics-hub [data-action="open-analytics"][data-context="running"]');
+    await page.waitForSelector('#analytics-running.active');
+    await page.click('#analytics-running [data-action="open-analytics"][data-context="run-performance"]');
     await page.waitForSelector('#analytics-run-performance.active .gym-performance');
     const seven = await page.$eval('#analytics-run-performance', (section) => ({
       title: section.querySelector('h2')?.textContent?.trim(),

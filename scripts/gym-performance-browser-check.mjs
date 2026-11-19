@@ -71,10 +71,17 @@ try {
       if (message.type() === 'error' && !/frame-ancestors.*ignored.*meta/i.test(message.text()) && !/net::ERR_/.test(message.text())) errors.push(message.text());
     });
     await page.goto(BASE, { waitUntil: 'networkidle' });
-    // Phase 3B merged Gym Performance into the Volume screen's Trends tab. The
-    // Home gym card deep-links straight there, so this check still enters the
-    // same way a user does — only the destination markup changed.
-    await page.click('.home-metric-card--gym');
+    // Phase 3B merged Gym Performance into the Volume screen's Trends tab.
+    // Home no longer carries the old In Focus card, so enter the way a user
+    // does now: Progress → Strength → Weekly Volume → Trends.
+    await page.click('.nav-item[data-target="analytics"]');
+    await page.waitForSelector('#view-analytics.active');
+    await page.waitForSelector('#analytics-hub.active');
+    await page.click('#analytics-hub [data-action="open-analytics"][data-context="strength"]');
+    await page.waitForSelector('#analytics-strength.active');
+    await page.click('#analytics-strength [data-action="open-analytics"][data-context="strength-volume"]');
+    await page.waitForSelector('#analytics-strength-volume.active');
+    await page.click('#analytics-strength-volume [data-strength-volume-tab="trends"]');
     await page.waitForSelector('#analytics-strength-volume.active .gym-performance');
     const seven = await page.$eval('#analytics-strength-volume', (section) => ({
       title: section.querySelector('h2')?.textContent?.trim(),
@@ -91,7 +98,7 @@ try {
     console.log(`Gym activity ${width}px:`, JSON.stringify(seven));
     // The merged screen owns the title; the Trends tab owns the controls.
     if (seven.title !== 'Volume') failures.push(`${width}px: expected the merged Volume title, got "${seven.title}"`);
-    if (seven.activeTab !== 'Trends') failures.push(`${width}px: the Home gym card must land on Trends, got "${seven.activeTab}"`);
+    if (seven.activeTab !== 'Trends') failures.push(`${width}px: Volume must open on Trends, got "${seven.activeTab}"`);
     if (seven.ranges !== 3 || seven.metrics !== 4 || seven.bins !== 7) failures.push(`${width}px: incomplete gym activity controls`);
     if (seven.evidence < 1) failures.push(`${width}px: missing exact workout evidence`);
     if (seven.overflow) failures.push(`${width}px: page-level horizontal overflow`);

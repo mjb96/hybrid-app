@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-palette="midnight">
 <head>
   <meta charset="UTF-8">
   <!-- Pinch-zoom left enabled (no maximum-scale / user-scalable=no): this app is
@@ -433,9 +433,6 @@
         <button class="home-avatar" id="homeAvatar" data-action="open-profile" aria-label="Open your profile">?</button>
       </header>
 
-      <!-- Today is the one decision surface. -->
-      <div id="homeTodayCard"></div>
-
       <!-- A live fast is status, not a menu: never hide an in-progress timer. -->
       <div class="qa-row qa-row--fasting mb-4" id="dashboardQuickActions" data-module="fasting" aria-label="Active fast" style="grid-template-columns:1fr;margin-top:10px;display:none;">
         <button class="qa-btn" id="qaFasting" data-action="open-fasting-detail" aria-label="View your active fast">
@@ -444,8 +441,8 @@
         </button>
       </div>
 
-      <!-- Safety and load flags stay above the weekly strip, but only render
-           when the model actually raises them. -->
+      <!-- Safety and load flags stay above everything, but only render when the
+           model actually raises them. -->
       <div id="homeAlerts">
         <article id="homeOvertrainingCard" class="card-dark home-alert-card home-alert-card--danger" style="display:none;" role="alert">
           <div class="card-icon-title" style="color:var(--color-red);"><span>🚨</span> <span id="homeOvertrainingTitle">Overtraining risk</span></div>
@@ -479,6 +476,19 @@
         <div class="home-week__days" id="homeWeekDays"></div>
       </section>
 
+      <!-- A live fast is status, not a menu: never hide an in-progress timer. -->
+      <div class="qa-row qa-row--fasting mb-4" id="dashboardQuickActions" data-module="fasting" aria-label="Active fast" style="grid-template-columns:1fr;margin-top:10px;display:none;">
+        <button class="qa-btn" id="qaFasting" data-action="open-fasting-detail" aria-label="View your active fast">
+          <span class="qa-icon">⏱️</span>
+          <span class="qa-text"><span class="qa-label">Fasting</span><span class="qa-sub">Intermittent fasting</span></span>
+        </button>
+      </div>
+
+      <!-- This week first, then the one decision surface: what to do today. -->
+      <div id="homeTodayCard"></div>
+
+      <div id="homeBodyweightCard"></div>
+
       <button class="home-insight" id="homeInsightCard" data-action="open-analytics" data-context="progress" hidden>
         <span class="home-insight__eyebrow">Coach</span>
         <span class="home-insight__text" id="homeInsightText"></span>
@@ -510,36 +520,6 @@
         <span id="homeVolumeGuideSub">View planned and logged set credits</span>
         <span class="home-volume-guide__arrow" aria-hidden="true">›</span>
       </button>
-
-      <!-- Secondary trends: kept for attribution and deep links, below the
-           decision surface rather than competing with it. -->
-      <div class="app-section-heading">
-        <div class="app-section-heading__title">In Focus</div>
-        <div class="app-section-heading__sub">This week's trends · open any chart in Progress</div>
-      </div>
-
-      <div class="in-focus-carousel">
-        <article class="card-dark carousel-card home-metric-card home-metric-card--gym" data-action="open-analytics" data-context="strength-volume-trends">
-          <div class="hmcard-top">
-            <span class="hmcard-icon">🏋️</span>
-            <span class="hmcard-label">Gym Performance</span>
-          </div>
-          <h3 id="focusStrengthHero" class="hmcard-hero">0m</h3>
-          <div class="hmcard-sub" id="focusStrengthSub">tap to view analytics</div>
-          <div class="bar-chart-container" id="strengthBarChart"></div>
-        </article>
-
-        <article class="card-dark carousel-card home-metric-card home-metric-card--run" data-action="open-analytics" data-context="run-performance" data-module="running">
-          <div class="hmcard-top">
-            <span class="hmcard-icon">🏃</span>
-            <span class="hmcard-label">Run Performance</span>
-            <button class="log-run-fab" data-action="open-run-logger" aria-label="Log a run">+</button>
-          </div>
-          <h3 id="focusRunHero" class="hmcard-hero">0.0 km</h3>
-          <div class="hmcard-sub" id="focusRunSub">tap to view analytics</div>
-          <div class="bar-chart-container" id="runBarChart"></div>
-        </article>
-      </div>
 
     </section>
 
@@ -1776,6 +1756,16 @@
               <button class="settings-toggle-btn" data-action="set-theme" data-theme-val="system">System</button>
             </div>
           </div>
+          <div class="settings-row">
+            <label class="settings-row-label">Dark palette</label>
+            <div class="settings-toggle-group">
+              <button class="settings-toggle-btn active" data-action="set-palette" data-palette="midnight">Midnight</button>
+              <button class="settings-toggle-btn" data-action="set-palette" data-palette="slate">Slate</button>
+              <button class="settings-toggle-btn" data-action="set-palette" data-palette="forest">Forest</button>
+              <button class="settings-toggle-btn" data-action="set-palette" data-palette="ember">Ember</button>
+            </div>
+          </div>
+          <div class="settings-hint">Midnight matches the app icon: navy surfaces, steel text, cyan actions and lime progress. Palettes apply to Dark/System; Light keeps its own colours.</div>
         </div>
 
         <!-- Data -->

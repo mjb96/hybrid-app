@@ -280,18 +280,6 @@ function actionAttrs(action) {
 }
 
 export function todayCardHTML(card) {
-  const evidence = card.evidence?.bullets?.length
-    ? `<details class="today-card__why">
-        <summary>Why this guidance?</summary>
-        <ul>${card.evidence.bullets.map((line) => `<li>${esc(line)}</li>`).join('')}</ul>
-      </details>`
-    : '';
-  const score = card.score
-    ? `<button class="today-card__score" data-action="open-analytics" data-context="hybrid-score"
-              aria-label="${esc(card.score.label)}. Open Hybrid Score details">
-        <span>${esc(card.score.label)}</span><strong>${esc(card.score.value)}</strong><span aria-hidden="true">›</span>
-      </button>`
-    : '';
   const offline = card.offline
     ? `<p class="today-card__offline" role="status"><span aria-hidden="true"></span>Offline · logging still saves on this device</p>`
     : '';
@@ -300,15 +288,10 @@ export function todayCardHTML(card) {
     : '';
 
   return `<article class="today-card today-card--${esc(card.tone)}" data-today-state="${esc(card.state)}" aria-labelledby="homeTodayTitle">
-    <div class="today-card__top">
-      <span class="today-card__eyebrow">${esc(card.eyebrow)}</span>
-      <span class="today-card__state" aria-label="Session status">${esc(card.state.replace('_', ' '))}</span>
-    </div>
+    <span class="today-card__eyebrow">${esc(card.eyebrow)}</span>
     <h2 id="homeTodayTitle" class="today-card__title">${esc(card.title)}</h2>
     <p class="today-card__meta">${esc(card.meta)}</p>
     <p class="today-card__guidance">${esc(card.guidance)}</p>
-    ${score}
-    ${evidence}
     ${offline}
     <div class="today-card__actions">
       <button id="homePrimaryCta" class="today-card__primary btn-action-block btn-green" ${actionAttrs(card.primary)}>${esc(card.primary?.label || 'Continue')}</button>

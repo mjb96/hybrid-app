@@ -65,7 +65,6 @@ try {
 
   const runQuick = page.locator('#homeQuickActions [data-action="open-run-logger"]');
   ok(await runQuick.isVisible(), 'Running module is visible by default');
-  ok(await page.locator('#runBarChart').isVisible(), 'dummy run trend is present by default');
 
   await page.click('#homeAvatar');
   await page.waitForSelector('#view-profile.active');
@@ -75,7 +74,6 @@ try {
   await runningRow.locator('.settings-switch').click();
   await page.waitForFunction(() => document.documentElement.dataset.moduleRunning === 'off');
   ok(!(await runQuick.isVisible()), 'turning Running off hides the Home run action');
-  ok(!(await page.locator('#runBarChart').isVisible()), 'turning Running off hides the Home run trend');
 
   await page.click('#settingsOverlay [data-action="close-settings"]');
   await page.click('.nav-item[data-target="analytics"]');

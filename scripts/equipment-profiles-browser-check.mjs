@@ -21,8 +21,9 @@ const server = createServer(async (req, res) => {
     const rel = (req.url || '/') === '/' ? 'index.html' : decodeURIComponent((req.url || '').split('?')[0]).replace(/^\//, '');
     const file = path.resolve(ROOT, rel);
     if (!file.startsWith(`${ROOT}${path.sep}`) && file !== path.join(ROOT, 'index.html')) throw new Error('unsafe');
+    const body = await readFile(file);
     res.writeHead(200, { 'content-type': MIME[path.extname(rel)] || 'application/octet-stream' });
-    res.end(await readFile(file));
+    res.end(body);
   } catch { res.writeHead(404); res.end('not found'); }
 });
 await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
@@ -100,7 +101,13 @@ try {
   ok(!(await bands.isChecked()), 'commercial gym has bands unchecked');
   ok((await plateBar.inputValue()) === '20', 'the gym bar weight is shown');
   ok((await platesInput.inputValue()) === '25, 20, 15, 10, 5, 2.5, 1.25', 'the gym plate set is shown');
-  ok(!(await plateHints.isChecked()), 'plate hints are off by default');
+  ok(!(await plateHints.isChecked()), 'plate hints are off by default');  ok((await page.evaluate(() => document.documentElement.dataset.palette)) === 'midnight', 'Midnight is the default palette');
+  await page.click('[data-action="set-palette"][data-palette="forest"]');
+  await page.waitForFunction((key) => JSON.parse(localStorage.getItem(key) || '{}')?.settings?.palette === 'forest', STORAGE_KEY);
+  ok((await page.evaluate(() => document.documentElement.dataset.palette)) === 'forest', 'palette changes apply live');
+  await page.click('[data-action="set-palette"][data-palette="midnight"]');
+  ok((await page.evaluate(() => document.documentElement.dataset.palette)) === 'midnight', 'palette can be changed back');
+
   ok(!(await autoWarmup.isChecked()), 'auto warm-up ramp is off by default');
 
   await select.selectOption('eqp_home');

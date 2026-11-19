@@ -141,6 +141,19 @@ test('one-off workouts remain resumable across days', () => {
   assert.equal(card.primary.action, 'start-today-workout');
 });
 
+test('the card HTML is compact: no score row, state pill or evidence drawer', () => {
+  const card = buildTodayCardModel({
+    state: state(), program: PROGRAM, model, now: MONDAY, tz: DISPLAY_TZ,
+    briefing: { coach: { evidence: { bullets: ['One reason', 'Another reason'] } } },
+    score: { hasData: true, score: 74, confidence: 75, delta: 2, band: { status: 'Productive' } },
+  });
+  const html = todayCardHTML(card);
+  assert.doesNotMatch(html, /today-card__score/);
+  assert.doesNotMatch(html, /today-card__state/);
+  assert.doesNotMatch(html, /today-card__why/);
+  assert.match(html, /today-card__primary/);
+});
+
 test('offline state reassures without changing the workout action', () => {
   const card = buildTodayCardModel({
     state: state(), program: PROGRAM, model, now: MONDAY, offline: true, tz: DISPLAY_TZ,

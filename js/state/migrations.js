@@ -356,9 +356,17 @@ const MIGRATIONS = [
     }
     if (state.settings.autoWarmupRamp == null) state.settings.autoWarmupRamp = false;
   },
+  // v9 → v10: icon-derived default palette. Existing Light/System choices are
+  // untouched; dark profiles get the new Midnight surfaces by default.
+  (state) => {
+    if (!state.settings || typeof state.settings !== 'object' || Array.isArray(state.settings)) {
+      state.settings = {};
+    }
+    if (!('palette' in state.settings)) state.settings.palette = 'midnight';
+  },
 ];
 
-export const CURRENT_SCHEMA_VERSION = MIGRATIONS.length; // 9
+export const CURRENT_SCHEMA_VERSION = MIGRATIONS.length; // 10
 
 /** Error raised when a state upgrade cannot safely commit. */
 export class StateMigrationError extends Error {

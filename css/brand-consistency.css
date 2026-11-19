@@ -32,6 +32,45 @@
   --accent-indigo: var(--brand-cobalt-strong);
 }
 
+/* Midnight is the icon palette. Brand-consistency.css loads last, so the
+   palette must re-declare the brand tokens here or the old cobalt wins. */
+html[data-theme="dark"][data-palette="midnight"] {
+  --brand-midnight: #070a12;
+  --brand-gunmetal: #0d1420;
+  --brand-raised: #111a2a;
+  --brand-cobalt: #22d3ee;
+  --brand-cobalt-strong: #0891b2;
+  --brand-cobalt-rgb: 34, 211, 238;
+  --brand-ice: #67e8f9;
+  --brand-ice-soft: #cffafe;
+  --brand-steel: #94a3b8;
+  --brand-burnt-orange: #a3e635;
+  --brand-gradient: linear-gradient(135deg, #22d3ee, #0891b2);
+  --bg-app: #070a12;
+  --bg-card: #0d1420;
+  --bg-input: #121b2b;
+  --bg-input-focus: #172236;
+  --bg-deep: #0a111d;
+  --color-blue: #22d3ee;
+  --color-indigo: #0891b2;
+  --color-orange: #a3e635;
+  --accent-blue: #22d3ee;
+  --accent-indigo: #0891b2;
+}
+
+/* Cyan is bright: use dark ink, not white, for the primary CTA and selected
+   pills so the icon palette keeps accessible contrast. */
+html[data-theme="dark"][data-palette="midnight"] #homePrimaryCta.btn-green,
+html[data-theme="dark"][data-palette="midnight"] #startWorkoutBtn.btn-green,
+html[data-theme="dark"][data-palette="midnight"] .ob-cta,
+html[data-theme="dark"][data-palette="midnight"] .day-pill.active,
+html[data-theme="dark"][data-palette="midnight"] .set-load-choice__btn.active,
+html[data-theme="dark"][data-palette="midnight"] .an-tab--active,
+html[data-theme="dark"][data-palette="midnight"] .detail-cta-btn:not(.detail-cta-btn--active):not(.detail-cta-btn--completed) {
+  color: #04121a !important;
+  box-shadow: 0 6px 22px rgba(34, 211, 238, 0.22) !important;
+}
+
 body {
   background-image:
     radial-gradient(ellipse at 82% 0%, rgba(var(--brand-cobalt-rgb), 0.15), transparent 50%),

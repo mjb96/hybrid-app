@@ -99,7 +99,14 @@ function renderOverview(body, state, history) {
     <article class="an-insight-card">
       <span class="an-insight-card__eyebrow">What this says</span>
       <p>${esc(primaryInsight || 'Open a metric to inspect its history and source activities.')}</p>
-    </article>`;
+    </article>
+    <button type="button" class="hub-link hub-link--quiet" data-action="open-analytics" data-context="run-performance" data-parent-context="running">
+      <span class="hub-link__label">
+        <span class="hub-link__title">Run performance</span>
+        <span class="hub-link__desc">Distance, time and pace across 7D · 4W · 1Y</span>
+      </span>
+      <span class="hub-link__arrow" aria-hidden="true">→</span>
+    </button>`;
 }
 
 function renderStats(body, state, history) {

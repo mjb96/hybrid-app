@@ -109,6 +109,14 @@ test('v9 seeds the opt-in warm-up ramp setting off', () => {
   assert.equal(state.settings.autoWarmupRamp, false);
 });
 
+test('v10 seeds the Midnight palette without changing the theme mode', () => {
+  const state = { schemaVersion: 9, settings: { theme: 'light' } };
+  migrateState(state);
+  assert.equal(state.schemaVersion, CURRENT_SCHEMA_VERSION);
+  assert.equal(state.settings.palette, 'midnight');
+  assert.equal(state.settings.theme, 'light');
+});
+
 test('migrateState is idempotent — already-current state is untouched', () => {
   const state = {
     schemaVersion: CURRENT_SCHEMA_VERSION,
