@@ -73,6 +73,7 @@ import {
   setProgressionIncrement, setDistanceUnit, setTheme, stepCurrentWeek, setAutoAdvanceWeek,
   saveThresholdPace as saveSettingsThresholdPace,
   exportData, triggerImport, handleImportFile, confirmResetAllData,
+  triggerExternalCsvImport, handleExternalCsvFile,
   applySettingsOnBoot,
   hcToggleConnect, hcSyncNow, saveStepGoal, hcToggleSyncField,
   setFitnessGoal, setWeightGoal, setFitnessLevel, setWeekStartDay, setFastingDefault,
@@ -1192,6 +1193,7 @@ document.addEventListener('click', (e) => {
   else if (action === 'week-step') stepCurrentWeek(parseInt(target.getAttribute('data-delta'), 10));
   else if (action === 'export-data') exportData();
   else if (action === 'import-data') triggerImport();
+  else if (action === 'import-external-csv') triggerExternalCsvImport();
   else if (action === 'auto-backup-folder') selectAutomaticBackupFolder();
   else if (action === 'auto-backup-now') backupNow();
   else if (action === 'auto-backup-disable') turnOffAutomaticBackup();
@@ -1327,6 +1329,11 @@ document.addEventListener('change', (e) => {
       appState.fastingSession.goal = goal;
       saveStateToLocalStorage(true);
     }
+    return;
+  }
+  if (target.id === 'settingsExternalCsvFile') {
+    handleExternalCsvFile(target.files?.[0]);
+    target.value = '';
     return;
   }
   if (target.id === 'settingsImportFile' || target.id === 'onboardingImportFile') {

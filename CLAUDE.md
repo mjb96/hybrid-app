@@ -15,6 +15,12 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   account system, backend or cloud sync**: local data, JSON/CSV export and Android
   automatic backups are the whole persistence story. Do not reintroduce a server
   client without a new product decision.
+- History import: `js/portability/import-workout-csv.js` is a clean-room reader
+  for OpenGym/Strong/Hevy one-row-per-set CSV (no OpenGym code copied). It writes
+  archived `arch:import:<id>` weeks with a stable `sessionId`, leaves the active
+  program alone, and imports strength sets only; cardio rows are counted and
+  skipped until a run-import pass exists. `handleExternalCsvFile` in settings
+  previews then applies it; re-importing the same file is idempotent.
 - Program-run isolation: every program run has a stable `state.activeActivationId`
   (`js/state/activation-identity.js`) and each week is stamped `week.activationId`. A
   switch/restart calls `startProgramActivation` (state.js) → `beginActivation` +

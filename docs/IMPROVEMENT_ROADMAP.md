@@ -1626,6 +1626,18 @@ testable on its own.
 
 ## 12. Session log
 
+- **2026-11-19 — OpenGym/Strong/Hevy workout CSV import.**
+  - Added a clean-room CSV reader (`js/portability/import-workout-csv.js`) for
+    the public one-row-per-set export shape used by OpenGym, Strong and Hevy.
+    No OpenGym code is copied.
+  - Imports strength sets into archived `arch:import:<id>` weeks with stable
+    session IDs, preserving warm-ups, RPE/RIR, workout notes, dates and duration.
+    Re-importing the same file is idempotent and the active program is untouched.
+  - Added **Settings → Data & backup → Import Workout History (CSV)** with a
+    preview and confirmation. Cardio rows are counted and skipped in this pass.
+  - Tests cover quoted CSV, OpenGym/Strong/Hevy headers, unit conversion,
+    warm-ups, archived-week mapping and idempotency.
+  - Next: bodyweight CSV import and a run/cardio import pass.
 - **2026-11-19 — Supabase removed; the app is local-only.**
   - Deleted the Supabase client, auth/sync/conflict modules, cloud recovery
     snapshots, account UI, edge function and RLS SQL. `package.json` no longer
@@ -1635,8 +1647,8 @@ testable on its own.
     the persistence story.
   - Privacy policy, Play Data Safety guide, store listing, threat model and
     versioning docs updated for the local-only posture.
-  - Verification: 1,771 tests, typecheck, precache, smoke; browser checks to be
-    re-run with the UI removal.
+  - Verification: 1,771 tests, typecheck, precache, smoke; browser 32/32;
+    Android test/lint/assemble pass.
   - Next: OpenGym history import.
 
 - **2026-11-19 — Android state mirror for offline durability.**
