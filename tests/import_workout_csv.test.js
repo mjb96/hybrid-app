@@ -121,6 +121,22 @@ test('applies an import into archived weeks and is idempotent', () => {
   assert.equal(second.sets, 0);
 });
 
+test('a timed treadmill is cardio, but holds and loaded carries are not runs', () => {
+  const cardio = parseWorkoutCsv('date,exercise,seconds\n2026-11-02,Treadmill,1500\n', { unit: 'kg' });
+  assert.equal(cardio.sessions.length, 1);
+  assert.equal(cardio.sessions[0].cardio[0].seconds, 1500);
+  assert.equal(cardio.cardioRows, 1);
+
+  const unsupported = parseWorkoutCsv([
+    'date,exercise,weight,unit,reps,distance_km,seconds',
+    '2026-11-02,Plank,,,0,,90',
+    '2026-11-02,Farmer Carry,40,kg,0,0.04,',
+  ].join('\n'), { unit: 'kg' });
+  assert.equal(unsupported.sessions.length, 0);
+  assert.equal(unsupported.skippedUnsupported, 2);
+  assert.equal(unsupported.cardioRows, 0);
+});
+
 test('reads UTF-16 Excel exports and semicolon-delimited files', () => {
   const text = 'date;exercise;weight;unit;reps\r\n2026-11-02;Bench;100;kg;5\r\n';
   const parsed = parseWorkoutCsv(text, { unit: 'kg' });

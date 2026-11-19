@@ -1127,6 +1127,7 @@ export async function handleExternalCsvFile(file) {
       `${parsed.sessions.length} workout${parsed.sessions.length === 1 ? '' : 's'} · ${parsed.totalSets} strength set${parsed.totalSets === 1 ? '' : 's'}`,
       parsed.cardioRows ? `${parsed.cardioRows} cardio row${parsed.cardioRows === 1 ? '' : 's'} will be imported as run data.` : '',
       parsed.skippedInvalid ? `${parsed.skippedInvalid} row${parsed.skippedInvalid === 1 ? '' : 's'} had no usable date, exercise or reps and will be skipped.` : '',
+      parsed.skippedUnsupported ? `${parsed.skippedUnsupported} timed hold/carry row${parsed.skippedUnsupported === 1 ? '' : 's'} without reps will be skipped.` : '',
       '',
       'They are added as archived history. Your current program and active workout are left alone. Re-importing the same file will not duplicate sessions.',
     ].filter(Boolean).join('\n'),
