@@ -471,8 +471,7 @@ function renderMyPlans(content) {
   }
   // Every dynamic fragment above is renderProgramCard() output, which escapes
   // all program text/attributes; the interpolated counts are numbers.
-  // lgtm[js/xss-through-dom]
-  content.innerHTML = html;
+  content.innerHTML = html; // lgtm[js/xss-through-dom]
 }
 
 function renderCollectionRows(container) {

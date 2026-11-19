@@ -8,6 +8,8 @@
 // custom programs and never overwrite a catalog/shared program.
 // =============================================================================
 
+import { secureRandomSuffix } from '../util/secure-id.js';
+
 export const PLAN_FILE_FORMAT = 'openhybrid-plan';
 export const PLAN_FILE_VERSION = 1;
 
@@ -98,26 +100,11 @@ export function parsePlanFile(text) {
 }
 
 /** Turn a parsed plan into a new editable custom program. */
-function randomSuffix() {
-  try {
-    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-      return crypto.randomUUID().slice(0, 8);
-    }
-  } catch { /* fall through */ }
-  try {
-    if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
-      const bytes = crypto.getRandomValues(new Uint8Array(4));
-      return [...bytes].map((byte) => byte.toString(36).padStart(2, '0')).join('').slice(0, 8);
-    }
-  } catch { /* fall through */ }
-  return Date.now().toString(36);
-}
-
 export function createImportedProgram(plan, existingIds = []) {
   const ids = new Set(existingIds);
   let id;
   do {
-    id = `prog_import_${Date.now().toString(36)}_${randomSuffix()}`;
+    id = `prog_import_${Date.now().toString(36)}_${secureRandomSuffix(8)}`;
   } while (ids.has(id));
   return {
     ...plan,

@@ -10,6 +10,7 @@ import { liftTarget, prescribeSetsForLift, reconcilePrescribedSets, jtRoleStamps
 import { getWeekModifier } from './schema.js';
 export { showToast } from './toast.js';
 import { showToast } from './toast.js';
+import { secureRandomSuffix } from './util/secure-id.js';
 import { recomputeLoadMetrics } from './brain/load_models.js';
 import { initImportExport, triggerEngineExport, triggerCSVExport, triggerBodyweightCSVExport, triggerEngineImport, setImportSuccessCallback } from './state/import-export.js';
 import { migrateState, CURRENT_SCHEMA_VERSION } from './state/migrations.js';
@@ -214,8 +215,7 @@ export function getPersonalRating(programId) {
 // are created in the same millisecond (e.g. fork-then-duplicate), which would
 // mint two records with the SAME id — a genuine identity hazard.
 function newProgramId() {
-  const rand = Math.random().toString(36).slice(2, 8);
-  return `prog_${Date.now()}_${rand}`;
+  return `prog_${Date.now()}_${secureRandomSuffix(6)}`;
 }
 
 export function createCustomProgram(name, totalWeeks, focus, philosophy) {
