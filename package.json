@@ -20,7 +20,7 @@
   },
   "devDependencies": {
     "@sentry/browser": "8.55.0",
-    "@supabase/supabase-js": "2.45.4",
+    "@supabase/supabase-js": "2.119.1",
     "buffer": "^6.0.3",
     "esbuild": "^0.24.2",
     "fake-indexeddb": "^6.2.5",
