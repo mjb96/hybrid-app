@@ -9,9 +9,11 @@
   Vanilla JavaScript PWA with a custom Android WebView shell.
 </p>
 
-> **Status: pre-release, local-first.** There is no account system and no cloud
-> sync: training data stays on the device, with JSON/CSV export and Android
-> automatic backups for moving it. The hosted PWA is a preview of the same app.
+> **Status: pre-release, local-first, open source.** Helyx is licensed under the
+> GNU Affero General Public License v3.0 (`AGPL-3.0-only`). There is no account
+> system and no cloud sync: training data stays on the device, with JSON/CSV
+> export and Android automatic backups for moving it. The hosted PWA is a
+> preview of the same app.
 
 ## What it does
 
@@ -112,7 +114,7 @@ logging works offline.
 | --- | --- |
 | `npm test` | Node unit tests |
 | `npm run verify` | Type check, precache check, workflow gates, unit tests, smoke render |
-| `npm run browser:verify` | 34 Playwright product checks (parallel, 180 s per-check kill; `-- --serial` to debug) |
+| `npm run browser:verify` | 34 Playwright product checks (parallel, 180 s per-check kill with one timeout retry; `-- --serial` to debug) |
 | `npm run perf:baseline` | Boot performance and bounded-DOM baseline |
 | `npm run precache:gen` | Regenerate the service-worker precache manifest |
 
@@ -180,5 +182,21 @@ data.
 
 ## License
 
-All rights reserved. This source is published for viewing and evaluation only;
-see [LICENSE](LICENSE). No open-source license is granted.
+Copyright (C) 2026 Matthew Boman.
+
+Helyx is free software: you can redistribute it and/or modify it under the
+terms of the **GNU Affero General Public License, version 3 only**
+(`AGPL-3.0-only`) as published by the Free Software Foundation.
+
+Helyx is distributed in the hope that it will be useful, but **WITHOUT ANY
+WARRANTY**; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+A PARTICULAR PURPOSE. See the [LICENSE](LICENSE) for the full text.
+
+Third-party notices are in [NOTICE.md](NOTICE.md). The corresponding source for
+the hosted PWA and the Android app is this repository:
+<https://github.com/mjb96/hybrid-app>.
+
+If you run a modified version as a network service, the AGPL requires you to
+offer its users the corresponding source. Contributions are accepted under the
+same licence.
+

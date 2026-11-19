@@ -7,11 +7,14 @@
 // =============================================================================
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { resolveConcurrency, resolveTimeoutSeconds, MAX_CONCURRENCY, DEFAULT_CHECK_TIMEOUT_SECONDS } from '../scripts/lib/browser-runner-options.mjs';
+import {
+  resolveConcurrency, resolveTimeoutSeconds, resolveRetries,
+  MAX_CONCURRENCY, DEFAULT_CHECK_TIMEOUT_SECONDS, DEFAULT_CHECK_RETRIES,
+} from '../scripts/lib/browser-runner-options.mjs';
 
 test('concurrency defaults keep one core free for the browser', () => {
   assert.equal(resolveConcurrency([], 4), 3);
-  assert.equal(resolveConcurrency([], 8), 4);
+  assert.equal(resolveConcurrency([], 8), 3);
 });
 
 test('concurrency defaults never exceed the available cores on a small machine', () => {
@@ -51,4 +54,17 @@ test('per-check timeout can be pinned but not disabled or unbounded', () => {
   assert.throws(() => resolveTimeoutSeconds(['--timeout=0']), /integer from 1/);
   assert.throws(() => resolveTimeoutSeconds(['--timeout=soon']), /integer from 1/);
   assert.throws(() => resolveTimeoutSeconds(['--timeout=99999']), /integer from 1/);
+});
+
+test('a timed-out check is retried once by default', () => {
+  assert.equal(resolveRetries([]), DEFAULT_CHECK_RETRIES);
+  assert.equal(resolveRetries([]), 1);
+});
+
+test('retries can be disabled or pinned, but not unbounded', () => {
+  assert.equal(resolveRetries(['--retries=0']), 0);
+  assert.equal(resolveRetries(['--retries=2']), 2);
+  assert.throws(() => resolveRetries(['--retries=-1']), /integer from 0/);
+  assert.throws(() => resolveRetries(['--retries=later']), /integer from 0/);
+  assert.throws(() => resolveRetries(['--retries=9']), /integer from 0/);
 });

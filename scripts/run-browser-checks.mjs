@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 import os from 'node:os';
-import { resolveConcurrency, resolveTimeoutSeconds } from './lib/browser-runner-options.mjs';
+import { resolveConcurrency, resolveTimeoutSeconds, resolveRetries } from './lib/browser-runner-options.mjs';
 
 const checks = [
   // First: it is the only check that publishes a non-zero safe-area inset, so a
@@ -69,9 +69,11 @@ const bail = args.includes('--bail');
 
 let concurrency;
 let timeoutSeconds;
+let retries;
 try {
   concurrency = resolveConcurrency(args, os.availableParallelism?.() ?? os.cpus().length);
   timeoutSeconds = resolveTimeoutSeconds(args);
+  retries = resolveRetries(args);
 } catch (err) {
   console.error(`browser:verify — ${err instanceof Error ? err.message : String(err)}`);
   process.exit(2);
@@ -79,6 +81,7 @@ try {
 
 const failed = [];
 let ran = 0;
+let retried = 0;
 let nextIndex = 0;
 let bailing = false;
 const startedAt = Date.now();
@@ -104,11 +107,15 @@ for (const signal of /** @type {const} */ (['SIGINT', 'SIGTERM'])) {
   });
 }
 
-/** @param {number} index */
-function runCheck(index) {
-  const check = checks[index];
+/**
+ * Run one attempt of a check. Resolves with its buffered output rather than
+ * printing, so a timed-out attempt can be retried before the final block.
+ *
+ * @param {string} check
+ * @returns {Promise<{status:number, output:string, seconds:string, timedOut:boolean}>}
+ */
+function runAttempt(check) {
   const started = Date.now();
-  console.log(`▶ ${check}`);
 
   return new Promise((resolve) => {
     const child = spawn(process.execPath, [check, '--required'], {
@@ -131,18 +138,12 @@ function runCheck(index) {
       settled = true;
       clearTimeout(timer);
       activeChildren.delete(child);
-      const status = timedOut ? 124 : (typeof code === 'number' ? code : 1);
-      const seconds = ((Date.now() - started) / 1000).toFixed(1);
-      const verdict = status === 0 ? 'PASS' : timedOut ? 'FAIL (timeout)' : 'FAIL';
-      if (timedOut) output += `\n[runner] ${check} exceeded ${timeoutSeconds}s and was killed.\n`;
-      // One write per check keeps concurrent blocks from interleaving mid-line.
-      process.stdout.write(`\n=== ${check} — ${verdict} (${seconds}s) ===\n${output}${output.endsWith('\n') || !output ? '' : '\n'}`);
-      if (status !== 0) {
-        failed.push({ check, status, index });
-        if (bail) bailing = true;
-      }
-      ran++;
-      resolve(undefined);
+      resolve({
+        status: timedOut ? 124 : (typeof code === 'number' ? code : 1),
+        output,
+        seconds: ((Date.now() - started) / 1000).toFixed(1),
+        timedOut,
+      });
     };
 
     timer = setTimeout(() => {
@@ -160,6 +161,43 @@ function runCheck(index) {
   });
 }
 
+/** @param {number} index */
+async function runCheck(index) {
+  const check = checks[index];
+  const started = Date.now();
+  console.log(`▶ ${check}`);
+
+  let result;
+  let attemptsUsed = 0;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    result = await runAttempt(check);
+    attemptsUsed = attempt;
+    if (!result.timedOut || attempt === retries) break;
+    retried++;
+    console.log(`↻ ${check} timed out after ${timeoutSeconds}s — retrying (${attempt + 1}/${retries})`);
+    // Keep a hung attempt's evidence, but do not let it masquerade as the
+    // successful attempt's output in the final block.
+    if (result.output) {
+      process.stdout.write(result.output.endsWith('\n') ? result.output : `${result.output}\n`);
+    }
+  }
+
+  const seconds = ((Date.now() - started) / 1000).toFixed(1);
+  const verdict = result.status === 0
+    ? (attemptsUsed > 0 ? 'PASS (retry)' : 'PASS')
+    : (result.timedOut ? 'FAIL (timeout)' : 'FAIL');
+  if (result.timedOut) {
+    result.output += `\n[runner] ${check} exceeded ${timeoutSeconds}s and was killed.\n`;
+  }
+  // One write per check keeps concurrent blocks from interleaving mid-line.
+  process.stdout.write(`\n=== ${check} — ${verdict} (${seconds}s) ===\n${result.output}${result.output.endsWith('\n') || !result.output ? '' : '\n'}`);
+  if (result.status !== 0) {
+    failed.push({ check, status: result.status, index });
+    if (bail) bailing = true;
+  }
+  ran++;
+}
+
 async function worker() {
   while (!bailing) {
     const index = nextIndex++;
@@ -171,16 +209,17 @@ async function worker() {
 await Promise.all(Array.from({ length: Math.min(concurrency, checks.length) }, () => worker()));
 
 const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);
+const retryNote = retried ? `, ${retried} timeout retr${retried === 1 ? 'y' : 'ies'}` : '';
 if (failed.length) {
   // Counts describe what actually RAN. Reporting "N passed" for checks that were
   // never executed (the --bail case) would be the same kind of false reassurance
   // the stop-on-first-failure behaviour was hiding.
   failed.sort((a, b) => a.index - b.index);
   const skipped = checks.length - ran;
-  console.error(`\n${failed.length} of ${ran} browser checks run FAILED (${elapsed}s at concurrency ${concurrency}):`);
+  console.error(`\n${failed.length} of ${ran} browser checks run FAILED (${elapsed}s at concurrency ${concurrency}${retryNote}):`);
   for (const { check, status } of failed) console.error(`  ✗ ${check} (exit ${status})`);
   console.error(`${ran - failed.length} passed${skipped ? `, ${skipped} not run (--bail)` : ''}.`);
   process.exitCode = failed[0].status;
+} else {
+  console.log(`\nAll ${checks.length} required browser checks passed in ${elapsed}s (concurrency ${concurrency}${retryNote}).`);
 }
-
-console.log(`\nAll ${checks.length} required browser checks passed in ${elapsed}s (concurrency ${concurrency}).`);

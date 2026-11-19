@@ -14,6 +14,8 @@
 export const MAX_CONCURRENCY = 8;
 export const DEFAULT_CHECK_TIMEOUT_SECONDS = 180;
 export const MAX_CHECK_TIMEOUT_SECONDS = 3600;
+export const DEFAULT_CHECK_RETRIES = 1;
+export const MAX_CHECK_RETRIES = 3;
 
 /**
  * @param {string[]} args
@@ -37,7 +39,10 @@ export function resolveConcurrency(args, cpuCount = 4) {
   }
   const cpus = Number.isFinite(cpuCount) && cpuCount > 0 ? Math.floor(cpuCount) : 4;
   if (cpus <= 2) return cpus;
-  return Math.min(4, cpus - 1);
+  // Three workers keeps browser startup reliable; four simultaneous Chromium
+  // launches produced rare launch deadlocks on a 10-core developer machine.
+  // `--concurrency=N` remains the escape hatch when a machine has headroom.
+  return Math.min(3, cpus - 1);
 }
 
 /**
@@ -56,6 +61,27 @@ export function resolveTimeoutSeconds(args, fallbackSeconds = DEFAULT_CHECK_TIME
   const value = Number(raw);
   if (!Number.isInteger(value) || value < 1 || value > MAX_CHECK_TIMEOUT_SECONDS) {
     throw new Error(`--timeout must be an integer from 1 to ${MAX_CHECK_TIMEOUT_SECONDS} seconds, got "${raw}"`);
+  }
+  return value;
+}
+
+/**
+ * A hung Playwright launch is transient: the browser process exists but never
+ * connects. One retry after the watchdog kills the process group turns that
+ * from a red suite into a slower green one. Non-timeout failures are never
+ * retried, so a genuine assertion failure stays visible.
+ *
+ * @param {string[]} args
+ * @param {number} [fallback]
+ * @returns {number}
+ */
+export function resolveRetries(args, fallback = DEFAULT_CHECK_RETRIES) {
+  const flag = args.find((arg) => arg.startsWith('--retries='));
+  if (!flag) return fallback;
+  const raw = flag.slice('--retries='.length);
+  const value = Number(raw);
+  if (!Number.isInteger(value) || value < 0 || value > MAX_CHECK_RETRIES) {
+    throw new Error(`--retries must be an integer from 0 to ${MAX_CHECK_RETRIES}, got "${raw}"`);
   }
   return value;
 }
