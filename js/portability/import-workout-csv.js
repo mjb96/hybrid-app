@@ -258,6 +258,49 @@ export function parseWorkoutCsv(text, opts = {}) {
   return { sessions: result, skippedCardio, skippedInvalid, totalSets };
 }
 
+
+// Common display-name variants from external catalogues. These are names and
+// training vocabulary, not copied exercise data; they let a re-imported Helyx
+// history land under the same catalogue entries instead of creating duplicates.
+export const EXTERNAL_EXERCISE_ALIASES = {
+  'Resistance Band Triceps Pushdown': 'Band Triceps Pushdown',
+  'Barbell Standing Military Press': 'Barbell Overhead Press',
+  'Dumbbell Incline Bench Press': 'Incline Dumbbell Press',
+  'Barbell Deadlift': 'Conventional Deadlift',
+  'Dumbbell Chest Supported Row': 'Chest-Supported Dumbbell Row',
+  'Dumbbell Rear Delt Fly': 'Rear-Delt Fly',
+  'Barbell Full Squat': 'Back Squat',
+  'Barbell Romanian Deadlift': 'Romanian Deadlift',
+  'Barbell Incline Bench Press': 'Incline Barbell Bench Press',
+  'Dumbbell Lying Triceps Extension': 'Skull Crusher',
+  'Dumbbell Seated Shoulder Press': 'Dumbbell Shoulder Press',
+  'Dumbbell Incline Curl': 'Incline Dumbbell Curl',
+  'Dumbbell One Arm Bent Over Row': 'One-Arm Dumbbell Row',
+  'Dumbbell Single Arm Bent Over Row': 'One-Arm Dumbbell Row',
+  'Barbell Close-Grip Bench Press': 'Close-Grip Bench Press',
+  'Weighted Straight Bar Dip': 'Dip',
+  'Dumbbell Biceps Curl': 'Dumbbell Curl',
+  'Dumbbell Walking Lunge': 'Walking Lunge',
+  'Ez Barbell Lying Triceps Extension': 'EZ-Bar Skull Crusher',
+  'Ez Barbell Curl': 'EZ-Bar Curl',
+  'Band Kneeling Lat Pulldown': 'Band Lat Pulldown',
+  'Barbell Front Squat': 'Front Squat',
+  'Dumbbell Rear Lunge': 'Reverse Lunge',
+  'Barbell Pause Bench Press': 'Paused Barbell Bench Press',
+  'Barbell Pause Deadlift': 'Paused Conventional Deadlift',
+  'Dumbbell Half Kneeling Military Press': 'Dumbbell Shoulder Press',
+  'Dumbbell Lying Floor Skullcrusher': 'Skull Crusher',
+};
+
+const aliasKey = (name) => String(name || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+const EXTERNAL_ALIAS_BY_KEY = new Map(
+  Object.entries(EXTERNAL_EXERCISE_ALIASES).map(([from, to]) => [aliasKey(from), to]),
+);
+
+function externalCanonicalCandidate(name) {
+  return EXTERNAL_ALIAS_BY_KEY.get(aliasKey(name)) || name;
+}
+
 function hash(value) {
   let h = 0x811c9dc5;
   const str = String(value);
@@ -292,13 +335,15 @@ export function applyWorkoutCsvImport(state, parsed, opts = {}) {
     const lifts = {};
     const liftOrder = [];
     for (const [rawName, rawSets] of Object.entries(session.entries || {})) {
-      const name = String(resolveName(rawName) || rawName).trim();
+      const candidate = externalCanonicalCandidate(rawName);
+      const resolved = resolveName(candidate);
+      const name = String(resolved || candidate).trim();
       if (!name || !Array.isArray(rawSets) || !rawSets.length) continue;
       if (!lifts[name]) { lifts[name] = []; liftOrder.push(name); }
       lifts[name].push(...rawSets);
       sets += rawSets.length;
       // A name the catalogue does not know is a legitimate custom exercise.
-      if (resolveName(rawName) == null) custom.add(name);
+      if (resolved == null) custom.add(name);
     }
     if (!liftOrder.length) continue;
 

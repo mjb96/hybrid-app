@@ -70,6 +70,17 @@ test('rejects non-workout CSV shapes', () => {
   assert.throws(() => parseWorkoutCsv('date,note\n2026-11-02,hello\n', { unit: 'kg' }));
 });
 
+test('maps common external names onto Helyx catalogue names', () => {
+  const parsed = parseWorkoutCsv('date,exercise,weight,reps\n2026-11-02,Barbell Deadlift,100,5\n', { unit: 'kg' });
+  const state = { currentWeek: '1', weeks: {}, customExercises: [] };
+  const result = applyWorkoutCsvImport(state, parsed, {
+    resolveName: (name) => (name === 'Conventional Deadlift' ? 'Conventional Deadlift' : null),
+  });
+  assert.equal(result.added.length, 1);
+  assert.deepEqual(Object.keys(state.weeks[result.added[0]].lifts.mon), ['Conventional Deadlift']);
+  assert.deepEqual(state.customExercises, []);
+});
+
 test('applies an import into archived weeks and is idempotent', () => {
   const parsed = parseWorkoutCsv(openGymCsv, { unit: 'kg' });
   const state = { currentWeek: '1', weeks: {}, customExercises: [] };
