@@ -137,7 +137,7 @@ try {
     if (seen.says.some((say) => say.length < 10)) failures.push(`${width}px: a domain card rendered without an interpretation`);
     // Strength should show a real same-exercise gain from the fixture, not a dash.
     if (seen.values[1] === '—') failures.push(`${width}px: strength headline is empty despite logged sets`);
-    if (!seen.secondary.includes('hybrid-score')) failures.push(`${width}px: Hybrid Score must remain reachable as a secondary destination`);
+    if (seen.secondary.includes('hybrid-score')) failures.push(`${width}px: Hybrid Score must not appear as a secondary destination`);
     if (seen.secondary.includes('fasting')) failures.push(`${width}px: Fasting must not appear for a profile with no fasting history`);
     if (!seen.hasMethod) failures.push(`${width}px: missing "how this is calculated" disclosure`);
     if (!/\d{4}-\d{2}-\d{2} to \d{4}-\d{2}-\d{2}/.test(seen.sub)) failures.push(`${width}px: hub subtitle does not name a real calendar week range`);

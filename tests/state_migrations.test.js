@@ -128,6 +128,13 @@ test('v11 normalises a mid-week anchor to that week\'s Monday', () => {
   assert.equal(monday.weekStartedAt, '2026-11-16');
 });
 
+test('v12 seeds Home/Progress card preferences without hiding anything', () => {
+  const state = { schemaVersion: 11, settings: {}, weekStartedAt: '2026-11-16' };
+  migrateState(state);
+  assert.equal(state.schemaVersion, CURRENT_SCHEMA_VERSION);
+  assert.deepEqual(state.settings.ui, { home: { hidden: [] }, progress: { hidden: [] } });
+});
+
 test('migrateState is idempotent — already-current state is untouched', () => {
   const state = {
     schemaVersion: CURRENT_SCHEMA_VERSION,

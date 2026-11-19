@@ -91,6 +91,7 @@ import {
 } from './settings.js';
 import { initAthleteProfile, renderAthleteProfile, handleProfileAction } from './athlete-profile.js';
 import { initActivities, openActivities, closeActivities, isActivitiesOpen, handleActivityAction } from './activities.js';
+import { initCustomizeSheet } from './ui/customize-sheet.js';
 import { initGpsTracker, startTracking, pauseTracking, resumeTracking, stopTracking, cancelTracking, onWorkoutTabActivated } from './gps-tracker.js';
 import { renderRunMap } from './workout-map.js';
 import { orderedLiftNames } from './workout-order.js';
@@ -1522,6 +1523,7 @@ initOnboarding(getState);
 initProgramLibrary(appState);
 initAthleteProfile(getState, getDays, saveState);
 initActivities(getState, saveState);
+initCustomizeSheet(getState, (suppress) => saveStateToLocalStorage(suppress), () => hydrateCurrentView());
 
 document.addEventListener('session:deleted', () => {
   try { hydrateCurrentView(); } catch (_) {}

@@ -20,6 +20,7 @@
 
 import { isInternalLiftId, UNKNOWN_LIFT_NAME } from './lift-id.js';
 import { startOfProgramWeek } from '../dates.js';
+import { normalizeUi } from '../ui/customize.js';
 import { reportHandledError } from '../monitoring/report-error.js';
 import { hasRunData, migrateLegacyRunSessions } from './run-sessions.js';
 
@@ -373,9 +374,17 @@ const MIGRATIONS = [
     const anchor = startOfProgramWeek(state.weekStartedAt);
     if (anchor) state.weekStartedAt = anchor;
   },
+  // v11 → v12: Home/Progress card preferences. Existing users see every card;
+  // hiding is opt-in and never removes data.
+  (state) => {
+    if (!state.settings || typeof state.settings !== 'object' || Array.isArray(state.settings)) {
+      state.settings = {};
+    }
+    state.settings.ui = normalizeUi(state.settings.ui);
+  },
 ];
 
-export const CURRENT_SCHEMA_VERSION = MIGRATIONS.length; // 11
+export const CURRENT_SCHEMA_VERSION = MIGRATIONS.length; // 12
 
 /** Error raised when a state upgrade cannot safely commit. */
 export class StateMigrationError extends Error {

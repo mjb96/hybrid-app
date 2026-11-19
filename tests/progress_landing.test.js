@@ -430,10 +430,10 @@ test('a brand-new profile reports allEmpty so the hub can lead with one empty st
   assert.equal(model.allEmpty, true);
 });
 
-test('Hybrid Score is a secondary destination, not a headline domain', () => {
+test('Hybrid Score is not a Progress destination', () => {
   const model = buildProgressLanding({ weeks: {} }, { days: DAYS, today: '2026-07-16' });
   assert.ok(!model.domains.some((d) => d.id === 'hybrid-score'));
-  assert.ok(model.secondary.some((entry) => entry.id === 'hybrid-score'));
+  assert.ok(!model.secondary.some((entry) => entry.id === 'hybrid-score'));
 });
 
 test('no destination is reachable from two entries on the same screen', () => {

@@ -2,6 +2,7 @@
 // HOME DASHBOARD — coordinator. UI sub-modules live in ./home/
 // ==========================================
 import { resolveProgramPhase } from './programs/phase.js';
+import { isCardVisible } from './ui/customize.js';
 import { getProgramById, saveStateToLocalStorage } from './state.js';
 import { computeHybridScore } from './brain/hybrid-score/hybrid-score.js';
 import { recordDailyScore } from './brain/hybrid-score/history.js';
@@ -322,8 +323,16 @@ document.addEventListener('click', (e) => {
   if (date) document.dispatchEvent(new CustomEvent('app:open-activities', { detail: { date } }));
 });
 
+function applyHomeCardVisibility(appState) {
+  document.querySelectorAll('[data-home-card]').forEach((el) => {
+    const id = el.getAttribute('data-home-card');
+    el.classList.toggle('home-card-hidden', !isCardVisible(appState?.settings, 'home', id));
+  });
+}
+
 export function renderHome() {
   const appState = _getState();
+  applyHomeCardVisibility(appState);
   // Home is a calendar-today surface. The cockpit's selected day is navigation
   // state and may point at a session the athlete merely previewed.
   const homeDay = todayProgramDay();

@@ -53,8 +53,10 @@ the same training picture.
   fit, exercise swaps and optional per-side plate hints. Hints say when a target
   cannot be built, and suggested loads snap to the weights you record. Switching
   takes one tap in Settings.
-- **Themes** — Midnight is the default icons-derived palette (navy, steel, cyan,
-  lime); Slate, Forest and Ember are alternatives. Light keeps its own colours.
+- **Themes & layout** — Midnight is the default icons-derived palette (navy,
+  steel, cyan, lime); Slate, Forest and Ember are alternatives. Light keeps its
+  own colours. Home and Progress let you hide optional cards and reset to the
+  default without touching the data.
 - **Bring your history** — import OpenGym, Strong or Hevy CSV files (strength
   sets, cardio runs and weigh-ins), or drop a batch of Garmin/Wahoo/Coros FIT
   activities into Settings. FIT runs keep date, distance, pace, HR and GPS;
@@ -147,7 +149,7 @@ format, not branding.
 | --- | --- |
 | `npm test` | Node unit tests |
 | `npm run verify` | Type check, precache check, workflow gates, unit tests, smoke render |
-| `npm run browser:verify` | 37 Playwright product checks (parallel, 180 s per-check kill with one timeout retry; `-- --serial` to debug) |
+| `npm run browser:verify` | 38 Playwright product checks (parallel, 180 s per-check kill with one timeout retry; `-- --serial` to debug) |
 | `npm run perf:baseline` | Boot performance and bounded-DOM baseline |
 | `npm run precache:gen` | Regenerate the service-worker precache manifest |
 

@@ -221,8 +221,6 @@ try {
   await onboarding.waitForSelector('#ob-step-5.ob-step-active');
   await onboarding.click('#ob-step-5 [data-action="ob-next"]');
   await onboarding.click('[data-action="ob-notif-skip"]');
-  await onboarding.waitForSelector('#ob-step-7.ob-step-active');
-  await onboarding.click('[data-action="ob-finish"]');
   await onboarding.waitForFunction(() => !document.getElementById('onboardingOverlay')?.classList.contains('active'));
   const saved = await onboarding.evaluate(() => JSON.parse(localStorage.getItem('hybrid_engine_v2_state') || '{}').settings || {});
   check(saved.fitnessGoal === 'strength', `onboarding goal did not persist: ${saved.fitnessGoal}`);

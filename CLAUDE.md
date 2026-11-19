@@ -14,7 +14,7 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
 - `npm run typecheck` — tsc over jsconfig
 - `npm run smoke` — scripts/smoke.mjs (jsdom import + home render)
 - `npm run icons:gen` — regenerate PWA/Android icons from `assets/brand/icon.svg`
-- `npm run browser:verify` — 37 real-Chromium product checks through a parallel
+- `npm run browser:verify` — 38 real-Chromium product checks through a parallel
   worker pool (3 workers by default; `-- --serial` for one-at-a-time debugging,
   `-- --concurrency=N` to pin workers, `-- --timeout=N` for the 180 s per-check
   kill, `-- --retries=N` for the default single retry after a timeout)
@@ -56,6 +56,11 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   filter through `moduleEnabled`; analytics sections carry `data-module` hooks so a
   deep link cannot reopen a hidden module. Settings must reflect the switches. Data is
   never deleted, and stored history remains readable.
+- Surface customization: `js/ui/customize.js` normalizes `settings.ui.home` /
+  `settings.ui.progress`; hidden ids never hide pinned safety/Today/navigation
+  surfaces and never block a deep link. v11→v12 seeds the empty preference.
+  Progress hides its domain/secondary cards; Home applies the class on
+  `[data-home-card]` during `renderHome`.
 - Bodyweight: `js/metrics/bodyweight.js` is the pure trend model behind the
   Progress graph (weekly means, 21-day least-squares rate, goal/corridor status).
   `settings.targetWeight` and `settings.rateGoal` are optional; v7→v8 seeds them.
@@ -106,8 +111,13 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   bodyweight card (`js/home/bodyweight-card.js` → `#homeBodyweightCard`) with
   one-tap prefilled logging, one coach insight from `model.topInsight`, and a
   2×2 quick-action grid. The In Focus cards and their graph module were removed;
-  deep charts live in Progress. Keep `#homePrimaryCta`, `.btn-history-link` and
-  the Run quick action in the Home DOM — browser checks measure them.
+  deep charts live in Progress. Optional cards (week strip, bodyweight, coach
+  insight, muscle volume) can be hidden from the Home header's Customize sheet:
+  `js/ui/customize.js` owns the card catalogue and `settings.ui`, and
+  `js/ui/customize-sheet.js` persists/applies it. Today, safety flags, quick
+  actions and navigation stay pinned. Keep `#homePrimaryCta`,
+  `.btn-history-link` and the Run quick action in the Home DOM — browser checks
+  measure them.
 - Weekly analytics attribution: `state.currentWeek` is a PROGRAM-week counter that only
   advances on an explicit step / confirmed auto-advance — it is NOT the calendar week.
   So "this week" analytics must NOT read `weeks[currentWeek]` directly (that leaked a
@@ -147,7 +157,10 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   canonical `estimatedE1rm`) — calendar-week, same-exercise only. Stored keys remain bare
   strings, while `js/exercises/catalog.js` resolves explicit historical aliases to a
   canonical ID/display name at read time; unknown custom names stay exact. The Hybrid Score strength
-  pillar stays program-week progression on purpose.
+  pillar stays program-week progression on purpose. Hybrid Score is no longer a
+  Progress destination, weekly-review card or onboarding reveal; the computation
+  remains for the morning briefing/notifications and for the one-release
+  compatibility window before cleanup.
 - Crash reporting: Sentry in `js/monitoring/`, DSN-gated (off until `sentry-config.js`
   has a DSN), PII-scrubbed for health/location data.
 - Mobile safe areas: `--safe-top` / `--safe-bottom` (`css/styles.css`, beside

@@ -430,7 +430,12 @@
           <h1 id="homeWeekBlockIndicator" class="home-week-label">Week 1</h1>
           <span class="home-phase-label" id="homePhaseLabelTag"></span>
         </div>
-        <button class="home-avatar" id="homeAvatar" data-action="open-profile" aria-label="Open your profile">?</button>
+        <div class="home-header-actions">
+          <button class="home-customize-btn" data-action="open-customize" data-surface="home" aria-label="Customize Home cards">
+            <span data-icon="sliders" aria-hidden="true"></span>
+          </button>
+          <button class="home-avatar" id="homeAvatar" data-action="open-profile" aria-label="Open your profile">?</button>
+        </div>
       </header>
 
       <!-- A live fast is status, not a menu: never hide an in-progress timer. -->
@@ -465,7 +470,7 @@
         </article>
       </div>
 
-      <section class="home-week" id="homeWeekStrip" aria-label="This week">
+      <section class="home-week" id="homeWeekStrip" data-home-card="weekStrip" aria-label="This week">
         <div class="home-week__head">
           <div>
             <span class="home-week__eyebrow">This week</span>
@@ -487,9 +492,9 @@
       <!-- This week first, then the one decision surface: what to do today. -->
       <div id="homeTodayCard"></div>
 
-      <div id="homeBodyweightCard"></div>
+      <div id="homeBodyweightCard" data-home-card="bodyweight"></div>
 
-      <button class="home-insight" id="homeInsightCard" data-action="open-analytics" data-context="progress" hidden>
+      <button class="home-insight" id="homeInsightCard" data-home-card="insight" data-action="open-analytics" data-context="progress" hidden>
         <span class="home-insight__eyebrow">Coach</span>
         <span class="home-insight__text" id="homeInsightText"></span>
         <span class="home-insight__arrow" aria-hidden="true">›</span>
@@ -514,12 +519,14 @@
         </button>
       </div>
 
-      <button id="homeVolumeGuideCard" class="card-dark home-volume-guide mb-4" data-action="open-analytics" data-context="strength_pr" aria-label="Open Volume Guide" style="display:none;">
-        <span class="home-volume-guide__eyebrow">MUSCLE VOLUME</span>
-        <strong id="homeVolumeGuideValue">0 of 0 focus muscles covered</strong>
-        <span id="homeVolumeGuideSub">View planned and logged set credits</span>
-        <span class="home-volume-guide__arrow" aria-hidden="true">›</span>
-      </button>
+      <div data-home-card="volumeGuide">
+        <button id="homeVolumeGuideCard" class="card-dark home-volume-guide mb-4" data-action="open-analytics" data-context="strength_pr" aria-label="Open Volume Guide" style="display:none;">
+          <span class="home-volume-guide__eyebrow">MUSCLE VOLUME</span>
+          <strong id="homeVolumeGuideValue">0 of 0 focus muscles covered</strong>
+          <span id="homeVolumeGuideSub">View planned and logged set credits</span>
+          <span class="home-volume-guide__arrow" aria-hidden="true">›</span>
+        </button>
+      </div>
 
     </section>
 
@@ -1415,20 +1422,10 @@
       <div class="ob-card">
         <div class="ob-emoji">☀️</div>
         <h1 class="ob-heading">Meet your<br>daily coach</h1>
-        <p class="ob-sub">Every morning: your Hybrid Score, today's session and one mission — delivered before you train.</p>
+        <p class="ob-sub">Every morning: today's session and one mission — delivered before you train.</p>
         <button class="ob-cta" data-action="ob-notif-enable">Enable morning briefings 🔔</button>
         <button class="ob-skip" data-action="ob-notif-skip">Maybe later</button>
         <button class="ob-back-link" data-action="ob-back" data-to="5">← Back</button>
-      </div>
-    </div>
-
-    <!-- Step 7: Provisional Hybrid Score reveal (V2-2 — the instant wow) -->
-    <div class="ob-step" id="ob-step-7">
-      <div class="ob-card">
-        <p class="ob-sub" style="margin-bottom:16px;">Here's your starting Hybrid Score</p>
-        <div id="obScoreReveal" class="ob-score-reveal"></div>
-        <p class="ob-sub" style="margin-top:16px;">Provisional — it sharpens into the real thing as you log sessions and check-ins.</p>
-        <button class="ob-cta" data-action="ob-finish" style="margin-top:20px;">Enter openHybrid →</button>
       </div>
     </div>
 
@@ -2206,6 +2203,20 @@
       <button class="qs-item" data-action="qs-walk" aria-label="Start a walk"><span class="qs-item__icon" aria-hidden="true">🚶</span><span class="qs-item__label">Walk</span></button>
       <button class="qs-item" data-action="qs-fast" aria-label="Start a fast"><span class="qs-item__icon" aria-hidden="true">⏱️</span><span class="qs-item__label">Fast</span></button>
     </div>
+    <div style="height: 16px;"></div>
+  </div>
+
+  <!-- Surface customization sheet — shared by Home and Progress. -->
+  <div id="customizeBackdrop" class="sheet-backdrop" data-action="close-customize"></div>
+  <div id="customizeSheet" class="bottom-sheet" role="dialog" aria-labelledby="customizeTitle" data-modal-root data-modal-close-action="close-customize" data-modal-companion="#customizeBackdrop" inert aria-hidden="true">
+    <div class="bottom-sheet-handle"></div>
+    <div class="bottom-sheet-header">
+      <h3 id="customizeTitle" class="bottom-sheet-title">Customize Home</h3>
+      <button class="sheet-close-btn" data-action="close-customize" aria-label="Close">✕</button>
+    </div>
+    <p class="customize-sub" id="customizeSub">Hide cards you do not use. Safety flags, Today and navigation stay visible.</p>
+    <div id="customizeList" class="customize-list"></div>
+    <button class="settings-action-btn" data-action="reset-customize">Reset to default</button>
     <div style="height: 16px;"></div>
   </div>
 

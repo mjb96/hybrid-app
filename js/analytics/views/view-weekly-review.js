@@ -3,21 +3,17 @@
 // WEEK IN REVIEW — analytics leaf (js/analytics/views/view-weekly-review.js)
 //
 // Presenter for the R6 weekly review: the week's story (totals · deltas · PRs
-// · Hybrid Score arc · one focus) with a share action. The data comes from the
+// · plan adherence · one focus) with a text-share action. The data comes from the
 // pure builder (js/brain/weekly-review.js); this file only renders and wires
 // the Share button.
 // =============================================================================
 import { showToast, getProgramById } from '../../state.js';
 import { weightUnitOf } from '../utils.js';
 import { reviewToText, buildWeeklyReview } from '../../brain/weekly-review.js';
-import { sparkline } from '../../brain/hybrid-score/ui.js';
-import { computeDashboardModel } from '../../home/dashboard-model.js';
-import { computeHybridScore } from '../../brain/hybrid-score/hybrid-score.js';
-import { shareHybridScoreCard } from '../../brain/hybrid-score/share-card.js';
 import { statCard } from '../charts/chart-primitives.js';
 import { renderMonthlyReport } from './view-monthly-report.js';
 import { renderProgressAnalytics, renderStreakDetail, renderGoalProgressDetail } from './view-progress.js';
-import { screenTabBar, mountScreenTabs, spark } from './screen-kit.js';
+import { screenTabBar, mountScreenTabs } from './screen-kit.js';
 
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const KM_TO_MI = 0.621371;
@@ -99,20 +95,11 @@ function _renderReviewOverview(body, review) {
     </article>`;
     return;
   }
-  const arc = review.arc;
-  const color = !arc.hasData ? '#94a3b8' : arc.delta >= 0 ? '#10b981' : '#ef4444';
-  const hero = arc.hasData
-    ? `<article class="card-dark an-hero">
-        <div class="an-hero__k">Hybrid Score · this week</div>
-        <div class="an-hero__val" style="color:${color}">${arc.end}</div>
-        <div class="an-hero__delta" style="color:${color}">${arc.delta === 0 ? 'Held steady this week' : `${arc.delta > 0 ? '+' : ''}${arc.delta} over the week`}</div>
-        ${spark(arc.series, color)}
-      </article>`
-    : `<article class="card-dark an-hero">
-        <div class="an-hero__k">This week</div>
-        <div class="an-hero__val">${review.totals.sessions}</div>
-        <div class="an-hero__empty">sessions logged — keep going to unlock your score arc.</div>
-      </article>`;
+  const hero = `<article class="card-dark an-hero">
+      <div class="an-hero__k">This week</div>
+      <div class="an-hero__val">${review.totals.sessions}</div>
+      <div class="an-hero__empty">${review.totals.sessions === 1 ? 'session' : 'sessions'} logged · ${review.totals.prCount} PR${review.totals.prCount === 1 ? '' : 's'}</div>
+    </article>`;
 
   body.innerHTML = `
     ${hero}
@@ -158,17 +145,6 @@ export function renderWeeklyReview(review, state) {
     { v: String(review.totals.prCount), k: 'PRs', d: review.totals.prCount > 0 ? '<span class="wrev-delta" style="color:var(--color-amber)">🏆</span>' : '' },
   ].map(s => `<div class="wrev-stat"><div class="wrev-stat__v">${s.v}</div><div class="wrev-stat__k">${s.k}</div>${s.d}</div>`).join('');
 
-  const arcHTML = review.arc.hasData ? `
-    <article class="card-dark p-3 mb-3">
-      <div class="flex-between mb-1">
-        <span class="wrev-label">Hybrid Score this week</span>
-        <span class="wrev-arc">${review.arc.start} → <b>${review.arc.end}</b>
-          <span style="color:${review.arc.delta >= 0 ? 'var(--color-green)' : 'var(--color-red)'};font-weight:800;">
-            ${review.arc.delta > 0 ? '+' : ''}${review.arc.delta}</span></span>
-      </div>
-      ${sparkline(review.arc.series, review.arc.delta >= 0 ? '#10b981' : '#ef4444')}
-    </article>` : '';
-
   const consHTML = review.consistency.total > 0 ? `
     <article class="card-dark p-3 mb-3">
       <div class="flex-between mb-1">
@@ -187,7 +163,6 @@ export function renderWeeklyReview(review, state) {
 
   el.innerHTML = `
     <div class="wrev-stats mb-3">${stats}</div>
-    ${arcHTML}
     ${consHTML}
     ${prsHTML}
     <h3 class="section-header mt-4">Next week's focus</h3>
@@ -195,7 +170,6 @@ export function renderWeeklyReview(review, state) {
       <div style="font-weight:800;color:var(--color-blue);font-size:0.72rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">${esc(review.focus.area)}</div>
       <p style="color:var(--text-secondary);font-size:0.84rem;line-height:1.5;margin:0;">${esc(review.focus.text)}</p>
     </article>
-    <button id="wrevShareCardBtn" class="btn-action-block" aria-label="Share your Hybrid Score card for this week">↗ Share your Score card</button>
     <button id="wrevShareBtn" class="btn-action-block btn-ghost" aria-label="Share this week's review as text">📤 Share as text</button>
   `;
 
@@ -215,19 +189,4 @@ export function renderWeeklyReview(review, state) {
     });
   }
 
-  // V2-5 — the weekly variant of the shareable card, riding on this screen.
-  const cardBtn = el.querySelector('#wrevShareCardBtn');
-  if (cardBtn) {
-    cardBtn.addEventListener('click', () => {
-      try {
-        const WK_DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
-        const dayKey = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][new Date().getDay()];
-        const model = computeDashboardModel(state, WK_DAYS, getProgramById(state.activeProgramId), dayKey);
-        const result = computeHybridScore(model, state, WK_DAYS, getProgramById(state.activeProgramId));
-        shareHybridScoreCard(result, state, {
-          showToast, variant: 'weekly', weekLabel: `Week ${state.currentWeek || ''}`.trim(),
-        });
-      } catch { showToast('Could not create the card', true); }
-    });
-  }
 }

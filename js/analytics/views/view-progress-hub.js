@@ -81,8 +81,17 @@ function secondaryRow(entry) {
  * @param {HTMLElement|null} container
  * @param {ReturnType<import('../progress-landing.js').buildProgressLanding>} model
  */
-export function renderProgressHub(container, model) {
+const SECONDARY_CARD_ID = {
+  bodyweight: 'bodyweight',
+  'muscle-load': 'muscleLoad',
+  projections: 'projections',
+};
+
+export function renderProgressHub(container, model, hidden = []) {
   if (!container || !model) return;
+  const hiddenSet = new Set(Array.isArray(hidden) ? hidden : []);
+  const domains = model.domains.filter((domain) => !hiddenSet.has(domain.id));
+  const secondary = model.secondary.filter((entry) => !hiddenSet.has(SECONDARY_CARD_ID[entry.id]));
 
   const intro = model.allEmpty
     ? `<p class="ph-empty">Nothing is logged yet. Finish a workout or a run and this page starts explaining what changed, and why.</p>`
@@ -90,13 +99,17 @@ export function renderProgressHub(container, model) {
 
   container.innerHTML = `
     <div class="hub-head">
-      <h2 class="hub-title">Progress</h2>
-      <p class="hub-sub">${esc(model.periodLabel)} · ${esc(model.weekStart)} to ${esc(model.weekEnd)}</p>
+      <div>
+        <h2 class="hub-title">Progress</h2>
+        <p class="hub-sub">${esc(model.periodLabel)} · ${esc(model.weekStart)} to ${esc(model.weekEnd)}</p>
+      </div>
+      <button type="button" class="hub-customize-btn" data-action="open-customize" data-surface="progress" aria-label="Customize Progress cards">Customize</button>
     </div>
     ${intro}
-    <div class="ph-grid">${model.domains.map(domainCard).join('')}</div>
-    <h3 class="section-header mt-4">More detail</h3>
-    <div class="hub-group">${model.secondary.map(secondaryRow).join('')}</div>
+    ${!domains.length && !secondary.length ? '<p class="ph-empty">All Progress cards are hidden. Use Customize to bring them back.</p>' : ''}
+    <div class="ph-grid">${domains.map(domainCard).join('')}</div>
+    ${secondary.length ? `<h3 class="section-header mt-4">More detail</h3>
+    <div class="hub-group">${secondary.map(secondaryRow).join('')}</div>` : ''}
     <details class="an-method mt-3">
       <summary>How this page is calculated</summary>
       <p>Every figure here covers one <strong>calendar</strong> week (Monday to Sunday), attributed by the real date each session was logged — not by your program week counter, so an archived program's sessions still count towards the week they happened in.</p>
