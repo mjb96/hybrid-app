@@ -98,7 +98,10 @@ try {
     const saved = JSON.parse(localStorage.getItem(key) || '{}');
     return Object.keys(saved.weeks || {}).filter((id) => id.startsWith('arch:import:')).length === 2;
   }, STORAGE_KEY, { timeout: 15000 });
-  await page.waitForSelector('#homeWeekStrip');
+  // #homeWeekStrip exists in the static HTML, so it does not prove the app
+  // modules initialized. The generated week cells do; without this wait CI could
+  // click History before initActivities() had wired its state.
+  await page.waitForFunction(() => document.querySelectorAll('#homeWeekDays .home-week-day').length === 7);
 
   const saved = await page.evaluate((key) => JSON.parse(localStorage.getItem(key) || '{}'), STORAGE_KEY);
   const imported = Object.entries(saved.weeks || {}).filter(([id]) => id.startsWith('arch:import:'));
@@ -114,7 +117,7 @@ try {
   ok(cardio?.[1].gymStats.mon.time === undefined, 'the cardio session is not counted as strength');
 
   await page.click('#homeQuickActions [data-action="open-activities"]');
-  await page.waitForFunction(() => document.getElementById('activitiesScreen')?.style.display !== 'none');
+  await page.waitForSelector('#activitiesScreen .activity-history-row');
   const history = await page.locator('#activitiesScreen').innerText();
   ok(/Push A/.test(history), 'History lists the imported strength session');
   ok(/Treadmill/.test(history), 'History lists the imported run');
