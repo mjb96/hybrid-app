@@ -9,6 +9,8 @@ import { CURRENT_SCHEMA_VERSION, isStateMigrationError, migrateState } from './s
 import { APP_VERSION } from './constants.js';
 import { setRestTiers, setRestTimerEnabled, setRestOverrides, initRestPersistence } from './timers.js';
 import { todayKey } from './dates.js';
+import { parseWorkoutCsv, applyWorkoutCsvImport, CSV_IMPORT_LIMITS } from './portability/import-workout-csv.js';
+import { resolveExercise } from './exercises/catalog.js';
 import { exportResultMessage, saveTextExport } from './portability/export-service.js';
 import {
   automaticBackupSupported,
@@ -656,6 +658,57 @@ export async function turnOffAutomaticBackup() {
 
 export function triggerImport() {
   document.getElementById('settingsImportFile')?.click();
+}
+
+export function triggerExternalCsvImport() {
+  document.getElementById('settingsExternalCsvFile')?.click();
+}
+
+export async function handleExternalCsvFile(file) {
+  if (!file) return;
+  if (file.size > CSV_IMPORT_LIMITS.maxBytes) {
+    showToast('That CSV is too large to import.', true);
+    return;
+  }
+  let parsed;
+  try {
+    const text = await file.text();
+    parsed = parseWorkoutCsv(text, {
+      unit: (_getState()?.settings?.weightUnit === 'lbs') ? 'lbs' : 'kg',
+    });
+  } catch (error) {
+    showToast(error?.message || 'That CSV could not be read.', true);
+    return;
+  }
+  if (!parsed.sessions.length) {
+    showToast(parsed.skippedCardio
+      ? 'No strength sets found — cardio rows are not imported yet.'
+      : 'No importable strength sets found.', true);
+    return;
+  }
+
+  const ok = await confirmModal({
+    title: 'Import workout history?',
+    message: [
+      `${parsed.sessions.length} workout${parsed.sessions.length === 1 ? '' : 's'} · ${parsed.totalSets} sets`,
+      parsed.skippedCardio ? `${parsed.skippedCardio} cardio row${parsed.skippedCardio === 1 ? '' : 's'} will be skipped.` : '',
+      '',
+      'They are added as archived history. Your current program and active workout are left alone. Re-importing the same file will not duplicate sessions.',
+    ].filter(Boolean).join('\n'),
+    confirmLabel: 'Import history',
+  });
+  if (!ok) return;
+
+  const result = applyWorkoutCsvImport(_getState(), parsed, {
+    resolveName: (name) => resolveExercise(name)?.name || null,
+  });
+  if (!result.added.length) {
+    showToast('Those workouts are already in your history.');
+    return;
+  }
+  await saveStateToLocalStorage(false);
+  showToast(`Imported ${result.added.length} workout${result.added.length === 1 ? '' : 's'} · ${result.sets} sets`);
+  setTimeout(() => location.reload(), 1000);
 }
 
 export function handleImportFile(file) {

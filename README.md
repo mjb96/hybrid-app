@@ -9,10 +9,9 @@
   Vanilla JavaScript PWA with a custom Android WebView shell.
 </p>
 
-> **Status: pre-release, local-only.** There is no account system and no cloud
+> **Status: pre-release, local-first.** There is no account system and no cloud
 > sync: training data stays on the device, with JSON/CSV export and Android
-> automatic backups for moving it. The hosted PWA is a preview of the same
-> local-only app.
+> automatic backups for moving it. The hosted PWA is a preview of the same app.
 
 ## What it does
 
@@ -34,6 +33,9 @@ the same training picture.
 - **Offline-first** — the PWA precaches its runtime and keeps training data on
   the device. There is no account, server or cloud sync; JSON/CSV export and
   Android automatic backups move data deliberately.
+- **Import your history** — bring workout history from OpenGym, Strong or Hevy
+  CSV exports (strength sets; cardio rows are skipped for now), with no account
+  or server involved.
 - **Durable on Android** — the shell mirrors the same state into app-private
   storage, so WebView eviction or a full localStorage quota does not lose the
   last change; a failed write is reported instead of silently claiming success.
@@ -87,9 +89,9 @@ python3 -m http.server 8770 --bind 127.0.0.1
 
 Open <http://127.0.0.1:8770/>.
 
-The first launch runs onboarding. No account is required and no data leaves
-the device. Use **Restore backup file** to bring in a JSON export; all logging
-works offline.
+The first launch runs onboarding. No account is required. Use **Restore backup
+file** for a Helyx JSON export, or **Settings → Data & backup → Import Workout
+History (CSV)** for an OpenGym/Strong/Hevy export. All logging works offline.
 
 ## Verification
 
@@ -142,7 +144,7 @@ gradle testDebugUnitTest lintDebug assembleDebug
 
 ## Security and privacy
 
-Helyx handles health and location data. The app is local-only: training data
+Helyx handles health and location data. The app is local-first: training data
 stays on the device, and exports/backups are the deliberate way to move it.
 Crash reporting is error-only and scrubbed. The Android shell disables platform
 backups and keeps the privileged WebView on a single bundled origin.
@@ -156,6 +158,8 @@ data.
 - The hosted PWA is a preview; Android is the primary offline target.
 - There is no account system and no cloud sync. Moving data between devices is
   a JSON export/import or the Android automatic-backup folder.
+- CSV import currently handles strength sets; cardio rows are skipped until the
+  run-import pass lands.
 - There is no iOS project; iOS and billing are out of scope.
 - The legal documents in `docs/legal/` are drafts with placeholders and are not
   legal advice.
