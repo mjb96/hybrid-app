@@ -1117,7 +1117,9 @@ export async function handleExternalCsvFile(file) {
     return;
   }
   if (!parsed.sessions.length) {
-    showToast('No importable workouts found in that CSV.', true);
+    showToast(parsed.skippedUnsupported
+      ? 'Only timed holds or carries were found — those cannot be imported as sets yet.'
+      : 'No importable workouts found in that CSV.', true);
     return;
   }
 
