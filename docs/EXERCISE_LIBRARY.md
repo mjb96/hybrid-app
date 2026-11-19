@@ -5,20 +5,22 @@ openHybrid has two catalogue layers:
 | Layer | Source | Licence | Media |
 |---|---|---|---|
 | **Core** (`CORE_EXERCISES`) | Original openHybrid text | AGPL-3.0-only | None |
-| **Extended** (`OPENGYM_EXERCISES`) | openGym catalogue text (openGym + ExerciseDB v1) | AGPL-3.0 / MIT | None |
+| **Extended** (`OPENGYM_EXERCISES`) | openGym catalogue metadata (names/ids/muscles/equipment) | AGPL-3.0 / MIT | None |
 
 ## What is imported
 
-`scripts/import-opengym-catalogue.mjs` reads a local openGym checkout and imports entries that:
+`scripts/import-opengym-catalogue.mjs` reads a local openGym checkout and imports **metadata** that:
 
-- have `textSource: "opengym"` (openGym-authored, AGPL-3.0) or
-  `textSource: "exercisedb"` (ExerciseDB v1 text distributed by openGym under MIT);
-- have a non-empty name and at least one instruction;
-- map to a real openHybrid muscle/equipment/movement value.
+- has `textSource: "opengym"` (openGym-authored, AGPL-3.0) or
+  `textSource: "exercisedb"` (ExerciseDB v1 metadata distributed by openGym under MIT);
+- has a non-empty name;
+- maps to a real openHybrid muscle/equipment/movement value.
 
 It **excludes**:
 
-- entries with no `textSource` or no instructions;
+- entries with no name/source;
+- **all instructional text and descriptions** — imported form guidance was
+  unreviewed, so only the reviewed core catalogue ships guidance;
 - **all media** — openGym’s stills and animations are licensed to Gym visual and are not AGPL. Nothing under `catalogue/media/` is read or copied.
 
 The generated file also carries `OPENGYM_ID_NAMES`, a complete source-id → display-name

@@ -1626,6 +1626,14 @@ testable on its own.
 
 ## 12. Session log
 
+- **2026-11-20 — Catalogue is metadata-only; imported form text removed.**
+  - Kept all 5,555 usable openGym/ExerciseDB catalogue names, ids, muscles and
+    equipment for search and plan import, but stopped shipping the 5,400
+    unreviewed instruction/description sets (about half the catalogue payload).
+  - Form guidance now comes only from the reviewed 157-entry core catalogue;
+    imported exercises say "Form guide not reviewed yet."
+  - Removed the in-app openGym/ExerciseDB licence disclosure; the legal
+    attribution remains in NOTICE.md and the source link.
 - **2026-11-20 — Complete openGym catalogue text and plan ID map.**
   - Imported all 5,555 usable openGym catalogue entries: 4,282 openGym-authored
     (AGPL-3.0) plus 1,273 ExerciseDB v1 entries openGym distributes under MIT.

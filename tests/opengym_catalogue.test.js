@@ -1,8 +1,8 @@
 // =============================================================================
 // openGym catalogue-text import contract
 //
-// openGym-authored text is AGPL-3.0; ExerciseDB v1 text distributed by openGym
-// is MIT. The exercise media is not licensed for reuse and must never appear.
+// openGym/ExerciseDB metadata is imported for search and plan ids. Imported
+// instructional text, descriptions and media are deliberately not shipped.
 // =============================================================================
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -22,7 +22,9 @@ test('the imported catalogue has the expected breadth and joins the core list', 
   assert.equal(EXERCISES.length, CORE_EXERCISES.length + OPENGYM_EXERCISES.length);
   for (const item of OPENGYM_EXERCISES) {
     assert.match(item.id, /^og_\d+$/);
-    assert.ok(item.name && item.instructions.length >= 1, `${item.id} needs a name and instructions`);
+    assert.ok(item.name, `${item.id} needs a name`);
+    assert.equal(item.instructions.length, 0, `${item.id} must not ship unreviewed instructions`);
+    assert.equal(item.description, '', `${item.id} must not ship an unreviewed description`);
     assert.ok(EXERCISE_CATEGORIES.includes(item.category), `${item.id} category`);
     assert.ok(MOVEMENT_PATTERNS.includes(item.movement), `${item.id} movement`);
     assert.ok(Array.isArray(item.safetyNotes) && item.safetyNotes.length === 0, `${item.id} is unreviewed`);
@@ -46,6 +48,7 @@ test('the generated file says where the text came from and excludes media', () =
   assert.match(source, /AGPL-3\.0/);
   assert.match(source, /ExerciseDB/i);
   assert.match(source, /MIT/);
+  assert.match(source, /Instructional text.*not included/i);
   assert.match(source, /No exercise media/i);
   assert.doesNotMatch(source, /\.gif|\.mp4|\.webm|exercise-media|catalogue\/media/i);
 });
