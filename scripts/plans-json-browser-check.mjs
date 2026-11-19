@@ -1,0 +1,113 @@
+// =============================================================================
+// PLANS / JSON IMPORT BROWSER CHECK
+// Proves the simplified two-tab Plans page and importing a portable plan file
+// into My Plans without overwriting a shared/catalog program.
+// =============================================================================
+import { createServer } from 'node:http';
+import { readFile, writeFile } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { createBrowserContext, resolveChromium, pinClock } from './browser-runtime.mjs';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const runtime = await resolveChromium();
+if (!runtime) process.exit(process.argv.includes('--required') ? 1 : 0);
+const { chromium, executablePath } = runtime;
+const STORAGE_KEY = 'hybrid_engine_v2_state';
+const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml' };
+const server = createServer(async (req, res) => {
+  try {
+    const rel = (req.url || '/') === '/' ? 'index.html' : decodeURIComponent((req.url || '').split('?')[0]).replace(/^\//, '');
+    const file = path.resolve(ROOT, rel);
+    if (!file.startsWith(`${ROOT}${path.sep}`) && file !== path.join(ROOT, 'index.html')) throw new Error('unsafe');
+    const body = await readFile(file);
+    res.writeHead(200, { 'content-type': MIME[path.extname(rel)] || 'application/octet-stream' });
+    res.end(body);
+  } catch { res.writeHead(404); res.end('not found'); }
+});
+await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+const base = `http://127.0.0.1:${server.address().port}`;
+
+const planFile = {
+  format: 'openhybrid-plan',
+  version: 1,
+  exportedAt: '2026-11-20T00:00:00.000Z',
+  plan: {
+    name: 'Imported Test Block',
+    totalWeeks: 4,
+    days: {
+      mon: { title: 'Push', badge: 'Push', lifts: ['Bench Press'], runs: 'Rest', desc: '' },
+      wed: { title: 'Pull', badge: 'Pull', lifts: ['Barbell Row'], runs: 'Rest', desc: '' },
+    },
+    weeklyVolModifiers: { 1: { sets: 4, reps: 6, intensityLabel: 'Build' } },
+  },
+};
+const planPath = path.join(os.tmpdir(), `openhybrid-plan-${process.pid}.json`);
+await writeFile(planPath, JSON.stringify(planFile, null, 2));
+
+const state = {
+  schemaVersion: 12, currentWeek: '1', activeProgramId: 'hybrid_engine', activeActivationId: 'act_plan',
+  weekStartedAt: '2026-11-16',
+  activations: [{ id: 'act_plan', programId: 'hybrid_engine', startWeek: 1, status: 'active', startedAt: '2026-10-26' }],
+  settings: {
+    name: 'Browser', theme: 'dark', palette: 'midnight', weightUnit: 'kg', distanceUnit: 'km', weekStartDay: 'mon', onboardingComplete: true,
+    fitnessGoal: 'hybrid', fitnessLevel: 'intermediate', equipmentTier: 'gym',
+    equipment: { barbell: true, rack: true, dumbbells: true, cables: true, pullupBar: true },
+    bandWeights: { L: 10, M: 20, H: 30 }, equipmentProfiles: [],
+  },
+  customPrograms: [], weeks: { '1': { activationId: 'act_plan', programId: 'hybrid_engine', dates: {}, lifts: {}, runs: {}, sessionStatus: {}, sessionSummary: {}, runSessions: {}, liftOrder: {}, liftMeta: {}, notes: {}, gymRpe: {}, bodyWeight: {}, gymStats: {} } },
+  bodyWeightLog: [], wellnessLog: [], healthConnect: { connected: false, hrv: [], restingHR: [], sleep: [], steps: [], vo2max: [] },
+  programLibrary: { bookmarks: [], completions: [], recentlyViewed: [], personalRatings: {}, activeFilters: {} },
+  hybridScore: { history: [], xp: 0, lastRecordedDate: null }, loadMetrics: { atl: 0, ctl: 0 },
+};
+
+const browser = await chromium.launch({ headless: true, executablePath });
+const failures = [];
+const ok = (condition, label) => { if (condition) console.log(`  ok · ${label}`); else { failures.push(label); console.error(`FAIL: ${label}`); } };
+try {
+  const context = await createBrowserContext(browser, { viewport: { width: 390, height: 844 }, timezoneId: 'Australia/Sydney', acceptDownloads: true });
+  await context.addInitScript(([key, value]) => localStorage.setItem(key, value), [STORAGE_KEY, JSON.stringify(state)]);
+  await context.addInitScript(pinClock, Date.parse('2026-11-20T09:00:00+11:00'));
+  const page = await context.newPage();
+  const errors = [];
+  page.on('pageerror', (error) => errors.push(String(error)));
+  await page.goto(base, { waitUntil: 'networkidle' });
+  await page.waitForSelector('#homeWeekStrip');
+  await page.click('.nav-item[data-target="program"]');
+  await page.waitForSelector('#programLibraryScreen');
+
+  const tabs = await page.locator('#progLibraryTabs .lib-tab').allTextContents();
+  ok(tabs.length === 2 && /Discover/.test(tabs[0]) && /My Plans/.test(tabs[1]), 'Plans has only Discover and My Plans tabs');
+  ok(await page.locator('#progFilterChips').isHidden(), 'the category chip wall is gone');
+  ok(/All programs/.test(await page.locator('#progLibraryContent').innerText()), 'Discover leads with one simple all-programs list');
+
+  await page.click('#progLibraryTabs [data-tab="my"]');
+  ok(/Nothing here yet/.test(await page.locator('#progLibraryContent').innerText()), 'My Plans starts with an honest empty state');
+
+  await page.setInputFiles('#planImportFile', planPath);
+  await page.waitForFunction(() => document.querySelector('#progLibraryContent')?.textContent?.includes('Imported Test Block'));
+  ok(await page.locator('#progLibraryTabs .lib-tab.active').innerText().then((text) => /My Plans/.test(text)), 'import lands on My Plans');
+  ok(/Your plans/.test(await page.locator('#progLibraryContent').innerText()), 'the imported plan appears under Your plans');
+  const saved = await page.evaluate((key) => JSON.parse(localStorage.getItem(key) || '{}'), STORAGE_KEY);
+  const imported = saved.customPrograms?.find((program) => program.name === 'Imported Test Block');
+  ok(!!imported, 'the imported plan is persisted as a custom program');
+  ok(imported?.days?.mon?.lifts?.[0] === 'Bench Press', 'the imported plan kept its training days');
+
+  await page.click('#progLibraryContent .prog-card[data-program-id]');
+  await page.waitForFunction(() => document.getElementById('programDetailScreen')?.style.display !== 'none');
+  await page.click('[data-action="open-program-menu"]');
+  await page.waitForSelector('.action-menu');
+  ok(/Export plan \(.json\)/.test(await page.locator('.action-menu').innerText()), 'program detail offers the portable JSON export');
+  ok(errors.length === 0, `no page errors (${errors.join('; ') || 'none'})`);
+  await context.close();
+} finally {
+  await browser.close();
+  await new Promise((resolve) => server.close(resolve));
+}
+if (failures.length) {
+  console.error(`\nplans-json-browser-check: ${failures.length} failure(s)`);
+  for (const failure of failures) console.error(`  - ${failure}`);
+  process.exit(1);
+}
+console.log('\nplans-json-browser-check: PASS — simplified Plans and JSON import.');

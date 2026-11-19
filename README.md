@@ -61,6 +61,12 @@ the same training picture.
   sets, cardio runs and weigh-ins), or drop a batch of Garmin/Wahoo/Coros FIT
   activities into Settings. FIT runs keep date, distance, pace, HR and GPS;
   strength FIT files import time/HR only because the format has no exercise names.
+- **Plans that move** — export any plan as a portable `.json` file and import it
+  on another device. Discover is now one searchable list, while saved, completed
+  and custom/imported plans live together under My Plans.
+- **Correct saved workouts** — History lets you reopen a finished strength
+  session or run and fix weights, reps, distance, HR or notes in place without
+  changing its date or identity.
 - **Progression styles** — custom programs can choose Double, Linear or Rep-first
   coaching. The suggested next load follows that program's style while keeping
   RPE, fatigue, cutting and stall safeguards.
@@ -149,7 +155,7 @@ format, not branding.
 | --- | --- |
 | `npm test` | Node unit tests |
 | `npm run verify` | Type check, precache check, workflow gates, unit tests, smoke render |
-| `npm run browser:verify` | 38 Playwright product checks (parallel, 180 s per-check kill with one timeout retry; `-- --serial` to debug) |
+| `npm run browser:verify` | 41 Playwright product checks (parallel, 180 s per-check kill with one timeout retry; `-- --serial` to debug) |
 | `npm run perf:baseline` | Boot performance and bounded-DOM baseline |
 | `npm run precache:gen` | Regenerate the service-worker precache manifest |
 

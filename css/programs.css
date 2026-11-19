@@ -3321,6 +3321,7 @@ html[data-theme="light"] .hero-badge {
 
 .lib-tab {
   flex: 1;
+  min-height: var(--touch-target, 44px);
   padding: 9px 12px;
   border-radius: 10px;
   border: none;
@@ -3749,4 +3750,37 @@ html[data-theme="light"] .prog-phase { background: rgba(0,0,0,0.02); }
 .wag-summary {
   font-size: max(0.8rem, var(--text-base));
   line-height: 1.5;
+}
+
+/* Simplified Plans landing */
+.plans-actions {
+  display: flex; gap: 8px; margin: 2px 0 12px;
+}
+.plans-action-btn {
+  flex: 1 1 0; min-height: 44px; padding: 0 12px;
+  border: 1px solid var(--border-default); border-radius: 11px;
+  background: var(--overlay-sm, rgba(255,255,255,.04));
+  color: var(--text-secondary); font: inherit; font-size: .72rem; font-weight: 750;
+  cursor: pointer;
+}
+.plans-action-btn:first-child {
+  border-color: transparent;
+  background: var(--brand-gradient, var(--color-blue));
+  color: #04121a;
+}
+.lib-empty-cta + .lib-empty-cta { margin-top: 8px; }
+
+/* Plans selection follows the icon palette, not leftover purple chrome. */
+.lib-tab.active {
+  background: color-mix(in srgb, var(--brand-cobalt, #22d3ee) 14%, transparent);
+  color: var(--brand-ice, var(--color-cyan));
+}
+.lib-tab-count {
+  background: var(--brand-gradient, var(--color-blue));
+  color: #04121a;
+}
+html[data-theme="dark"] .active-prog-continue-btn:not(.active-prog-continue-btn--quiet) {
+  border-color: transparent;
+  background: var(--brand-gradient);
+  color: #04121a;
 }

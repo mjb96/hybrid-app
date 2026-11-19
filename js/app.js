@@ -3,9 +3,11 @@
 // ==========================================
 import { devWarn } from './debug.js';
 import { openBuilder } from './program_builder.js';
-import { initProgramLibrary, updateLibraryState, renderLibrary, handleLibraryAction, returnToLibrary } from './programs/library.js';
+import { initProgramLibrary, updateLibraryState, renderLibrary, handleLibraryAction, returnToLibrary, showLibraryTab } from './programs/library.js';
 import { handleDetailAction, closeDayPreviewModal } from './programs/detail.js';
 import { copyProgramAsText, handleProgramTextAction } from './programs/copy-program.js';
+import { buildPlanFile, parsePlanFile, createImportedProgram, planFilename } from './programs/program-json.js';
+import { saveTextExport, exportResultMessage } from './portability/export-service.js';
 import { openActionMenu, closeActionMenu, isActionMenuOpen } from './ui/action-menu.js';
 import { openCompareModal, closeCompareModal, pickCompareB, renderComparePicker, handleCompareSearch } from './programs/compare-ui.js';
 import { getCatalogEntry } from './programs/catalog.js';
@@ -1150,10 +1152,13 @@ document.addEventListener('click', (e) => {
     if (isActionMenuOpen()) closeActionMenu();
     else openActionMenu(target, [
       { label: 'Copy program', action: 'copy-program-text', programId: progId, icon: svgIcon('clipboard', { size: 18 }) },
+      { label: 'Export plan (.json)', action: 'export-program-json', programId: progId, icon: svgIcon('download', { size: 18 }) },
     ], { label: 'Program actions' });
   }
   else if (action === 'close-action-menu') closeActionMenu();
   else if (action === 'copy-program-text') copyProgramAsText(progId);
+  else if (action === 'export-program-json') exportProgramJson(progId);
+  else if (action === 'import-plan-json') document.getElementById('planImportFile')?.click();
   else if (handleProgramTextAction(action)) { /* copy-program preview modal buttons */ }
   else if (action === 'open-compare') openCompareModal(progId);
   else if (action === 'compare-pick') pickCompareB(progId);
@@ -1161,7 +1166,7 @@ document.addEventListener('click', (e) => {
   else if (action === 'close-compare') closeCompareModal();
 
   // New Program Library actions
-  else if (['open-program-detail', 'prog-filter', 'diff-filter', 'prog-quick-search', 'hero-dot', 'lib-tab', 'toggle-bookmark', 'set-profile-answer'].includes(action)) {
+  else if (['open-program-detail', 'prog-filter', 'diff-filter', 'prog-quick-search', 'hero-dot', 'lib-tab', 'toggle-bookmark', 'set-profile-answer', 'prog-show-all'].includes(action)) {
     handleLibraryAction(action, target, e);
   }
   else if (['close-program-detail', 'make-active-from-detail', 'view-active-program', 'open-day-preview', 'preview-week-step', 'close-day-preview', 'detail-toggle-bookmark', 'mark-program-complete', 'detail-week-step', 'detail-week-current'].includes(action)) {
@@ -1374,6 +1379,11 @@ document.addEventListener('change', (e) => {
   }
   if (target.id === 'settingsFitFiles') {
     handleFitFiles(target.files);
+    target.value = '';
+    return;
+  }
+  if (target.id === 'planImportFile') {
+    handlePlanImportFile(target.files?.[0]);
     target.value = '';
     return;
   }
@@ -1658,6 +1668,39 @@ initGarminGymImport(async (timeStr, stats) => {
 });
 
 setImportSuccessCallback(() => hydrateCurrentView());
+
+async function exportProgramJson(programId) {
+  const program = getProgramById(programId);
+  if (!program) { showToast('Plan not found', true); return; }
+  try {
+    const file = buildPlanFile(program);
+    const result = await saveTextExport({
+      filename: planFilename(program),
+      content: JSON.stringify(file, null, 2),
+      mime: 'application/json',
+    });
+    const copy = exportResultMessage(result, 'Plan');
+    showToast(copy.message, copy.error);
+  } catch (error) {
+    showToast(error instanceof Error ? error.message : 'Plan export failed', true);
+  }
+}
+
+async function handlePlanImportFile(file) {
+  if (!file) return;
+  if (file.size > 2 * 1024 * 1024) { showToast('That plan file is too large.', true); return; }
+  try {
+    const plan = parsePlanFile(await file.text());
+    const program = createImportedProgram(plan, (appState.customPrograms || []).map((item) => item.id));
+    if (!Array.isArray(appState.customPrograms)) appState.customPrograms = [];
+    appState.customPrograms.push(program);
+    await saveStateToLocalStorage(true);
+    showLibraryTab('my');
+    showToast(`Imported ${program.name}`);
+  } catch (error) {
+    showToast(error instanceof Error ? error.message : 'That plan could not be imported', true);
+  }
+}
 
 function checkForAutomaticWeekAdvance() {
   if (appState.settings?.autoAdvanceWeek === false) return;

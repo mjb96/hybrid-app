@@ -70,6 +70,7 @@ try {
   await page.waitForSelector('#view-profile.active');
   await page.click('#view-profile [data-action="open-settings"]');
   await page.waitForSelector('#settingsOverlay.active');
+  await page.click('#settingsTabs [data-settings-tab="training"]');
   const runningRow = page.locator('.settings-row', { has: page.locator('[data-module-toggle="running"]') });
   await runningRow.locator('.settings-switch').click();
   await page.waitForFunction(() => document.documentElement.dataset.moduleRunning === 'off');

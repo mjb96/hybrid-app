@@ -1,6 +1,6 @@
 # UI refresh plan — openHybrid
 
-**Status:** in progress — Midnight palette and Home/Progress card customization shipped; Settings sub-pages and the remaining screen batches are next.
+**Status:** in progress — Midnight palette, Home/Progress card customization, Settings tabs/search, saved-activity editing and the simplified Plans surface have shipped.
 **Goal:** make openHybrid feel like one coherent, modern training app — closer to openGym’s calm, card-based design language — without copying its AGPL code, changing the vanilla-JS stack, or risking training data.
 
 ## Design direction

@@ -106,7 +106,7 @@ export function renderProgramCard(program, size = 'small', reason = '') {
                 data-action="toggle-bookmark"
                 data-program-id="${safeId}"
                 aria-label="${saved ? 'Remove bookmark' : 'Save program'}">
-          ${saved ? '🔖' : '🤍'}
+          ${svgIcon('bookmark', { size: 16, cls: saved ? 'is-saved' : '' })}
         </button>
         ${ratingHTML}
       </div>
