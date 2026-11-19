@@ -50,6 +50,25 @@ export function icon(name, { size = 24, cls = '' } = {}) {
   return `<svg class="ic${cls ? ' ' + cls : ''}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
 }
 
+/** The same glyph as a DOM node, for surfaces built with textContent (no HTML sinks). */
+export function iconNode(name, { size = 24, cls = '' } = {}) {
+  const body = PATHS[name];
+  if (!body || typeof document === 'undefined') return null;
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', `ic${cls ? ` ${cls}` : ''}`);
+  svg.setAttribute('width', String(size));
+  svg.setAttribute('height', String(size));
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '2');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.innerHTML = body; // static glyph path from the allowlisted PATHS map
+  return svg;
+}
+
 // Fill every [data-icon] span under `root` with its glyph. Idempotent — safe to
 // call again after DOM changes (skips spans already painted).
 export function paintIcons(root = document) {

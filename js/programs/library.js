@@ -7,7 +7,7 @@ import { searchPrograms, POPULAR_SEARCHES } from './search.js';
 import { getRecommendations } from './recommendations.js';
 import { athleteProfile, recommendationBasis } from './recommendation-fit.js';
 import { renderProgramDetail, closeProgramDetail } from './detail.js';
-import { renderProgramCard, isWod, coverGlyphFor } from './program-card.js';
+import { renderProgramCard, renderProgramCardNode, isWod, coverGlyphFor } from './program-card.js';
 import { icon as svgIcon } from '../ui/icons.js';
 import { toggleBookmark, recordRecentlyViewed, getProgramById, getActiveProgramIssue, saveStateToLocalStorage } from '../state.js';
 import { escapeHtml, safeCssColor } from '../util.js';
@@ -209,102 +209,6 @@ function renderLibraryTabs() {
   `;
 }
 
-function renderSavedPrograms() {
-  const filterEl = document.getElementById('progFilterChips');
-  const content = document.getElementById('progLibraryContent');
-  const searchResults = document.getElementById('progSearchResults');
-  if (filterEl) filterEl.innerHTML = '';
-  if (searchResults) searchResults.style.display = 'none';
-  if (!content) return;
-
-  const bookmarkIds = _appState?.programLibrary?.bookmarks || [];
-  const allSaved = bookmarkIds.map(resolveProgramMeta).filter(Boolean);
-
-  if (allSaved.length === 0) {
-    content.style.display = 'block';
-    content.innerHTML = `
-      <div class="lib-empty-state">
-        <div class="lib-empty-icon">${svgIcon('bookmark', { size: 30 })}</div>
-        <div class="lib-empty-title">No saved programs yet</div>
-        <div class="lib-empty-sub">Tap the bookmark icon on any program or workout to save it here</div>
-        <button class="lib-empty-cta" data-action="lib-tab" data-tab="discover">Browse Programs</button>
-      </div>
-    `;
-    return;
-  }
-
-  const savedPrograms = allSaved.filter(p => !isWod(p));
-  const savedWorkouts = allSaved.filter(p => isWod(p));
-
-  let html = '';
-
-  if (savedPrograms.length > 0) {
-    html += `
-      <div class="filtered-grid-header mb-4">
-        <div class="filtered-grid-title">Saved Programs</div>
-        <div class="filtered-grid-count">${savedPrograms.length} program${savedPrograms.length !== 1 ? 's' : ''}</div>
-      </div>
-      <div class="program-grid${savedWorkouts.length > 0 ? ' mb-6' : ''}">
-        ${savedPrograms.map(p => renderProgramCard(p, 'large')).join('')}
-      </div>
-    `;
-  }
-
-  if (savedWorkouts.length > 0) {
-    html += `
-      <div class="filtered-grid-header mb-4${savedPrograms.length > 0 ? ' mt-4' : ''}">
-        <div class="filtered-grid-title">Saved Workouts</div>
-        <div class="filtered-grid-count">${savedWorkouts.length} workout${savedWorkouts.length !== 1 ? 's' : ''}</div>
-      </div>
-      <div class="program-grid">
-        ${savedWorkouts.map(p => renderProgramCard(p, 'large')).join('')}
-      </div>
-    `;
-  }
-
-  content.style.display = 'block';
-  content.innerHTML = html;
-}
-
-function renderCompletedPrograms() {
-  const filterEl = document.getElementById('progFilterChips');
-  const content = document.getElementById('progLibraryContent');
-  const searchResults = document.getElementById('progSearchResults');
-  if (filterEl) filterEl.innerHTML = '';
-  if (searchResults) searchResults.style.display = 'none';
-  if (!content) return;
-
-  const completions = _appState?.programLibrary?.completions || [];
-  const completed = completions
-    .map(c => ({ completion: c, program: resolveProgramMeta(c.programId) }))
-    .filter(x => x.program)
-    .sort((a, b) => new Date(b.completion.completedAt) - new Date(a.completion.completedAt));
-
-  if (completed.length === 0) {
-    content.style.display = 'block';
-    content.innerHTML = `
-      <div class="lib-empty-state">
-        <div class="lib-empty-icon">${svgIcon('trophy', { size: 30 })}</div>
-        <div class="lib-empty-title">No completed programs yet</div>
-        <div class="lib-empty-sub">Finish a program and mark it complete to track your progress</div>
-        <button class="lib-empty-cta" data-action="lib-tab" data-tab="discover">Find a Program</button>
-      </div>
-    `;
-    return;
-  }
-
-  content.style.display = 'block';
-  content.innerHTML = `
-    <div class="filtered-grid-header mb-4">
-      <div class="filtered-grid-title">Completed Programs</div>
-      <div class="filtered-grid-count">${completed.length} programs</div>
-    </div>
-    <div class="program-grid">
-      ${completed.map(({ program }) => renderProgramCard(program, 'large')).join('')}
-    </div>
-  `;
-}
-
 // ── Filter chips ──────────────────────────────────────────────────────────────
 
 const FILTER_CHIPS = [
@@ -456,22 +360,30 @@ function renderMyPlans(content) {
     return;
   }
 
-  let html = '';
-  if (custom.length) {
-    html += `<div class="filtered-grid-header mb-4"><div class="filtered-grid-title">Your plans</div><div class="filtered-grid-count">${custom.length}</div></div>
-      <div class="program-grid mb-6">${custom.map((program) => renderProgramCard(program, 'large')).join('')}</div>`;
-  }
-  if (saved.length) {
-    html += `<div class="filtered-grid-header mb-4"><div class="filtered-grid-title">Saved</div><div class="filtered-grid-count">${saved.length}</div></div>
-      <div class="program-grid mb-6">${saved.map((program) => renderProgramCard(program, 'large')).join('')}</div>`;
-  }
-  if (completed.length) {
-    html += `<div class="filtered-grid-header mb-4"><div class="filtered-grid-title">Completed</div><div class="filtered-grid-count">${completed.length}</div></div>
-      <div class="program-grid">${completed.map(({ program }) => renderProgramCard(program, 'large')).join('')}</div>`;
-  }
-  // Every dynamic fragment above is renderProgramCard() output, which escapes
-  // all program text/attributes; the interpolated counts are numbers.
-  content.innerHTML = html; // lgtm[js/xss-through-dom]
+  // Build with DOM nodes + textContent. Plan names/notes can come from an
+  // imported JSON file, so this surface must never reinterpret them as markup.
+  const nodes = [];
+  const addSection = (title, programs, gap = true) => {
+    if (!programs.length) return;
+    const header = document.createElement('div');
+    header.className = `filtered-grid-header mb-4${gap ? ' mb-6' : ''}`;
+    const titleEl = document.createElement('div');
+    titleEl.className = 'filtered-grid-title';
+    titleEl.textContent = title;
+    const count = document.createElement('div');
+    count.className = 'filtered-grid-count';
+    count.textContent = String(programs.length);
+    header.append(titleEl, count);
+    const grid = document.createElement('div');
+    grid.className = `program-grid${gap ? ' mb-6' : ''}`;
+    programs.forEach((program) => grid.append(renderProgramCardNode(program, 'large')));
+    nodes.push(header, grid);
+  };
+
+  addSection('Your plans', custom);
+  addSection('Saved', saved);
+  addSection('Completed', completed.map((item) => item.program), false);
+  content.replaceChildren(...nodes);
 }
 
 function renderCollectionRows(container) {
