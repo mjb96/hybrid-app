@@ -197,9 +197,30 @@ try {
     const { context, page } = await openState({ state });
     ok(await page.locator('.today-card').getAttribute('data-today-state') === state, `${state} state is explicit`);
     ok((await page.locator('#homePrimaryCta').textContent())?.trim() === label, `${state} state uses "${label}"`);
+    if (state === 'completed') {
+      ok(await page.locator('.session-summary').count() === 1, 'completed state shows the session summary');
+      ok(await page.locator('.session-map svg').count() === 2, 'completed state shows front and back body maps');
+      ok((await page.locator('.session-summary').innerText()).includes('400 kg'), 'completed summary shows real session volume');
+    }
     if (state === 'unresolved') {
       ok(await page.locator('#homeChooseWorkout').count() === 0, 'unresolved work does not compete with another-workout action');
     }
+    await context.close();
+  }
+
+  {
+    const { context, page } = await openState({ state: 'ready' });
+    await page.locator('[data-action="home-week-prev"]').click();
+    ok((await page.locator('#homeWeekLabel').textContent())?.trim() === 'Last week', 'previous-week control moves the rail back one week');
+    ok(await page.locator('.week-recap').count() === 1, 'a past week renders a recap, not a Today decision');
+    ok(await page.locator('#homePrimaryCta').count() === 0, 'a past week does not offer a start action');
+    const arrow = await page.locator('[data-action="home-week-prev"]').boundingBox();
+    ok(!!arrow && arrow.width >= 44 && arrow.height >= 44, 'week navigation meets the 44px touch target');
+    await page.locator('[data-action="home-week-today"]').click();
+    ok((await page.locator('#homeWeekLabel').textContent())?.trim() === 'This week', 'Back to this week returns to the decision');
+    ok(await page.locator('#homePrimaryCta').isVisible(), 'returning to this week restores the primary action');
+    for (let i = 0; i < 4; i++) await page.locator('[data-action="home-week-prev"]').click();
+    ok(await page.locator('[data-action="home-week-prev"]').isDisabled(), 'week history is bounded at four previous weeks');
     await context.close();
   }
 

@@ -473,9 +473,13 @@
       <section class="home-week" id="homeWeekStrip" aria-label="This week">
         <div class="home-week__rail" data-home-card="weekStrip">
           <div class="home-week__head">
-            <div>
-              <span class="home-week__eyebrow">This week</span>
-              <strong class="home-week__range" id="homeWeekRange">Your seven-day plan</strong>
+            <div class="home-week__nav">
+              <button type="button" class="home-week__nav-btn" data-action="home-week-prev" aria-label="Show previous week">‹</button>
+              <div class="home-week__titles" aria-live="polite">
+                <span class="home-week__eyebrow" id="homeWeekLabel">This week</span>
+                <strong class="home-week__range" id="homeWeekRange">Your seven-day plan</strong>
+              </div>
+              <button type="button" class="home-week__nav-btn" data-action="home-week-next" aria-label="Show next week">›</button>
             </div>
             <span class="home-week__count" id="homeWeekCount">—</span>
           </div>

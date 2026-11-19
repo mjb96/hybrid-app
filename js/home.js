@@ -21,9 +21,10 @@ import { initFastingCard } from './home/fasting-card.js';
 import { setHTML } from './ui/render.js';
 import { escapeHtml } from './util.js';
 import { buildHomeWeekStrip } from './home/week-strip.js';
+import { HOME_WEEK_HISTORY, buildPastWeekView, weekOffsetLabel, weekRecapHTML } from './home/week-view.js';
 import { renderHomeBodyweight } from './home/bodyweight-card.js';
 import { reportHandledError, renderSafely } from './monitoring/report-error.js';
-import { todayKey } from './dates.js';
+import { addDaysISO, todayKey } from './dates.js';
 import { buildVolumeGuideModel, hasExplicitMusclePriorities } from './analytics/volume-guide.js';
 
 let _getState;
@@ -35,6 +36,11 @@ let _getDays;
 // state never enters an export or sync surface.
 let _todayCardExpanded = false;
 let _todayCardExpandedDate = null;
+
+// Bounded week history on Home. Presentation-only, like Today's expansion.
+let _homeWeekOffset = 0;
+let _homeWeekDate = null;
+let _lastPastWeekView = null;
 
 export function initHome(getStateFn, getSelectedDayFn, getDaysFn) {
   _getState = getStateFn;
@@ -266,16 +272,32 @@ function renderHomeGreeting(appState) {
 function renderHomeWeek(appState, activeProgram) {
   const host = document.getElementById('homeWeekDays');
   const rangeEl = document.getElementById('homeWeekRange');
+  const labelEl = document.getElementById('homeWeekLabel');
   const countEl = document.getElementById('homeWeekCount');
   if (!host) return;
+  const today = todayKey();
   const strip = buildHomeWeekStrip({
     state: appState,
     program: activeProgram,
     days: _getDays(),
-    today: todayKey(),
+    today,
   });
-  const today = todayKey();
-  host.innerHTML = strip.days.map((cell) => {
+
+  // Past weeks are calendar-date recaps, never a re-read of currentWeek. The
+  // current strip supplies the display week's first date so a Sunday-start
+  // setting stays consistent.
+  let pastView = null;
+  const currentStart = strip.days.find((cell) => cell.date)?.date;
+  if (_homeWeekOffset < 0 && currentStart) {
+    pastView = buildPastWeekView(appState, {
+      startISO: addDaysISO(currentStart, _homeWeekOffset * 7),
+      offset: _homeWeekOffset,
+    });
+  }
+  _lastPastWeekView = pastView;
+  const cells = pastView ? pastView.cells : strip.days;
+
+  host.innerHTML = cells.map((cell) => {
     const disabled = !cell.date || (cell.date && cell.date > today);
     const classes = ['home-week-day', `home-week-day--${cell.status}`];
     if (cell.isToday) classes.push('is-today');
@@ -291,16 +313,33 @@ function renderHomeWeek(appState, activeProgram) {
       <span class="home-week-day__date">${escapeHtml(dateLabel)}</span>
     </button>`;
   }).join('');
+
+  if (labelEl) labelEl.textContent = weekOffsetLabel(_homeWeekOffset);
   if (rangeEl) {
-    const first = strip.days.find((d) => d.date)?.date;
-    const last = [...strip.days].reverse().find((d) => d.date)?.date;
-    rangeEl.textContent = first && last ? `${shortDate(first)} – ${shortDate(last)}` : 'Your seven-day plan';
+    if (pastView) {
+      rangeEl.textContent = pastView.range;
+    } else {
+      const first = strip.days.find((d) => d.date)?.date;
+      const last = [...strip.days].reverse().find((d) => d.date)?.date;
+      rangeEl.textContent = first && last ? `${shortDate(first)} – ${shortDate(last)}` : 'Your seven-day plan';
+    }
   }
   if (countEl) {
-    countEl.textContent = strip.plannedCount
-      ? `${strip.doneCount} / ${strip.plannedCount} done`
-      : 'Recovery week';
+    if (pastView) {
+      countEl.textContent = pastView.doneCount
+        ? `${pastView.doneCount} day${pastView.doneCount === 1 ? '' : 's'}`
+        : 'No training';
+    } else {
+      countEl.textContent = strip.plannedCount
+        ? `${strip.doneCount} / ${strip.plannedCount} done`
+        : 'Recovery week';
+    }
   }
+
+  const prevBtn = document.querySelector('[data-action="home-week-prev"]');
+  const nextBtn = document.querySelector('[data-action="home-week-next"]');
+  if (prevBtn) prevBtn.disabled = _homeWeekOffset <= -HOME_WEEK_HISTORY;
+  if (nextBtn) nextBtn.disabled = _homeWeekOffset >= 0;
 }
 
 function renderHomeInsight(model, state) {
@@ -357,7 +396,23 @@ function _syncTodayCardToggle(card, expanded) {
   }
 }
 
+function _setHomeWeekOffset(offset) {
+  const next = Math.max(-HOME_WEEK_HISTORY, Math.min(0, Number(offset) || 0));
+  if (next === _homeWeekOffset) return;
+  _homeWeekOffset = next;
+  renderHome();
+}
+
 document.addEventListener('click', (e) => {
+  const weekNav = e.target.closest?.('[data-action="home-week-prev"], [data-action="home-week-next"], [data-action="home-week-today"]');
+  if (weekNav) {
+    e.preventDefault();
+    const action = weekNav.getAttribute('data-action');
+    if (action === 'home-week-prev') _setHomeWeekOffset(_homeWeekOffset - 1);
+    else if (action === 'home-week-next') _setHomeWeekOffset(_homeWeekOffset + 1);
+    else _setHomeWeekOffset(0);
+    return;
+  }
   const toggle = e.target.closest?.('[data-action="toggle-today-card"]');
   if (toggle) {
     e.preventDefault();
@@ -385,12 +440,20 @@ function applyHomeCardVisibility(appState) {
     // surface, so hiding "This week" must not remove the primary action.
     if (id === 'weekStrip') {
       el.closest('.home-week')?.classList.toggle('home-week--strip-hidden', hidden);
+      // With no rail there is no way back to this week; never leave a past
+      // recap pinned in the Today slot.
+      if (hidden && _homeWeekOffset !== 0) _homeWeekOffset = 0;
     }
   });
 }
 
 export function renderHome() {
   const appState = _getState();
+  const renderDay = todayKey();
+  if (_homeWeekDate !== renderDay) {
+    _homeWeekDate = renderDay;
+    _homeWeekOffset = 0;
+  }
   applyHomeCardVisibility(appState);
   // Home is a calendar-today surface. The cockpit's selected day is navigation
   // state and may point at a session the athlete merely previewed.
@@ -473,17 +536,24 @@ export function renderHome() {
       _todayCardExpandedDate = todayISO;
       _todayCardExpanded = false;
     }
-    const card = buildTodayCardModel({
-      state: appState,
-      program: activeProgram,
-      model,
-      briefing,
-      score: scoreResult,
-      offline: typeof navigator !== 'undefined' && navigator.onLine === false,
-    });
-    const expanded = isTodayCardCollapsible(card) && _todayCardExpanded;
-    setHTML(todayMount, todayCardHTML(card, { expanded }));
-    _syncTodayCardToggle(card, expanded);
+    if (_homeWeekOffset < 0 && _lastPastWeekView) {
+      setHTML(todayMount, weekRecapHTML(_lastPastWeekView, {
+        weightUnit: appState.settings?.weightUnit,
+      }));
+      _syncTodayCardToggle(null, false);
+    } else {
+      const card = buildTodayCardModel({
+        state: appState,
+        program: activeProgram,
+        model,
+        briefing,
+        score: scoreResult,
+        offline: typeof navigator !== 'undefined' && navigator.onLine === false,
+      });
+      const expanded = isTodayCardCollapsible(card) && _todayCardExpanded;
+      setHTML(todayMount, todayCardHTML(card, { expanded }));
+      _syncTodayCardToggle(card, expanded);
+    }
   }
   renderHomeSupportingSignals(appState, model);
   renderHomeVolumeGuide(appState, activeProgram);

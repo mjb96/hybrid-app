@@ -9,7 +9,7 @@
 // =============================================================================
 
 export const HOME_CARDS = Object.freeze([
-  { id: 'weekStrip', label: 'This week', note: 'Seven-day training strip' },
+  { id: 'weekStrip', label: 'This week', note: 'Seven-day rail with four weeks of recaps' },
   { id: 'bodyweight', label: 'Bodyweight', note: 'Latest weigh-in and 30-day trend' },
   { id: 'insight', label: 'Coach insight', note: 'One evidence-backed line' },
   { id: 'volumeGuide', label: 'Muscle volume', note: 'Focus-muscle coverage for the week' },

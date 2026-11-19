@@ -1626,6 +1626,27 @@ testable on its own.
 
 ## 12. Session log
 
+- **2026-11-20 — Completed session summary and the anatomical heat map.**
+  - A completed Today card now carries duration, volume, working sets, PRs,
+    today's weigh-in and a front/back muscle heat map instead of only a review
+    action.
+  - 89-region static path geometry is vendored from the Apache-2.0 Body Muscles
+    project (`js/home/body-paths.js`, `NOTICE.md`, `LICENSES/Apache-2.0.txt`).
+    openHybrid supplies the credit-weighted model, palette, layout and copy; no
+    openGym or Gym-visual media is used.
+  - `js/home/session-muscles.js` sums the catalogue's per-muscle credits across
+    completed working sets (warm-ups and unticked rows excluded), normalises to
+    the hardest-trained muscle and maps it onto the body regions. The chips are
+    the accessible text equivalent.
+- **2026-11-20 — Home week history, bounded to four previous weeks.**
+  - The week header now pages back through four calendar weeks. A past week
+    renders a recap (sessions, volume, sets, PRs and the same heat map) instead
+    of a Today decision, and offers only "Back to this week".
+  - `js/home/week-view.js` reads `indexSlotsByDate`, not `state.currentWeek`, so
+    archived activations and same-date sessions are attributed by real calendar
+    date. No future weeks and no infinite history.
+  - The rail keeps its 44px cells; hiding "This week" in Customize resets to the
+    current week and leaves Today pinned.
 - **2026-11-20 — Home: Today folded into the week surface.**
   - `#homeTodayCard` now lives inside `#homeWeekStrip`: the seven-day rail is the
     header and Today is the decision body, not a second card.
