@@ -77,4 +77,12 @@ jobs:
         env:
           ANDROID_HOME: /usr/local/lib/android/sdk
           ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
-        run: gradle testDebugUnitTest lintDebug assembleDebug --no-daemon
+        run: |
+          # Maven Central and the Actions cache can return transient 429/5xx
+          # responses. Retry once so an external blip does not block a Pages
+          # deploy or a release; a real test/lint failure still fails twice.
+          if ! gradle testDebugUnitTest lintDebug assembleDebug --no-daemon; then
+            echo "::warning::Gradle failed; retrying once for a transient dependency or cache error."
+            sleep 20
+            gradle testDebugUnitTest lintDebug assembleDebug --no-daemon
+          fi
