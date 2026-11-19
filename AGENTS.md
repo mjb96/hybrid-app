@@ -7,6 +7,10 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
 - `npm test` — node --test suite
 - `npm run typecheck` — tsc over jsconfig
 - `npm run smoke` — scripts/smoke.mjs (jsdom import + home render)
+- `npm run browser:verify` — 34 real-Chromium product checks through a parallel
+  worker pool (default leaves one core free; `-- --serial` for one-at-a-time
+  debugging, `-- --concurrency=N` to pin workers, `-- --timeout=N` to change the
+  180 s per-check kill)
 
 ## Architecture facts (verify before relying on them)
 - State: one big `appState` object → localStorage (source of truth) in the browser;

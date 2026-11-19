@@ -112,7 +112,7 @@ logging works offline.
 | --- | --- |
 | `npm test` | Node unit tests |
 | `npm run verify` | Type check, precache check, workflow gates, unit tests, smoke render |
-| `npm run browser:verify` | 34 Playwright product checks |
+| `npm run browser:verify` | 34 Playwright product checks (parallel, 180 s per-check kill; `-- --serial` to debug) |
 | `npm run perf:baseline` | Boot performance and bounded-DOM baseline |
 | `npm run precache:gen` | Regenerate the service-worker precache manifest |
 
