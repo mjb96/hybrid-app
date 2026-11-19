@@ -124,7 +124,17 @@ Licensed under the SIL Open Font License, Version 1.1:
 
 ## Exercise catalogue
 
-openHybrid's exercise names, cues and muscle mappings are original text. No exercise
-media from openGym or Gym visual is included. If a future change imports
-third-party exercise content, its licence and attribution must be added here
-before it ships.
+The core catalogue (the first 157 entries) is original openHybrid text. The
+extended catalogue in `js/exercises/opengym-catalogue.js` is derived from the
+[openGym exercise catalogue](https://github.com/DuarteSantos8/openGym), Copyright
+(C) 2026 Duarte Santos and openGym contributors, licensed **AGPL-3.0** (the same
+licence as openHybrid).
+
+Only entries marked `textSource: "opengym"` with written instructions are
+imported. Entries openGym received from other datasets (for example
+`textSource: "exercisedb"`) are excluded. No exercise media — stills, GIFs or
+animations — is copied, because openGym's media is separately licensed to Gym
+visual and is not AGPL.
+
+Regenerate with `scripts/import-opengym-catalogue.mjs`; see
+[`docs/EXERCISE_LIBRARY.md`](docs/EXERCISE_LIBRARY.md).

@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { PROGRAMS } from '../js/constants.js';
 import { PROGRAM_CATALOG } from '../js/programs/catalog.js';
 import {
-  browseExercises, EQUIPMENT, EXERCISES, EXERCISE_DIFFICULTIES, MOVEMENT_PATTERNS, MUSCLES,
+  browseExercises, CORE_EXERCISES, EQUIPMENT, EXERCISES, EXERCISE_DIFFICULTIES, MOVEMENT_PATTERNS, MUSCLES,
   canonicalExerciseId, exerciseLibraryByCategory, normaliseExerciseName, resolveExercise,
   exerciseStatForName, equipmentLabel, searchExercises,
 } from '../js/exercises/catalog.js';
@@ -216,8 +216,8 @@ test('the reviewed EZ-bar catalogue spans suitable muscle groups with complete g
     'EZ-Bar Upright Row',
     'EZ-Bar Zercher Squat',
   ];
-  const items = browseExercises({ equipment: 'ezBar' }, 100);
-  assert.deepEqual(items.map((item) => item.name), expected);
+  const items = CORE_EXERCISES.filter((item) => item.equipment.includes('ezBar'));
+  assert.deepEqual(items.map((item) => item.name).sort(), expected);
   assert.deepEqual([...new Set(items.map((item) => item.category))].sort(), ['legs', 'pull', 'push']);
   for (const item of items) {
     assert.ok(item.equipment.includes('ezBar'), `${item.name} uses the EZ-bar equipment identity`);
@@ -235,7 +235,7 @@ test('EZ-bar filtering and aliases do not collapse distinct straight-bar variati
   assert.equal(canonicalExerciseId('RDL'), 'romanian_deadlift');
   assert.equal(canonicalExerciseId('EZ Curl Bar Floor Press'), 'ez_bar_floor_press');
   assert.equal(canonicalExerciseId('Barbell Floor Press'), 'barbell_floor_press');
-  const legs = browseExercises({ equipment: 'ezBar', category: 'legs' }, 100).map((item) => item.name);
+  const legs = CORE_EXERCISES.filter((item) => item.equipment.includes('ezBar') && item.category === 'legs').map((item) => item.name).sort();
   assert.deepEqual(legs, ['EZ-Bar Glute Bridge', 'EZ-Bar Romanian Deadlift', 'EZ-Bar Zercher Squat']);
   assert.equal(browseExercises({ query: 'ez curl bar row', equipment: 'ezBar' })[0]?.name, 'EZ-Bar Bent-Over Row');
 });
@@ -369,7 +369,7 @@ test('an unknown muscle group returns nothing rather than everything', () => {
 test('conditioning movements with no single primary muscle stay reachable', () => {
   // Burpees and kettlebell swings honestly have no one primary group; they must
   // not be forced into one, and must still appear when no muscle filter is set.
-  const all = browseExercises({}, 500);
+  const all = EXERCISES;
   const ungrouped = all.filter((item) => primaryMuscleGroups(item).length === 0);
   assert.ok(ungrouped.length > 0, 'fixture sanity: some movements have no primary group');
   const names = ungrouped.map((item) => item.name);
@@ -385,7 +385,7 @@ test('conditioning movements with no single primary muscle stay reachable', () =
 // that explains how to do it without saying what to watch out for.
 // =============================================================================
 test('a reviewed exercise is reviewed completely, or not at all', () => {
-  const all = browseExercises({}, 500);
+  const all = CORE_EXERCISES;
   const reviewed = all.filter((e) => e.instructions.length || e.difficulty || e.safetyNotes.length);
   assert.ok(reviewed.length >= 32, `expected the shipped batches, got ${reviewed.length}`);
   for (const e of reviewed) {
@@ -396,14 +396,14 @@ test('a reviewed exercise is reviewed completely, or not at all', () => {
 });
 
 test('difficulty is one of the declared levels', () => {
-  for (const e of browseExercises({}, 500)) {
+  for (const e of CORE_EXERCISES) {
     if (!e.difficulty) continue;
     assert.ok(EXERCISE_DIFFICULTIES.includes(e.difficulty), `${e.id}: "${e.difficulty}" is not a declared level`);
   }
 });
 
 test('reviewed copy is a sentence, not a fragment or an essay', () => {
-  for (const e of browseExercises({}, 500)) {
+  for (const e of CORE_EXERCISES) {
     for (const line of [...e.instructions, ...e.safetyNotes]) {
       assert.ok(line.length >= 20 && line.length <= 160, `${e.id}: "${line}" (${line.length} chars)`);
       assert.match(line, /[.!?]$/, `${e.id}: "${line}" should end as a sentence`);
@@ -415,7 +415,7 @@ test('reviewed copy is a sentence, not a fragment or an essay', () => {
 test('the most-used programme lifts are reviewed first', () => {
   // The batch was picked by real usage across the programme catalogue, not
   // alphabetically — the lifts an athlete actually meets in the cockpit.
-  const byId = new Map(browseExercises({}, 500).map((e) => [e.id, e]));
+  const byId = new Map(CORE_EXERCISES.map((e) => [e.id, e]));
   for (const id of ['back_squat', 'barbell_bench_press', 'conventional_deadlift', 'pull_up']) {
     const e = byId.get(id);
     assert.ok(e, `${id} missing from the catalogue`);

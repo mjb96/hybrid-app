@@ -69,6 +69,10 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   `computeDiagnosticForLift(..., { progressionStyle })` forwards it to
   `suggestProgression`, and the program editor's Progression tab exposes the
   choice. RPE/fatigue/cut/stall holds still take precedence in every style.
+- Exercise catalogue: the original 157 are `CORE_EXERCISES`; `js/exercises/opengym-catalogue.js`
+  adds ~4,280 openGym-authored text entries (AGPL-3.0, no media) imported by
+  `scripts/import-opengym-catalogue.mjs`. Exclude openGym's `textSource: exercisedb`
+  rows and all Gym-visual media; see NOTICE.md and docs/EXERCISE_LIBRARY.md.
 - Equipment profiles: `js/equipment-profiles.js` owns
   `settings.equipmentProfiles` (array of
   `{ id, name, equipment, bandWeights, plateSetup }`) plus
@@ -231,7 +235,7 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   A mid-run `onPositionError` must never tear down the session.
 - No iOS project exists. iOS is OUT OF SCOPE for the current launch push.
 - Exercise metadata: `instructions`/`difficulty`/`safetyNotes` are AUTHORED per
-  exercise via `REVIEWED()` and land a batch at a time (66/157 done, picked by
+  exercise via `REVIEWED()` and land a batch at a time (66/157 core entries done, picked by
   real programme usage). `tests/exercise_catalog.test.js` guards the shape — an
   entry with instructions must have a valid difficulty and a safety note, and
   every line must read as a sentence. Safety notes are a claim shown to someone
