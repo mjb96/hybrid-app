@@ -1609,6 +1609,27 @@
           <label class="hc-data-toggle"><input type="checkbox" data-equipment="ezBar"><span>EZ bar</span></label>
           <label class="hc-data-toggle"><input type="checkbox" data-equipment="treadmill"><span>Treadmill</span></label>
 
+          <div class="settings-plate-setup">
+            <div class="settings-section-label settings-section-label--sub">Plate setup (<span id="settingsPlateSetupUnit">kg</span>)</div>
+            <div class="settings-hint">Per-side hints on barbell lifts use this profile's bar and plates. Each weight unit keeps its own setup.</div>
+            <div class="settings-row">
+              <label class="settings-row-label" for="settingsPlateBar">Bar weight</label>
+              <div class="settings-input-unit-row">
+                <input type="number" class="settings-input settings-input-short" id="settingsPlateBar" min="1" step="0.5" inputmode="decimal">
+                <span class="settings-unit-badge" id="settingsPlateBarUnit">kg</span>
+              </div>
+            </div>
+            <div class="settings-row">
+              <label class="settings-row-label" for="settingsPlates">Plates</label>
+              <input type="text" class="settings-input settings-profile-plates" id="settingsPlates" placeholder="25, 20, 15, 10, 5, 2.5, 1.25" autocomplete="off">
+            </div>
+            <div class="settings-row">
+              <label class="settings-row-label" for="settingsShowPlateHints">Show hints in workouts</label>
+              <label class="settings-switch"><input type="checkbox" id="settingsShowPlateHints"><span class="settings-switch-track"></span></label>
+            </div>
+            <button type="button" class="settings-text-btn" data-action="equipment-plates-reset">Reset to standard plates</button>
+          </div>
+
           <!-- These were hidden as a "power-user knob", which left the athlete
                with no way to see or verify the weights their band sets are
                logged with — and no way to correct them if their bands differ. -->

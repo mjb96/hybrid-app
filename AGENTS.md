@@ -41,12 +41,17 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   deep link cannot reopen a hidden module. Settings must reflect the switches. Data is
   never deleted, and stored history remains readable.
 - Equipment profiles: `js/equipment-profiles.js` owns
-  `settings.equipmentProfiles` (array of `{ id, name, equipment, bandWeights }`)
-  plus `activeEquipmentProfileId`. `settings.equipment` / `settings.bandWeights`
-  are the active profile's projection and remain the fields every other caller
+  `settings.equipmentProfiles` (array of
+  `{ id, name, equipment, bandWeights, plateSetup }`) plus
+  `activeEquipmentProfileId`. `settings.equipment` / `settings.bandWeights` are
+  the active profile's projection and remain the fields every other caller
   reads; always update through the helpers rather than writing them directly.
-  Settings → Equipment switches, adds, renames and deletes profiles (the last
-  profile cannot be deleted). v5→v6 seeds one profile from the legacy kit.
+  `plateSetup` stores `{ kg: { bar, plates[] }, lb: { bar, plates[] } }` per
+  profile. `getActivePlateSetup(state, unit)` feeds `plateHint(total, unit, setup)`;
+  the logger only renders the per-side line when `settings.showPlateHints` is on
+  (default off, preserving the earlier target-line simplification). Settings →
+  Equipment switches, adds, renames and deletes profiles (the last profile cannot
+  be deleted). v5→v6 seeds one profile from the legacy kit.
 - Home decision surface: `index.html` keeps one Today card (`#homeTodayCard`),
   a generated week strip (`js/home/week-strip.js` → `#homeWeekDays`), one coach
   insight from `model.topInsight`, and a 2×2 quick-action grid. The In Focus

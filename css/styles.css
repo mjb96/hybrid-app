@@ -1191,6 +1191,11 @@ select.native-select {
   margin-top: 2px; color: var(--text-muted); font-size: .64rem;
   font-style: normal; font-weight: 550; line-height: 1.35;
 }
+.set-plate-hint {
+  display: block; margin-top: 3px; color: var(--color-green, #10b981);
+  font-size: .68rem; font-weight: 700; letter-spacing: .01em;
+}
+.set-plate-hint[hidden] { display: none; }
 .cct-logall {
   flex: 0 0 auto; font: inherit; font-size: 0.72rem; font-weight: 800;
   padding: 6px 12px; border-radius: 999px; cursor: pointer;
@@ -9455,6 +9460,23 @@ html[data-theme="light"] .recap-next__link {
   opacity: 0.4;
   cursor: not-allowed;
 }
+.settings-plate-setup { padding-bottom: 6px; }
+.settings-profile-plates {
+  width: 220px;
+  max-width: 62%;
+  flex: 0 1 auto;
+}
+.settings-text-btn {
+  background: none;
+  border: none;
+  color: var(--color-blue, #3b82f6);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 10px 2px;
+  min-height: 44px;
+  cursor: pointer;
+}
+.settings-text-btn:active { opacity: 0.55; }
 
 /* Module toggles: entry points disappear, data is never deleted. */
 html[data-module-running="off"] [data-module="running"],

@@ -165,7 +165,7 @@ export function buildExerciseCard({ displaySafeName, safeLiftName, isCompleted, 
     ${historyPanelHTML || `<span class="cockpit-history-line">${historicalLineText}</span>`}
     ${diagnostic.progression && diagnostic.progression.weight ? `
       <div class="cockpit-coach-target">
-        <span class="cct-text"><small>Suggested next · this program run</small><b>${escapeHtml(String(diagnostic.progression.weight))}${escapeHtml(weightUnit)} × ${escapeHtml(String(diagnostic.progression.reps))} reps</b><em>${escapeHtml(String(diagnostic.progression.rationale || ''))}</em></span>
+        <span class="cct-text"><small>Suggested next · this program run</small><b>${escapeHtml(String(diagnostic.progression.weight))}${escapeHtml(weightUnit)} × ${escapeHtml(String(diagnostic.progression.reps))} reps</b><em>${escapeHtml(String(diagnostic.progression.rationale || ''))}</em><span class="set-plate-hint" data-plate-hint hidden></span></span>
         ${isCompleted ? '' : `<button class="cct-logall tactile-scale" data-action="log-all-target">Log all →</button>`}
       </div>
     ` : ''}

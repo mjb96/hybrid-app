@@ -93,6 +93,25 @@ export function closeSettings() {
 // ==========================================
 // SYNC UI → STATE
 // ==========================================
+function _plateUnit(appState) {
+  return appState.settings?.weightUnit === 'lbs' ? 'lb' : 'kg';
+}
+
+function _syncPlateSetupUI(appState) {
+  const unit = _plateUnit(appState);
+  const setup = equipmentProfiles.getActivePlateSetup(appState, unit);
+  const barInput = document.getElementById('settingsPlateBar');
+  if (barInput && document.activeElement !== barInput) barInput.value = setup.bar;
+  const platesInput = document.getElementById('settingsPlates');
+  if (platesInput && document.activeElement !== platesInput) platesInput.value = setup.plates.join(', ');
+  const unitLabel = document.getElementById('settingsPlateSetupUnit');
+  if (unitLabel) unitLabel.textContent = unit;
+  const barUnit = document.getElementById('settingsPlateBarUnit');
+  if (barUnit) barUnit.textContent = unit;
+  const showHints = document.getElementById('settingsShowPlateHints');
+  if (showHints) showHints.checked = appState.settings?.showPlateHints === true;
+}
+
 function _syncSettingsUI() {
   if (!_getState) return;
   const appState = _getState();
@@ -177,6 +196,9 @@ function _syncSettingsUI() {
   if (bl) bl.value = bw.L ?? '';
   if (bm) bm.value = bw.M ?? '';
   if (bh) bh.value = bw.H ?? '';
+
+  // Plate setup for the active profile and current weight unit.
+  _syncPlateSetupUI(appState);
 
   // Rest tiers + auto-timer toggle
   const rp = s.restPeriods || { compound: 180, accessory: 120, isolation: 90 };
@@ -395,6 +417,7 @@ export function setWeightUnit(unit) {
   _setToggleActive('[data-action="set-unit"]', `[data-unit="${unit}"]`);
   const bwUnit = document.getElementById('settingsBodyWeightUnit');
   if (bwUnit) bwUnit.textContent = unit;
+  _syncPlateSetupUI(appState);
   showToast(`Weight unit: ${unit}`);
 }
 
@@ -668,6 +691,42 @@ export function saveBandWeights() {
     H: read('settingsBandHeavy', 30),
   });
   saveStateToLocalStorage(true);
+}
+
+// Persist the active profile's bar/plates for the current weight unit. Invalid
+// input is rejected and the stored setup is shown again rather than saved as a
+// silently empty plate list.
+export function savePlateSetup() {
+  const appState = _ensureSettings();
+  const unit = _plateUnit(appState);
+  equipmentProfiles.ensureEquipmentProfiles(appState);
+  const bar = parseFloat(document.getElementById('settingsPlateBar')?.value);
+  const plates = equipmentProfiles.parsePlateList(document.getElementById('settingsPlates')?.value || '');
+  if (!Number.isFinite(bar) || bar <= 0 || plates.length === 0) {
+    showToast('Enter a bar weight and at least one plate');
+    _syncPlateSetupUI(appState);
+    return;
+  }
+  equipmentProfiles.setActivePlateSetup(appState, unit, { bar, plates });
+  saveStateToLocalStorage(true);
+  _syncPlateSetupUI(appState);
+  showToast(`Plate setup saved (${unit})`);
+}
+
+export function setShowPlateHints(enabled) {
+  const appState = _ensureSettings();
+  appState.settings.showPlateHints = !!enabled;
+  saveStateToLocalStorage(true);
+  showToast(enabled ? 'Plate hints on' : 'Plate hints off');
+}
+
+export function resetPlateSetup() {
+  const appState = _ensureSettings();
+  const unit = _plateUnit(appState);
+  equipmentProfiles.resetActivePlateSetup(appState, unit);
+  saveStateToLocalStorage(true);
+  _syncPlateSetupUI(appState);
+  showToast(`Standard ${unit} plates restored`);
 }
 
 export function toggleModule(id, on) {

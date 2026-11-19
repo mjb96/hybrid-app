@@ -58,11 +58,22 @@ export function formatPlates(breakdown) {
   return s;
 }
 
-/** One-call convenience: target + unit → "per side: 20 + 20". */
-export function plateHint(total, unit = 'kg') {
-  const bar = unit === 'lb' ? LB_BAR : KG_BAR;
-  const plates = unit === 'lb' ? LB_PLATES : KG_PLATES;
-  const bd = computePlateBreakdown(total, bar, plates);
+/**
+ * One-call convenience: target + unit + optional gym setup → "per side: 20 + 20".
+ * `setup` comes from the active equipment profile; omitted callers keep the
+ * standard bar/plate set.
+ * @param {number|string} total
+ * @param {'kg'|'lb'|'lbs'|string} [unit]
+ * @param {{ bar?: number, plates?: number[] }|null} [setup]
+ */
+export function plateHint(total, unit = 'kg', setup = null) {
+  const isLb = unit === 'lb' || unit === 'lbs';
+  const defaultBar = isLb ? LB_BAR : KG_BAR;
+  const defaultPlates = isLb ? LB_PLATES : KG_PLATES;
+  const setupBar = Number(setup?.bar);
+  const bar = Number.isFinite(setupBar) && setupBar > 0 ? setupBar : defaultBar;
+  const plates = Array.isArray(setup?.plates) && setup.plates.length ? setup.plates : defaultPlates;
+  const bd = computePlateBreakdown(Number(total), bar, plates);
   const s = formatPlates(bd);
   return s ? `${s} / side` : '';
 }
