@@ -37,7 +37,7 @@ jobs:
           fetch-depth: 0   # full history so VERSION_CODE = commit count is stable
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '20'
 
