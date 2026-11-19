@@ -73,7 +73,7 @@ import { initOnboarding, shouldShowOnboarding, startOnboarding, handleOnboarding
 import {
   initSettings, openSettings, closeSettings,
   saveName, saveBodyWeight, setWeightUnit,
-  setProgressionIncrement, setDistanceUnit, setTheme, stepCurrentWeek, setAutoAdvanceWeek,
+  setProgressionIncrement, setDistanceUnit, setTheme, setPalette, stepCurrentWeek, setAutoAdvanceWeek,
   saveThresholdPace as saveSettingsThresholdPace,
   exportData, triggerImport, handleImportFile, confirmResetAllData,
   triggerExternalCsvImport, handleExternalCsvFile, toggleModule,
@@ -1202,6 +1202,7 @@ document.addEventListener('click', (e) => {
   else if (action === 'set-unit') setWeightUnit(target.getAttribute('data-unit'));
   else if (action === 'set-dist-unit') setDistanceUnit(target.getAttribute('data-unit'));
   else if (action === 'set-theme')    setTheme(target.getAttribute('data-theme-val'));
+  else if (action === 'set-palette')  setPalette(target.getAttribute('data-palette'));
   else if (action === 'rest-preset') applyRestPreset(target.getAttribute('data-preset'));
   else if (action === 'reset-rest-overrides') resetRestOverrides();
   else if (action === 'set-progression') setProgressionIncrement(parseFloat(target.getAttribute('data-kg')));
@@ -1502,7 +1503,10 @@ const saveState = (suppress) => saveStateToLocalStorage(suppress);
 initEngine(getState, getDays);
 initHome(getState, getSelectedDay, getDays);
 initAnalytics(getState, getDays);
-initBodyweightSheet(renderAnalytics);
+initBodyweightSheet(() => {
+  renderAnalytics();
+  if (document.getElementById('view-home')?.classList.contains('active')) renderHome();
+});
 initDragDrop(getState, getSelectedDay, saveState);
 initWorkout(getState, getSelectedDay, getDays, saveState, switchGlobalAppTab, scheduleLocalSave);
 initSettings(getState);

@@ -21,9 +21,10 @@ openHybrid is a training app for people who lift and run. It keeps the fast logg
 workflow of a strength app while treating running, recovery and load as part of
 the same training picture.
 
-- **Decision-first Home** — one Today card for Start/Resume/Review, a seven-day
-  training strip, one coach insight and quick actions. Deep charts stay in
-  Progress and the secondary In Focus section.
+- **Decision-first Home** — a seven-day "This week" strip first, then a compact
+  Today card for Start/Resume/Review, a bodyweight card with one-tap logging,
+  one coach insight and quick actions. Deep charts stay in Progress; the old
+  In Focus cards are gone.
 - **Strength logging** — routines, set types, RPE/RIR, rest timers, supersets,
   exercise swaps, plate math, estimated 1RM and PRs. A 4,400+ exercise catalogue
   (openGym text, AGPL, no media) backs search and imports. An optional warm-up
@@ -52,6 +53,8 @@ the same training picture.
   fit, exercise swaps and optional per-side plate hints. Hints say when a target
   cannot be built, and suggested loads snap to the weights you record. Switching
   takes one tap in Settings.
+- **Themes** — Midnight is the default icons-derived palette (navy, steel, cyan,
+  lime); Slate, Forest and Ember are alternatives. Light keeps its own colours.
 - **Progression styles** — custom programs can choose Double, Linear or Rep-first
   coaching. The suggested next load follows that program's style while keeping
   RPE, fatigue, cutting and stall safeguards.
@@ -139,7 +142,7 @@ format, not branding.
 | --- | --- |
 | `npm test` | Node unit tests |
 | `npm run verify` | Type check, precache check, workflow gates, unit tests, smoke render |
-| `npm run browser:verify` | 37 Playwright product checks (parallel, 180 s per-check kill with one timeout retry; `-- --serial` to debug) |
+| `npm run browser:verify` | 36 Playwright product checks (parallel, 180 s per-check kill with one timeout retry; `-- --serial` to debug) |
 | `npm run perf:baseline` | Boot performance and bounded-DOM baseline |
 | `npm run precache:gen` | Regenerate the service-worker precache manifest |
 

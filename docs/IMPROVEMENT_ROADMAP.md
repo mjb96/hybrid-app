@@ -1626,6 +1626,16 @@ testable on its own.
 
 ## 12. Session log
 
+- **2026-11-20 — Midnight theme, Home bodyweight card, In Focus removed.**
+  - `js/theme.js` adds the icon palette (Midnight: navy, steel, cyan, lime) as
+    the default for dark/system profiles, with Slate/Forest/Ember alternatives
+    in Settings → Appearance. Schema v10 seeds the palette; Light is untouched.
+  - Home now includes a compact bodyweight card: latest value, 30-day line with
+    goal, weekly trend and a Log button that opens the prefilled sheet. The full
+    graph remains in Progress.
+  - Removed the In Focus carousel and its DOM chart module; Home is a decision
+    surface, Progress owns deep charts. The Run quick action keeps the old
+    `log-run-fab` affordance.
 - **2026-11-20 — Extended exercise catalogue text.**
   - Imported 4,282 openGym-authored exercises with instructions
     (`textSource: "opengym"`, AGPL-3.0) into the searchable/picker catalogue.

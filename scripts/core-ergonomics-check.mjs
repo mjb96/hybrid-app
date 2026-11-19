@@ -141,7 +141,7 @@ try {
 
   for (const width of WIDTHS) {
     const { context, page } = await appPage(width);
-    await inspect(page, `home ${width}px`, ['.bottom-nav .nav-item', '.home-avatar', '.log-run-fab', '.btn-history-link']);
+    await inspect(page, `home ${width}px`, ['.bottom-nav .nav-item', '.home-avatar', '.home-quick-btn[data-action="open-run-logger"]', '.btn-history-link']);
     const navLabels = await page.$$eval('.bottom-nav .nav-item', (items) => items.map((item) => item.textContent.trim()));
     check(navLabels.join('|') === 'Home|Train|Progress|Plans',
       `home ${width}px: primary navigation was ${navLabels.join('|')}`);

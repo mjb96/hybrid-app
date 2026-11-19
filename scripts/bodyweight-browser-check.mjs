@@ -21,8 +21,9 @@ const server = createServer(async (req, res) => {
     const rel = (req.url || '/') === '/' ? 'index.html' : decodeURIComponent((req.url || '').split('?')[0]).replace(/^\//, '');
     const file = path.resolve(ROOT, rel);
     if (!file.startsWith(`${ROOT}${path.sep}`) && file !== path.join(ROOT, 'index.html')) throw new Error('unsafe');
+    const body = await readFile(file);
     res.writeHead(200, { 'content-type': MIME[path.extname(rel)] || 'application/octet-stream' });
-    res.end(await readFile(file));
+    res.end(body);
   } catch { res.writeHead(404); res.end('not found'); }
 });
 await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
@@ -65,6 +66,13 @@ try {
   page.on('pageerror', (error) => errors.push(String(error)));
   await page.goto(base, { waitUntil: 'networkidle' });
   await page.waitForSelector('#homeWeekStrip');
+  await page.waitForSelector('#homeBodyweightCard .home-bw__spark');
+  ok(/85\.9 kg/.test(await page.locator('#homeBodyweightCard').innerText()), 'Home shows the latest weigh-in');
+  await page.click('#homeBodyweightCard [data-action="open-bw-sheet"]');
+  await page.waitForSelector('#bwSheet.active');
+  ok((await page.locator('#bwSheetWeight').inputValue()) === '85.9', 'Home Log opens the prefilled sheet');
+  await page.click('#bwSheet .sheet-close-btn');
+  await page.waitForFunction(() => !document.getElementById('bwSheet')?.classList.contains('active'));
 
   await page.click('.nav-item[data-target="analytics"]');
   await page.waitForSelector('#view-analytics.active');
@@ -90,7 +98,7 @@ try {
 
   ok(/Last 85\.9 kg/.test(await page.locator('#bwLastHint').innerText()), 'the log button shows the last weight');
 
-  await page.click('[data-action="open-bw-sheet"]');
+  await page.click('#analytics-bodyweight [data-action="open-bw-sheet"]');
   await page.waitForSelector('#bwSheet.active');
   ok((await page.locator('#bwSheetWeight').inputValue()) === '85.9', 'the sheet prefills the last weight');
   ok((await page.locator('#bwSheetDate').inputValue()) === '2026-11-19', 'the sheet opens on today');
@@ -105,7 +113,7 @@ try {
   ok(/85\.8 kg/.test(await page.locator('#bwSummary').innerText()), 'saving updates the latest weight');
   await page.waitForFunction(() => !document.getElementById('bwSheet')?.classList.contains('active'));
 
-  await page.click('[data-action="open-bw-sheet"]');
+  await page.click('#analytics-bodyweight [data-action="open-bw-sheet"]');
   await page.waitForSelector('#bwSheet.active');
   ok((await page.locator('#bwSheetRecent .bw-sheet-recent-row').count()) >= 1, 'recent weigh-ins are one tap away');
   const deleteDate = await page.locator('[data-action="delete-bw-row"]').first().getAttribute('data-date');

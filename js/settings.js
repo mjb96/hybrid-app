@@ -12,6 +12,7 @@ import { todayKey } from './dates.js';
 import { parseWorkoutCsv, applyWorkoutCsvImport, CSV_IMPORT_LIMITS } from './portability/import-workout-csv.js';
 import { moduleEnabled, setModuleEnabled, applyModuleVisibility } from './modules.js';
 import * as equipmentProfiles from './equipment-profiles.js';
+import { applyPalette, normalizePalette } from './theme.js';
 import { looksLikeBodyCsv, parseBodyCsv, applyBodyweightCsvImport } from './portability/import-body-csv.js';
 import { resolveExercise, EXERCISES } from './exercises/catalog.js';
 import { exportResultMessage, saveTextExport } from './portability/export-service.js';
@@ -214,6 +215,7 @@ function _syncSettingsUI() {
   _setToggleActive('[data-action="set-dist-unit"]',   `[data-unit="${s.distanceUnit || 'km'}"]`);
   _setToggleActive('[data-action="set-progression"]', `[data-kg="${s.progressionIncrement || 2.5}"]`);
   _setToggleActive('[data-action="set-theme"]',       `[data-theme-val="${s.theme || 'dark'}"]`);
+  _setToggleActive('[data-action="set-palette"]',     `[data-palette="${normalizePalette(s.palette)}"]`);
   _setToggleActive('[data-action="set-fitness-goal"]',`[data-goal="${s.fitnessGoal || 'hybrid'}"]`);
   _setToggleActive('[data-action="set-weight-goal"]',`[data-weight-goal="${s.weightGoal || 'maintain'}"]`);
   _setToggleActive('[data-action="set-fitness-level"]',`[data-level="${s.fitnessLevel || 'intermediate'}"]`);
@@ -510,6 +512,16 @@ function _applyTheme(mode) {
   } else {
     document.documentElement.dataset.theme = mode;
   }
+}
+
+export function setPalette(id) {
+  const appState = _ensureSettings();
+  const palette = normalizePalette(id);
+  appState.settings.palette = palette;
+  saveStateToLocalStorage(true);
+  applyPalette(document.documentElement, palette);
+  _setToggleActive('[data-action="set-palette"]', `[data-palette="${palette}"]`);
+  showToast(`${palette.charAt(0).toUpperCase() + palette.slice(1)} palette`);
 }
 
 export function setDistanceUnit(unit) {
@@ -1297,6 +1309,7 @@ export function applySettingsOnBoot(appState) {
     saveStateToLocalStorage(true);
   });
   _applyTheme(s.theme || 'dark');
+  applyPalette(document.documentElement, s.palette);
 
   // Re-apply system theme if OS preference changes at runtime
   if (s.theme === 'system') {
