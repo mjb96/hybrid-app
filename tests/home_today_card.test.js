@@ -109,6 +109,12 @@ test('a deliberately finished session becomes a review action', () => {
   });
   assert.equal(card.state, 'completed');
   assert.deepEqual(card.primary, { action: 'open-today-summary', day: 'mon', label: 'Review workout' });
+  const html = todayCardHTML(card);
+  assert.match(html, /session-summary/);
+  assert.match(html, /session-map/);
+  assert.match(html, /600 kg/);
+  assert.match(html, /Front body map/);
+  assert.equal((html.match(/id="homePrimaryCta"/g) || []).length, 1);
 });
 
 test('rest day recommends recovery instead of a workout', () => {

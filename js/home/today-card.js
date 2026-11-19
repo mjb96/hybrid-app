@@ -6,6 +6,7 @@ import { dateKey, todayProgramDay } from '../dates.js';
 import { evaluateSessionCompletion, classifyPlannedSession } from '../workout/completion-policy.js';
 import { activeOneOffSession } from '../workout/one-off-session.js';
 import { explicitSessionStatus, SESSION_STATUS } from '../workout/session-status.js';
+import { buildSessionSummary, sessionSummaryHTML } from './session-summary.js';
 
 const DAY_NAMES = Object.freeze({
   mon: 'Monday', tue: 'Tuesday', wed: 'Wednesday', thu: 'Thursday',
@@ -109,6 +110,14 @@ function scoreSupport(score) {
   };
 }
 
+function completedMeta(dayLabel, summary) {
+  const finished = summary?.finishedAt ? new Date(summary.finishedAt) : null;
+  const time = finished && !Number.isNaN(finished.getTime())
+    ? finished.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    : '';
+  return [dayLabel, time ? `finished ${time}` : 'workout logged'].filter(Boolean).join(' · ');
+}
+
 function baseModel({ state, program, model, briefing, score, now, offline, tz }) {
   const todayDay = todayProgramDay(now, tz);
   return {
@@ -127,6 +136,7 @@ function baseModel({ state, program, model, briefing, score, now, offline, tz })
     score: scoreSupport(score),
     offline: !!offline,
     week: String(state?.currentWeek || '1'),
+    weightUnit: state?.settings?.weightUnit === 'lbs' ? 'lbs' : 'kg',
     programName: program?.name || program?.title || '',
     model,
   };
@@ -188,11 +198,12 @@ export function buildTodayCardModel(options) {
     const session = programSession(program, todayCompleted.day);
     card.state = 'completed';
     card.tone = 'complete';
-    card.eyebrow = 'Completed today';
+    card.eyebrow = 'Completed';
     card.day = todayCompleted.day;
     card.dayLabel = DAY_NAMES[todayCompleted.day] || card.dayLabel;
     card.title = session.title;
-    card.meta = todayCompleted.completion.progressLabel || 'Workout logged';
+    card.summary = buildSessionSummary(state, weekKey, todayCompleted.day);
+    card.meta = completedMeta(card.dayLabel, card.summary);
     card.guidance = 'Today’s work is safely logged. Recover now; the details remain editable.';
     card.primary = { action: 'open-today-summary', day: todayCompleted.day, label: 'Review workout' };
     card.secondary = { action: 'open-program-workout-picker', label: 'Choose another workout' };
@@ -238,7 +249,9 @@ export function buildTodayCardModel(options) {
   if (todayCompletion.finished) {
     card.state = 'completed';
     card.tone = 'complete';
-    card.eyebrow = 'Completed today';
+    card.eyebrow = 'Completed';
+    card.summary = buildSessionSummary(state, weekKey, card.day);
+    card.meta = completedMeta(card.dayLabel, card.summary);
     card.guidance = 'Today’s work is safely logged. Recover now; the details remain editable.';
     card.primary = { action: 'open-today-summary', day: card.day, label: 'Review workout' };
     card.secondary = { action: 'open-program-workout-picker', label: 'Choose another workout' };
@@ -320,6 +333,9 @@ export function todayCardHTML(card, options = {}) {
   const classes = ['today-card', `today-card--${esc(card.tone)}`];
   if (collapsible) classes.push('is-collapsible');
   if (collapsed) classes.push('is-collapsed');
+  const summary = card.state === 'completed' && card.summary
+    ? sessionSummaryHTML(card.summary, { weightUnit: card.weightUnit })
+    : '';
 
   return `<article class="${classes.join(' ')}" data-today-state="${esc(card.state)}" aria-labelledby="homeTodayTitle">
     <div class="today-card__head">
@@ -328,6 +344,7 @@ export function todayCardHTML(card, options = {}) {
       <p class="today-card__meta">${esc(card.meta)}</p>
       ${toggle}
     </div>
+    ${summary}
     <div class="today-card__detail" id="homeTodayCardDetail">
       <p class="today-card__guidance">${esc(card.guidance)}</p>
       ${offline}

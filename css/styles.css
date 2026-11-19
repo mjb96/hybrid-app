@@ -1963,6 +1963,39 @@ body.sheet-scroll-locked {
   gap: 10px;
   margin-bottom: 11px;
 }
+.home-week__nav {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+.home-week__titles { min-width: 0; }
+.home-week__nav-btn {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--border-default);
+  border-radius: 11px;
+  color: var(--text-secondary);
+  background: color-mix(in srgb, var(--text-muted, #94a3b8) 6%, transparent);
+  font: inherit;
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.home-week__nav-btn:active { transform: scale(.96); }
+.home-week__nav-btn:disabled { opacity: .32; cursor: default; }
+.home-week__nav-btn:focus-visible {
+  outline: 2px solid var(--color-cyan, #22d3ee);
+  outline-offset: 2px;
+}
+.home-week__range {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .home-week__eyebrow,
 .home-insight__eyebrow {
   display: block;
@@ -1993,7 +2026,7 @@ body.sheet-scroll-locked {
   min-width: 0;
   display: grid;
   grid-template-columns: repeat(7, minmax(44px, 1fr));
-  gap: 5px;
+  gap: 3px;
   overflow-x: auto;
   padding-bottom: 2px;
   scrollbar-width: none;
@@ -2303,6 +2336,152 @@ html[data-theme="light"] .home-insight { background: linear-gradient(135deg, rgb
   white-space: nowrap;
 }
 
+/* ── Completed session summary + anatomical heat map ─────────────────────── */
+.session-summary {
+  margin: 12px 0 0;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--color-green, #10b981) 15%, var(--border-default));
+  border-radius: 14px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-green, #10b981) 7%, transparent), transparent 62%);
+}
+.session-summary__pr {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 8px;
+  padding: 4px 8px;
+  border: 1px solid color-mix(in srgb, var(--color-amber, #f59e0b) 28%, transparent);
+  border-radius: 999px;
+  color: var(--color-amber, #f59e0b);
+  background: color-mix(in srgb, var(--color-amber, #f59e0b) 8%, transparent);
+  font-size: .6rem;
+  font-weight: 850;
+}
+.session-summary__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(78px, 1fr));
+  gap: 7px;
+}
+.session-summary__stat {
+  padding: 8px 9px;
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--bg-deep, #080f1a) 40%, transparent);
+}
+.session-summary__stat b {
+  display: block;
+  color: var(--text-primary);
+  font-size: .86rem;
+  letter-spacing: -.01em;
+}
+.session-summary__stat span {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-faint, var(--text-muted));
+  font-size: .5rem;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.session-map {
+  margin: 10px 0 0;
+  padding: 9px 6px 5px;
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--bg-deep, #080f1a) 30%, transparent);
+}
+.session-map__views {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  align-items: end;
+}
+.session-map__view { text-align: center; min-width: 0; }
+.session-map__label {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--text-faint, var(--text-muted));
+  font-size: .48rem;
+  font-weight: 800;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+.session-map__view svg {
+  display: block;
+  width: 96px;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+.session-map__legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  margin-top: 5px;
+  color: var(--text-faint, var(--text-muted));
+  font-size: .5rem;
+  font-weight: 700;
+}
+.session-map__legend span { display: inline-flex; align-items: center; gap: 4px; }
+.bm-swatch { width: 7px; height: 7px; border-radius: 2px; display: inline-block; }
+.session-map__credit {
+  margin: 5px 0 0;
+  color: var(--text-faint, var(--text-muted));
+  font-size: .46rem;
+  text-align: center;
+  opacity: .7;
+}
+.session-map__credit a { color: inherit; text-decoration: none; }
+
+.session-summary__muscles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 9px;
+}
+.session-summary__chip {
+  padding: 4px 8px;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  color: var(--text-secondary);
+  background: color-mix(in srgb, var(--text-muted, #94a3b8) 7%, transparent);
+  font-size: .58rem;
+  font-weight: 700;
+}
+.session-summary__chip.is-primary {
+  color: color-mix(in srgb, #ff7a1a 72%, var(--text-primary));
+  border-color: color-mix(in srgb, #ff7a1a 30%, transparent);
+  background: color-mix(in srgb, #ff7a1a 8%, transparent);
+}
+.session-summary__body {
+  margin: 9px 0 0;
+  color: var(--text-muted);
+  font-size: .64rem;
+}
+.session-summary__body b { color: var(--text-primary); }
+
+/* Body-map geometry. The fill is only the "not trained" base; each heat class
+   carries the intensity. Class names are prefixed so they cannot collide with
+   the generic utility classes elsewhere. */
+.bm-base, .bm-h1, .bm-h2, .bm-h3, .bm-h4 {
+  stroke: var(--bg-deep, #080f1a);
+  stroke-width: .22;
+  stroke-linejoin: round;
+}
+.bm-base { fill: #22364f; }
+.bm-h1 { fill: #ff7a1a; fill-opacity: .28; }
+.bm-h2 { fill: #ff7a1a; fill-opacity: .5; }
+.bm-h3 { fill: #ff7a1a; fill-opacity: .74; }
+.bm-h4 { fill: #ff7a1a; fill-opacity: .96; }
+.bm-swatch.bm-base { background: #22364f; }
+.bm-swatch.bm-h1 { background: rgba(255,122,26,.28); }
+.bm-swatch.bm-h2 { background: rgba(255,122,26,.5); }
+.bm-swatch.bm-h3 { background: rgba(255,122,26,.74); }
+.bm-swatch.bm-h4 { background: #ff7a1a; }
+
 html[data-theme="light"] .today-card {
   border-color: color-mix(in srgb, var(--today-accent) 18%, #e2e8f0);
   background:
@@ -2315,6 +2494,12 @@ html[data-theme="light"] .home-week .today-card {
   background: transparent;
   box-shadow: none;
 }
+html[data-theme="light"] .bm-base { fill: #dbe4ef; }
+html[data-theme="light"] .bm-base,
+html[data-theme="light"] .bm-h1,
+html[data-theme="light"] .bm-h2,
+html[data-theme="light"] .bm-h3,
+html[data-theme="light"] .bm-h4 { stroke: #fff; }
 
 /* dvh tracks the CURRENT visual viewport; vh tracks the largest one (URL bar
    hidden), so the vh line alone can size this picker taller than the screen and

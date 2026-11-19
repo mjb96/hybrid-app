@@ -168,3 +168,19 @@ SOFTWARE.
 
 Regenerate with `scripts/import-opengym-catalogue.mjs`; see
 [`docs/EXERCISE_LIBRARY.md`](docs/EXERCISE_LIBRARY.md).
+
+## Body Muscles — Apache-2.0 (session body-map geometry)
+
+`js/home/body-paths.js` vendors the static SVG path geometry from
+[Body Muscles](https://github.com/vulovix/body-muscles) for the session muscle
+heat map.
+
+Copyright 2024 Ivan Vulović.
+
+Licensed under the Apache License, Version 2.0. The full licence text is in
+[`LICENSES/Apache-2.0.txt`](LICENSES/Apache-2.0.txt).
+
+Modifications: only the static path data is used; the library runtime is not
+included. openHybrid crops the shared source coordinate space into separate
+front and back views and recolours every region with its own credit-weighted
+heat model. No openGym or Gym-visual media is used.
