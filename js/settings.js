@@ -42,15 +42,7 @@ const REST_PRESETS = {
 };
 import { showToast } from './state.js';
 import { rearmReminder, notificationsGranted } from './notifications.js';
-import { getCloudUser, signOutSupabase, deleteAccount as authDeleteAccount } from './state/auth.js';
 import { confirmModal } from './ui/confirm-modal.js';
-import {
-  hasCloudPullSnapshot,
-  recoverCloudPullSnapshot,
-  hasCloudOverwriteSnapshot,
-  cloudOverwriteSnapshotInfo,
-  recoverCloudOverwriteSnapshot,
-} from './state/import-export.js';
 import { isHealthBridgeAvailable, getHealthAvailability, connectAndSync, syncHealthConnect, describeFieldStatus } from './health/health-bridge.js';
 import { HEALTH_FIELDS, normalizeSyncFields, selectedFieldIds, isSupportedField } from './health/health-fields.js';
 import {
@@ -101,28 +93,6 @@ function _syncSettingsUI() {
   const appState = _getState();
   const s = appState.settings || {};
   void _syncAutomaticBackupUI();
-
-  // Show the pre-sync recovery affordance only when a recoverable snapshot of
-  // this device's data exists (i.e. a cloud copy overwrote it on sign-in).
-  const recoverBtn  = document.getElementById('settingsRecoverSnapshotBtn');
-  const recoverHint = document.getElementById('settingsRecoverSnapshotHint');
-  const canRecover  = hasCloudPullSnapshot();
-  if (recoverBtn)  recoverBtn.style.display  = canRecover ? '' : 'none';
-  if (recoverHint) recoverHint.style.display = canRecover ? '' : 'none';
-
-  const cloudRecoverBtn = document.getElementById('settingsRecoverCloudOverwriteBtn');
-  const cloudRecoverHint = document.getElementById('settingsRecoverCloudOverwriteHint');
-  const canRecoverCloud = hasCloudOverwriteSnapshot();
-  if (cloudRecoverBtn) cloudRecoverBtn.style.display = canRecoverCloud ? '' : 'none';
-  if (cloudRecoverHint) {
-    cloudRecoverHint.style.display = canRecoverCloud ? '' : 'none';
-    if (canRecoverCloud) {
-      const info = cloudOverwriteSnapshotInfo();
-      const s = info?.summary;
-      const latest = s?.latestDate ? ` Latest training: ${s.latestDate}.` : '';
-      cloudRecoverHint.textContent = `Protected before this device replaced newer cloud data.${latest}`;
-    }
-  }
 
   const nameInput = document.getElementById('settingsNameInput');
   if (nameInput) nameInput.value = s.name || '';
@@ -213,8 +183,6 @@ function _syncSettingsUI() {
     satEl.value = `${String(sat.hour).padStart(2, '0')}:${String(sat.minute).padStart(2, '0')}`;
   }
 
-  // Account / cloud sync status
-  _syncAccountUI();
 
   // Notification status text
   const notifStatusEl = document.getElementById('settingsNotifStatus');
@@ -615,81 +583,6 @@ export function saveBandWeights() {
   saveStateToLocalStorage(true);
 }
 
-export function signOut() {
-  signOutSupabase();
-}
-
-// Guard against a double-tap firing two deletions concurrently.
-let _deleteInFlight = false;
-
-export async function deleteAccount() {
-  if (_deleteInFlight) return;
-
-  const ok = await confirmModal({
-    title: 'Delete your account?',
-    message: 'This permanently deletes your account and all synced app data. JSON files already exported or written to your automatic backup folder remain yours; delete those files separately if you do not want to keep them.\n\nConsider exporting your data first (Settings → Export).',
-    confirmLabel: 'Delete account', danger: true,
-  });
-  if (!ok) return;
-
-  _deleteInFlight = true;
-  const btn = document.getElementById('settingsDeleteAccountBtn');
-  if (btn) btn.disabled = true;
-
-  showToast('Deleting account…');
-  try {
-    const res = await authDeleteAccount();
-    if (res.ok) {
-      // Only reached when the auth identity is confirmed removed.
-      showToast('Account and all data deleted.');
-      setTimeout(() => { try { window.location.reload(); } catch (_) {} }, 900);
-      return; // keep the button disabled through the reload
-    }
-
-    // Honest, non-technical messaging for each partial/failed outcome. When the
-    // login still exists we keep the user signed in so a retry can finish.
-    const msg =
-      res.reason === 'not-signed-in' ? 'You are not signed in.'
-      : res.reason === 'offline' ? 'You are offline. Reconnect and try again to delete your account.'
-      : res.reason === 'function-unavailable'
-        ? (res.dataDeleted
-            ? 'Your data was removed, but your account login could not be deleted yet. Please try again shortly.'
-            : 'Account deletion is temporarily unavailable. Please try again shortly.')
-      : /* auth-delete-failed */
-        (res.dataDeleted
-          ? 'Your data was removed, but we could not fully delete your account. Please try again.'
-          : 'We could not delete your account. Please try again.');
-    showToast(msg, true);
-  } catch (_) {
-    showToast('We could not delete your account. Please try again.', true);
-  } finally {
-    _deleteInFlight = false;
-    if (btn) btn.disabled = false;
-  }
-}
-
-// ── Account / cloud status UI ─────────────────────────────────────────────────
-async function _syncAccountUI() {
-  const emailEl   = document.getElementById('settingsAccountEmail');
-  const signOutBtn = document.getElementById('settingsSignOutBtn');
-  if (!emailEl) return;
-
-  const deleteBtn = document.getElementById('settingsDeleteAccountBtn');
-  const signInBtn = document.getElementById('settingsSignInBtn');
-  const user = await getCloudUser();
-  if (user?.email) {
-    emailEl.textContent = user.email;
-    if (signInBtn)  signInBtn.style.display  = 'none';
-    if (signOutBtn) signOutBtn.style.display = 'block';
-    if (deleteBtn)  deleteBtn.style.display  = 'block';
-  } else {
-    emailEl.textContent = 'Local only — not signed in';
-    if (signInBtn)  signInBtn.style.display  = 'block';
-    if (signOutBtn) signOutBtn.style.display = 'none';
-    if (deleteBtn)  deleteBtn.style.display  = 'none';
-  }
-}
-
 export function saveThresholdPace() {
   const val = document.getElementById('settingsThresholdPace')?.value?.trim() || '';
   const parts = val.split(':');
@@ -763,37 +656,6 @@ export async function turnOffAutomaticBackup() {
 
 export function triggerImport() {
   document.getElementById('settingsImportFile')?.click();
-}
-
-// Recover the pre-sync snapshot of this device's data (see import-export.js).
-// Confirmed because it overwrites the currently-loaded (cloud) state.
-export async function recoverPreSyncSnapshot() {
-  if (!hasCloudPullSnapshot()) { showToast('No recoverable snapshot found.', true); return; }
-  const ok = await confirmModal({
-    title: 'Recover this device’s data?',
-    message: 'This replaces the currently loaded data with what was on this device before it last synced from the cloud, and pushes it back up.',
-    confirmLabel: 'Recover',
-  });
-  if (!ok) return;
-  if (await recoverCloudPullSnapshot()) _syncSettingsUI();
-}
-
-export async function recoverPreOverwriteCloudSnapshot() {
-  if (!hasCloudOverwriteSnapshot()) { showToast('No protected cloud snapshot found.', true); return; }
-  const info = cloudOverwriteSnapshotInfo();
-  const s = info?.summary;
-  const detail = [
-    s?.strengthDays ? `${s.strengthDays} strength day${s.strengthDays === 1 ? '' : 's'}` : null,
-    s?.runs ? `${s.runs} run${s.runs === 1 ? '' : 's'}` : null,
-    s?.latestDate ? `latest ${s.latestDate}` : null,
-  ].filter(Boolean).join(' · ');
-  const ok = await confirmModal({
-    title: 'Recover the protected cloud copy?',
-    message: `This restores the cloud data saved immediately before this device replaced it${detail ? ` (${detail})` : ''}. Your current state is backed up first.`,
-    confirmLabel: 'Recover cloud copy',
-  });
-  if (!ok) return;
-  if (await recoverCloudOverwriteSnapshot()) _syncSettingsUI();
 }
 
 export function handleImportFile(file) {

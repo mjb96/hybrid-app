@@ -7,7 +7,7 @@
 //  - sendDefaultPii: false, and beforeSend strips request/user data so we never
 //    ship emails, IPs, or the app's state blob.
 //  - beforeBreadcrumb redacts network breadcrumb URLs to their path (drops
-//    query strings / the Supabase user_id) so breadcrumbs can't leak identifiers.
+//    query strings / account ids) so breadcrumbs can't leak identifiers.
 //  - Errors only (no performance tracing) to minimise data collected.
 // =============================================================================
 

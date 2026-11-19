@@ -202,23 +202,6 @@ try {
   await onboarding.keyboard.press('Escape');
   check(await onboarding.locator('#onboardingOverlay').evaluate((el) => el.classList.contains('active')), 'required onboarding was dismissed by Escape');
 
-  // Auth opens above required onboarding. It used to inherit `inert` from the
-  // onboarding modal, leaving a visible sign-in screen that accepted no input.
-  const authTrigger = onboarding.locator('#onboardingOverlay [data-action="open-auth"]');
-  await authTrigger.click();
-  await onboarding.waitForSelector('#authOverlay[aria-hidden="false"]');
-  check(await onboarding.getAttribute('#authOverlay .auth-card', 'aria-modal') === 'true', 'auth did not acquire modal semantics');
-  check(!(await onboarding.locator('#authOverlay').evaluate((el) => el.hasAttribute('inert'))), 'open auth remained inert');
-  check(await onboarding.locator('#loginEmail').evaluate((el) => document.activeElement === el), 'auth did not focus email input');
-  await onboarding.fill('#loginEmail', 'athlete@example.com');
-  check(await onboarding.inputValue('#loginEmail') === 'athlete@example.com', 'auth email input was not editable');
-  await onboarding.click('[data-auth-tab="signup"]');
-  check(await onboarding.locator('#authPanelSignup').isVisible(), 'create-account tab did not open');
-  await onboarding.click('[data-action="close-auth"]');
-  await onboarding.waitForFunction(() => document.getElementById('authOverlay')?.getAttribute('aria-hidden') === 'true');
-  check(await authTrigger.evaluate((el) => document.activeElement === el), 'closing auth did not restore focus to its trigger');
-  check(await onboarding.locator('#onboardingOverlay').evaluate((el) => el.classList.contains('active')), 'closing auth dismissed onboarding');
-
   check(await onboarding.locator('[data-action="ob-import-backup"]').isVisible(), 'offline backup restore is not available from welcome');
   check(await onboarding.locator('#onboardingImportFile').getAttribute('accept') === '.json,application/json', 'welcome restore does not constrain the backup file type');
   await onboarding.click('[data-action="ob-start-new"]');

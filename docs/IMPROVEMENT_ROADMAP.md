@@ -239,7 +239,7 @@ surfaces, not implementation-file ownership.
 | **Activities list/detail** | Find exact logged strength, run and walk evidence; edit/delete a record | Filtered list, same-day separate runs, detail, route, empty history, missing route, delete with Undo | **Train** for recent activity; linked evidence also remains reachable from **Progress**. |
 | **Session recap** | Review a just-finished or historical session | Completed work, comparisons, notable progress, share, route; sparse/partial session states | **Train**, with deep links into Progress evidence. |
 | **Quick activity** | Track a run or walk now | GPS acquisition, live time/distance/pace, pause/resume, finish/cancel, permission/background/replay failures | **Train**. Phase 2C will give this surface parity with the strength cockpit. |
-| **Onboarding and auth/restore** | Start safely with a new profile or recover existing work | Restore-first gateway, name, goal, experience/frequency/recovery/equipment, recommended plan, optional units/bodyweight, notification choice, provisional score; sign-in/import failure paths | **First use**. New setup must never obscure restore options or trap a permission denial. |
+| **Onboarding and restore** | Start safely with a new profile or recover existing work | Restore-first gateway, name, goal, experience/frequency/recovery/equipment, recommended plan, optional units/bodyweight, notification choice, provisional score; import failure paths | **First use**. New setup must never obscure restore options or trap a permission denial. |
 
 #### Visible hierarchy classification
 
@@ -259,7 +259,7 @@ surfaces, not implementation-file ownership.
 | **Training** | Today summary, manual run logger, finish review, add exercise, exercise detail, swap exercise, clear today, workout picker, Quick Start, workout preview, rest/plate/set action disclosures | Escape/Android Back/visible Close where dismissible; commit current inputs before navigation; return focus and scroll to the trigger. Clear/discard names the exact workout and must not imply account deletion. |
 | **Plans** | Create programme, activation/start-week choice, compare, builder exercise picker, programme-text fallback, programme rating | Return to the exact library/detail/builder context. Starting/restarting archives prior runs; it never edits catalogue data. |
 | **Progress/profile** | Fasting detail, PR goal, settings, avatar/photo choice, celebration/share | Dismissal returns to the originating card. Optional or unavailable integrations remain skippable. |
-| **Data and account safety** | Generic confirm, auth, sync conflict choose-device-version, migration recovery, import preview, pre-sync/pre-overwrite recovery, reset all data, delete account | No silent default. Explain local/cloud scope, retain recovery snapshot where supported, and require an explicit destructive verb. |
+| **Data safety** | Generic confirm, migration recovery, import preview, reset all data, Android state mirror | No silent default. Explain local scope, keep the durable mirror, and require an explicit destructive verb. |
 | **System feedback** | Offline status, toast, loading copy, GPS acquisition/quality, Health Connect permission, service-worker update | Loading, offline, permission-denied, partial success and failure use different language; logging remains locally safe. |
 
 #### Duplicate and competing ownership
@@ -285,7 +285,7 @@ direct usability observation.
 
 | Journey | Current shortest path and completion | Baseline | Recovery and principal friction | Intended owner |
 | --- | --- | --- | --- | --- |
-| **First use → first useful session** | Restore/new gateway → name → goal → experience/equipment → choose recommended plan → optional setup → notification choice → score reveal → Home → Today | 8–10 taps after text entry; 7 decision surfaces | Back exists through setup; import/sign-in are available before creating empty data. It is capable but long, and the provisional score delays first training. | First use → Home → Train |
+| **First use → first useful session** | Restore/new gateway → name → goal → experience/equipment → choose recommended plan → optional setup → notification choice → score reveal → Home → Today | 8–10 taps after text entry; 7 decision surfaces | Back exists through setup; import is available before creating empty data. It is capable but long, and the provisional score delays first training. | First use → Home → Train |
 | **Open → planned start/resume** | Home → Start/Resume today | 1 tap; 0 intermediate decisions | Strong path. Rest/completed/unresolved-day states must never reuse the wrong action. | Home → Train |
 | **Choose another strength session** | Home → Choose another workout → programme/empty/copy-past choice | 2 taps plus session choice; 1 sheet | Choice sheet is safe and activation-aware, but “planned”, “empty” and “copy past” need clearer hierarchy. | Home/Train |
 | **Quick run/walk/fast** | Train → Quick start → mode | 2 taps when already in Train; 3 from another destination | The four-tab prototype removes a competing global Start destination but adds one tap from Home. A future Train landing should expose common modes without crowding the active cockpit. | Train |
@@ -1066,7 +1066,7 @@ shipped controls underneath the Android status bar for months.
 - **DONE 2026-08-06:** `--safe-top` / `--safe-bottom` tokens
   (`css/styles.css`, beside `--touch-target`) consult BOTH inset sources, and
   every top-anchored surface pads from them: `.view-container` (all five
-  destinations), `.modal-overlay`, `.ob-step`, `.auth-overlay`,
+  destinations), `.modal-overlay`, `.ob-step`,
   `.migration-recovery`, `.week-nav-bar`, plus bottom clearance on
   `.bottom-sheet`, `.profile-customiser-sheet` and `.fasting-sheet`.
 - **DONE 2026-08-06:** `scripts/safe-area-browser-check.mjs` publishes a
@@ -1560,7 +1560,7 @@ even while release work is parked.
 | Plans | 58-program catalogue, an active-plan lead that agrees with Home about the next session, fit-based recommendations with stated reasons, comparison, details, timeline, editable personal copies, builder |
 | Exercises | 157 canonical exercises, 66 with reviewed instructions/difficulty/safety notes, aliases, equipment/muscle data, filters and details |
 | Progress | Calendar-week strength/running, exact evidence, load/readiness, weekly/monthly review, Gym/Run/Recovery detail |
-| History/data | Activity history, exact deletion/undo, activation isolation, export/restore, backups, optional cloud sync/conflict UI |
+| History/data | Activity history, exact deletion/undo, activation isolation, export/restore, backups, Android state mirror |
 | Quality | 1,800 tests, typecheck, smoke, precache/workflow gates, 32 responsive/accessibility browser checks |
 
 ## 11. Immediate execution queue
@@ -1625,6 +1625,19 @@ Avoid parallel redesign of every screen. Each step should be usable and
 testable on its own.
 
 ## 12. Session log
+
+- **2026-11-19 — Supabase removed; the app is local-only.**
+  - Deleted the Supabase client, auth/sync/conflict modules, cloud recovery
+    snapshots, account UI, edge function and RLS SQL. `package.json` no longer
+    carries `@supabase/supabase-js`; the vendored runtime is Sentry only.
+  - `/api`-free: onboarding now offers only a JSON backup restore; Settings has
+    no account/cloud section; the state mirror and JSON/CSV export/backup are
+    the persistence story.
+  - Privacy policy, Play Data Safety guide, store listing, threat model and
+    versioning docs updated for the local-only posture.
+  - Verification: 1,771 tests, typecheck, precache, smoke; browser checks to be
+    re-run with the UI removal.
+  - Next: OpenGym history import.
 
 - **2026-11-19 — Android state mirror for offline durability.**
   - Added `StateMirrorBridge` and `StateMirrorSafe`: the Android shell now
@@ -2797,7 +2810,7 @@ testable on its own.
     the detail that turned this from a polish item into the audit's P1.
   - Fixed as `--safe-top` / `--safe-bottom` tokens beside `--touch-target`,
     consumed by `.view-container`, `.modal-overlay`, `.ob-step` (first run),
-    `.auth-overlay`, `.migration-recovery` (the route out of a failed
+    `.migration-recovery` (the route out of a failed
     migration), `.week-nav-bar`, and bottom clearance on `.bottom-sheet`,
     `.profile-customiser-sheet` and `.fasting-sheet`. Every site keeps its
     pre-token declaration FIRST as a fallback, so an engine that cannot resolve

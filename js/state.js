@@ -11,18 +11,9 @@ import { getWeekModifier } from './schema.js';
 export { showToast } from './toast.js';
 import { showToast } from './toast.js';
 import { recomputeLoadMetrics } from './brain/load_models.js';
-import { getSupabaseClient } from './state/supabase.js';
-import { initAuth, loginToSupabase, signUpToSupabase, checkActiveSession } from './state/auth.js';
 import { initImportExport, triggerEngineExport, triggerCSVExport, triggerEngineImport, setImportSuccessCallback } from './state/import-export.js';
 import { migrateState, CURRENT_SCHEMA_VERSION } from './state/migrations.js';
 import { showMigrationRecovery } from './state/migration-recovery-ui.js';
-import { getStoredCloudVersion, setStoredCloudVersion, isServerNewer } from './state/sync-guard.js';
-import {
-  snapshotCloudBeforeOverwrite,
-  getCloudOverwriteBackup,
-  clearCloudOverwriteBackup,
-  trainingStateSummary,
-} from './state/recovery-vault.js';
 import { writeMirror, restoreStateMirror, mirrorSupported } from './state/mirror.js';
 import {
   ensureActivation, beginActivation, archiveForeignWeeks,
@@ -36,55 +27,14 @@ import {
   isRecoveryGatePending,
 } from './state/recovery-gate.js';
 
-export { loginToSupabase, signUpToSupabase, checkActiveSession };
 export { triggerEngineExport, triggerCSVExport, triggerEngineImport, setImportSuccessCallback };
-export { getCloudOverwriteBackup, clearCloudOverwriteBackup };
 
 export const STORAGE_KEY = 'hybrid_engine_v2_state';
 // Written beside the state so the native mirror can tell which copy is newer.
 export const SAVED_AT_KEY = STORAGE_KEY + '_saved_at';
 
-// Recovery point written just before a cloud pull overwrites local state. The
-// cloud sync is last-write-wins with no merge, so a stale/empty device could
-// otherwise clobber real history on load. This snapshot lets that be undone.
-export const CLOUD_BACKUP_KEY = STORAGE_KEY + '_cloud_backup';
-
 function _defaultStorage() {
   return (typeof localStorage !== 'undefined') ? localStorage : null;
-}
-
-// Snapshot the pre-pull local state so a bad/stale cloud pull can be recovered.
-// Rolling single backup, timestamp-wrapped. Returns true if a snapshot was
-// written. Only snapshots states that actually carry logged history, so a fresh
-// or empty install can't overwrite a previously-good recovery point.
-export function snapshotLocalBeforeCloudPull(rawLocal, storage = _defaultStorage()) {
-  if (!storage || !rawLocal) return false;
-  try {
-    const parsed = JSON.parse(rawLocal);
-    const hasHistory = parsed && parsed.weeks && Object.keys(parsed.weeks).length > 0;
-    if (!hasHistory) return false;
-    storage.setItem(CLOUD_BACKUP_KEY, JSON.stringify({ savedAt: new Date().toISOString(), state: parsed }));
-    return true;
-  } catch (e) {
-    console.warn('Pre-cloud-pull backup failed:', e);
-    return false;
-  }
-}
-
-// Read back the last pre-cloud-pull snapshot (parsed { savedAt, state }) or null.
-export function getCloudPullBackup(storage = _defaultStorage()) {
-  if (!storage) return null;
-  try {
-    const raw = storage.getItem(CLOUD_BACKUP_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
-// Drop the pre-cloud-pull snapshot (after the user recovers or dismisses it).
-export function clearCloudPullBackup(storage = _defaultStorage()) {
-  try { storage?.removeItem(CLOUD_BACKUP_KEY); } catch { /* ignore */ }
 }
 
 // Base state configuration
@@ -241,7 +191,7 @@ export function recordRecentlyViewed(programId) {
   lib.recentlyViewed.unshift({ programId, viewedAt: new Date().toISOString() });
   if (lib.recentlyViewed.length > 20) lib.recentlyViewed.length = 20;
   // Autosave (debounced, no toast): viewing a program shouldn't fire a
-  // "Saved" toast or an immediate cloud round-trip on every detail open.
+  // "Saved" toast or an immediate write on every detail open.
   saveStateToLocalStorage(true);
 }
 
@@ -695,13 +645,6 @@ function memoizedLoadMetrics(state) {
   return _loadCache;
 }
 
-// Cloud upserts the whole state blob over the network. Debounce the autosave
-// path (suppressToast === true: typing, toggles) so rapid edits coalesce into a
-// single round-trip; explicit user saves flush immediately for their toast.
-let _cloudTimer = null;
-let _cloudPending = false;
-const CLOUD_DEBOUNCE_MS = 1500;
-
 // Local-write coalescing. Serialising the entire appState to localStorage on
 // every weight/rep keystroke is wasteful for large histories. High-frequency,
 // low-criticality edits (typing) go through scheduleLocalSave() and coalesce
@@ -740,7 +683,7 @@ function writeLocalNow() {
   if (_localTimer) { clearTimeout(_localTimer); _localTimer = null; }
   _localPending = false;
   // Do not turn boot's empty defaults into a "returning" local profile while
-  // the recovery welcome is waiting. A cloud/JSON restore writes its real data
+  // the recovery welcome is waiting. A JSON restore writes its real data
   // directly or releases this gate; deliberate onboarding completion does too.
   if (isRecoveryGatePending()) return false;
   appState.loadMetrics = memoizedLoadMetrics(appState);
@@ -756,7 +699,6 @@ function writeLocalNow() {
     if (mirrorOn) {
       try { localStorage.setItem(SAVED_AT_KEY, savedAt); } catch { /* tie-breaker only */ }
     }
-    _cloudDirty = true;
     saved = true;
   } catch (e) {
     console.error('Failed to save state locally:', e);
@@ -775,27 +717,15 @@ function writeLocalNow() {
   return saved;
 }
 
-function _scheduleCloudDebounce() {
-  _cloudPending = true;
-  if (!_cloudTimer) {
-    _cloudTimer = setTimeout(() => {
-      _cloudTimer = null;
-      if (_cloudPending) { _cloudPending = false; cloudSave(true); }
-    }, CLOUD_DEBOUNCE_MS);
-  }
-}
-
 // Debounced local persist for rapid, non-critical edits (typing weight/reps).
-// Coalesces a burst of keystrokes into a single serialize. The cloud write is
-// debounced separately. Crash safety: critical actions never use this path, and
-// flushLocalSave() runs on pagehide/visibilitychange so a backgrounded app
-// persists the last keystroke.
+// Coalesces a burst of keystrokes into a single serialize. Crash safety:
+// critical actions never use this path, and flushLocalSave() runs on
+// pagehide/visibilitychange so a backgrounded app persists the last keystroke.
 export function scheduleLocalSave() {
   _localPending = true;
   if (!_localTimer) {
     _localTimer = setTimeout(() => { _localTimer = null; if (_localPending) writeLocalNow(); }, LOCAL_DEBOUNCE_MS);
   }
-  _scheduleCloudDebounce();
 }
 
 // Force any pending debounced LOCAL write to happen now (before unload/reads).
@@ -803,177 +733,18 @@ export function flushLocalSave() {
   if (_localPending || _localTimer) writeLocalNow();
 }
 
-// Sync-conflict wiring. When a save would overwrite newer cloud data (another
-// device wrote since we loaded), we do NOT clobber it: we raise a conflict for
-// the user to resolve. `_conflictPending` suppresses further cloud writes until
-// they choose; `_forceOverwrite` is a one-shot bypass set by "keep this device".
-let _onSyncConflict = null;
-let _conflictPending = false;
-let _forceOverwrite = false;
-let _conflictCloudProtected = false;
-
-// Offline resilience: an edit always reaches localStorage, but if the cloud
-// write can't complete (offline, or a transient network error) the cloud copy
-// is now stale. Track that so we can push it up the moment connectivity is
-// back, instead of leaving it un-synced until the next manual save.
-let _cloudDirty = false;
-
-/** Register the UI handler shown when a stale-overwrite is detected. */
-export function setSyncConflictHandler(fn) { _onSyncConflict = fn; }
-
-export function isSyncConflictPending() { return _conflictPending; }
-
-// Pure decision for the reconnect handler: only re-sync when there is unsynced
-// local work, a cloud client exists, and we're not already blocked on a
-// user conflict choice (which would otherwise re-prompt on every reconnect).
-export function shouldResyncOnReconnect(dirty, hasClient, conflictPending) {
-  return !!(dirty && hasClient && !conflictPending);
-}
-
-async function cloudSave(suppressToast) {
-  // A cleared/fresh device starts with a valid-looking but empty default state.
-  // Never let a delayed boot autosave upload that blank scaffold while the user
-  // is signing in or choosing a backup. The gate is released only after local
-  // or cloud data loads, or the user deliberately completes onboarding.
-  if (isRecoveryGatePending()) {
-    if (!suppressToast) showToast('Saved on this device. Restore or finish setup before cloud sync.');
-    return;
-  }
-  const _sb = getSupabaseClient();
-  if (!_sb) {
-    if (!suppressToast) showToast('Session Saved Locally ✓');
-    return;
-  }
-  try {
-    const { data: sessionData } = await _sb.auth.getSession();
-    if (!sessionData?.session) {
-      if (!suppressToast) showToast('Session Saved Locally ✓');
-      return;
-    }
-    const uid = sessionData.session.user.id;
-
-    // Already waiting on the user to resolve a conflict — local state is safely
-    // in localStorage; don't touch the cloud until they decide.
-    if (_conflictPending) return;
-
-    // Divergence guard: unless the user explicitly chose to overwrite, check
-    // whether the server row is newer than the version this device last saw.
-    if (!_forceOverwrite) {
-      const { data: row, error: selErr } = await _sb
-        .from('user_data')
-        .select('updated_at, state_data')
-        .eq('user_id', uid)
-        .maybeSingle();
-      if (!selErr && row && isServerNewer(getStoredCloudVersion(), row.updated_at)) {
-        // Protect the exact newer cloud blob before the destructive choice is
-        // even shown. An accidental "replace cloud" decision is therefore
-        // recoverable from Settings on this device.
-        const cloudHasHistory = !!(row.state_data?.weeks && Object.keys(row.state_data.weeks).length);
-        _conflictCloudProtected = !cloudHasHistory || snapshotCloudBeforeOverwrite(row.state_data, {
-          serverUpdatedAt: row.updated_at,
-        });
-        _conflictPending = true;
-        if (_onSyncConflict) {
-          _onSyncConflict({
-            serverUpdatedAt: row.updated_at,
-            lastSeen: getStoredCloudVersion(),
-            cloudProtected: _conflictCloudProtected,
-            cloudSummary: trainingStateSummary(row.state_data),
-            deviceSummary: trainingStateSummary(appState),
-          });
-        }
-        return; // do NOT overwrite newer cloud data
-      }
-    }
-    _forceOverwrite = false;
-
-    const { error } = await _sb
-      .from('user_data')
-      .upsert({ user_id: uid, state_data: appState }, { onConflict: 'user_id' });
-
-    if (error) throw error;
-    _cloudDirty = false; // cloud now matches local
-
-    // Best-effort: record the new server version for divergence detection.
-    // Kept separate from the upsert (and error-tolerant) so a save never breaks
-    // if the updated_at migration hasn't been applied yet.
-    try {
-      const { data: v } = await _sb
-        .from('user_data')
-        .select('updated_at')
-        .eq('user_id', uid)
-        .maybeSingle();
-      if (v?.updated_at) setStoredCloudVersion(v.updated_at);
-    } catch { /* column absent until migration applied — degrade gracefully */ }
-
-    if (!suppressToast) showToast('Session Saved to Cloud ✓');
-  } catch (err) {
-    console.error('Supabase Save Error:', err);
-    // Plain-language, reassuring — the edit is already safe in localStorage; the
-    // raw "DB Reject: <error>" read as data loss to a non-technical user.
-    if (!suppressToast) showToast("Couldn't sync to cloud — saved on this device.", true);
-  }
-}
-
-// Resolve a detected sync conflict from the UI. 'local' overwrites the cloud
-// with this device's state; 'cloud' discards local edits and reloads the
-// authoritative cloud copy (the pre-pull snapshot backup still lets it be undone).
-export async function resolveSyncConflict(choice) {
-  if (choice === 'local') {
-    if (!_conflictCloudProtected) {
-      showToast('Cloud copy could not be protected. Export this device before replacing anything.', true);
-      return false;
-    }
-    _conflictPending = false;
-    _forceOverwrite = true;
-    await cloudSave(false);
-    _conflictCloudProtected = false;
-    return true;
-  } else if (choice === 'cloud') {
-    _conflictPending = false;
-    _conflictCloudProtected = false;
-    // Reload: the fresh boot pull replaces local with cloud and re-stamps the
-    // last-seen version, so the next save won't re-trigger the conflict.
-    if (typeof window !== 'undefined') window.location.reload();
-    return true;
-  }
-  return false;
-}
-
-// Force any pending debounced cloud save to run now (e.g. before unload/login).
-export function flushCloudSave() {
-  if (_cloudTimer) { clearTimeout(_cloudTimer); _cloudTimer = null; }
-  if (_cloudPending) { _cloudPending = false; return cloudSave(true); }
-}
-
 if (typeof window !== 'undefined') {
-  // Don't lose the last debounced local write or sync if the app is backgrounded
-  // or killed. Local flush first so the persisted copy is current, then cloud.
-  window.addEventListener('pagehide', () => { flushLocalSave(); flushCloudSave(); });
-  document.addEventListener('visibilitychange', () => { if (document.hidden) { flushLocalSave(); flushCloudSave(); } });
-  // Back online: push up any edits made while offline (or after a failed save).
-  window.addEventListener('online', () => {
-    if (shouldResyncOnReconnect(_cloudDirty, !!getSupabaseClient(), _conflictPending)) {
-      cloudSave(true);
-    }
-  });
+  // Never lose the last debounced local write when the app is backgrounded or
+  // killed. There is no cloud copy to flush to any more.
+  window.addEventListener('pagehide', flushLocalSave);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) flushLocalSave(); });
 }
 
 export async function saveStateToLocalStorage(suppressToast = false) {
   // Critical/explicit save: write local immediately (also cancels any pending
   // debounced local write, since we just persisted the latest state).
   const savedLocally = writeLocalNow();
-
-  if (suppressToast) {
-    // Autosave: coalesce network writes. localStorage already holds the latest.
-    _scheduleCloudDebounce();
-    return savedLocally;
-  }
-
-  // Explicit save: cancel any pending debounce and flush now so the toast is truthful.
-  if (_cloudTimer) { clearTimeout(_cloudTimer); _cloudTimer = null; }
-  _cloudPending = false;
-  await cloudSave(false);
+  if (!suppressToast && savedLocally) showToast('Saved on this device ✓');
   return savedLocally;
 }
 
@@ -981,7 +752,6 @@ export async function pullEngineDataFromStorage() {
   beginRecoveryGate();
   let localData = null;
   let rawLocal = null;
-  let loadedCloudState = false;
   // The Android shell's private mirror is the durable copy when WebView
   // storage was cleared, is corrupt, or failed a quota write. It only wins if
   // it is newer than localStorage; the browser path no-ops.
@@ -1031,7 +801,7 @@ export async function pullEngineDataFromStorage() {
     streakFreezes: { available: 1, used: [], earnedTier: 0 },   // R7 streak protection
   };
 
-  // Always seed defaults so a brand-new install (no localData, no cloud) still
+  // Always seed defaults so a brand-new install (no localData) still
   // has every top-level key — notably `settings`, which the schema-patch block
   // below dereferences. Settings is deep-merged so keys added in later versions
   // reach returning users instead of being shadowed by their stored object.
@@ -1047,51 +817,6 @@ export async function pullEngineDataFromStorage() {
   // week scaffold — otherwise every fresh user looks like they already have data
   // and onboarding (and its provisional-Score reveal) never shows.
   appState._hadStoredState = localData != null;
-
-  const _sb2 = getSupabaseClient();
-  if (_sb2) {
-    try {
-      const fetchCloud = async () => {
-        const { data: userData, error: authError } = await _sb2.auth.getUser();
-        if (!authError && userData?.user) {
-            // select('*') (not 'state_data, updated_at') so the load still works
-            // if the updated_at migration hasn't been applied yet — the column
-            // is simply absent from the row rather than erroring the query.
-            const { data, error } = await _sb2
-              .from('user_data')
-              .select('*')
-              .eq('user_id', userData.user.id)
-              .single();
-
-            if (!error && data?.state_data) return data;
-        }
-        return null;
-      };
-
-      const cloudRow = await Promise.race([
-        fetchCloud(),
-        new Promise((_, reject) => setTimeout(() => reject(new Error("Supabase timeout")), 4000))
-      ]);
-
-      if (cloudRow?.state_data) {
-        // Safety net: back up the pre-pull local state before the cloud blob
-        // overwrites it, so a stale/empty device clobbering real history on
-        // load can be recovered (sync is last-write-wins with no merge).
-        snapshotLocalBeforeCloudPull(rawLocal);
-        appState = {
-          ...baseDefaults,
-          ...cloudRow.state_data,
-          settings: { ...baseDefaults.settings, ...(cloudRow.state_data && cloudRow.state_data.settings) },
-        };
-        loadedCloudState = true;
-        // Record the server version we just loaded, so a later save can tell
-        // whether another device has written since (divergence detection).
-        if (cloudRow.updated_at) setStoredCloudVersion(cloudRow.updated_at);
-      }
-    } catch (cloudErr) {
-      console.warn('Cloud sync timeout/failure, relying on local backup.');
-    }
-  }
 
   // Schema Patching
   if (!appState.activeProgramId) appState.activeProgramId = "hybrid_engine";
@@ -1154,7 +879,6 @@ export async function pullEngineDataFromStorage() {
 
   reconcileRecoveryGate({
     hadLocalState: localData != null,
-    loadedCloudState,
     onboardingComplete: appState.settings?.onboardingComplete === true,
   });
 
@@ -1162,7 +886,6 @@ export async function pullEngineDataFromStorage() {
   appState.loadMetrics = recomputeLoadMetrics(appState);
 
   // Wire up sub-modules now that state is live
-  initAuth(pullEngineDataFromStorage);
   initImportExport({
     getState:    () => appState,
     setState:    (s) => { appState = s; },
@@ -1170,10 +893,6 @@ export async function pullEngineDataFromStorage() {
     defaultDays: DEFAULT_DAYS,
     migrate:     migrateState,
     storageKey:  STORAGE_KEY,
-    getCloudBackup:   getCloudPullBackup,
-    clearCloudBackup: clearCloudPullBackup,
-    getCloudOverwriteBackup,
-    clearCloudOverwriteBackup,
   });
 
   try {

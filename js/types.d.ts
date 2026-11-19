@@ -143,7 +143,6 @@ declare global {
     __onAndroidBack?: () => string;
     _hybridGetState?: () => any;
     _hybridGetProgram?: () => any;
-    supabase?: any;
   }
 }
 

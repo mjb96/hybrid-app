@@ -68,7 +68,7 @@ export function commitReorderedDOMStateToStorage() {
 // ==========================================
 // DASHBOARD TILE LAYOUT PERSISTENCE
 // Order + hidden live in appState (appState.dashboardTiles) so they export and
-// cloud-sync with the rest of the user's data. Legacy standalone localStorage
+// saved with the rest of the user's data. Legacy standalone localStorage
 // keys are migrated once on load in state.js.
 // ==========================================
 function _dashboardTiles() {

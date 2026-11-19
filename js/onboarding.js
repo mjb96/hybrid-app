@@ -282,9 +282,9 @@ function _finish() {
     else appState.bodyWeightLog.push({ date: today, weight: bw });
   }
 
-  // Deliberately completing new-profile setup releases the fresh-device cloud
-  // write lock. Until this point, blank defaults cannot overwrite a returning
-  // user's cloud history during sign-in.
+  // Deliberately completing new-profile setup releases the fresh-device write
+  // lock. Until this point, blank defaults cannot overwrite a real local
+  // profile waiting to be restored.
   completeRecoveryGate();
   saveStateToLocalStorage(true);
 

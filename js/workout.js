@@ -282,7 +282,7 @@ function _buildExerciseCardEl(liftName, loggedLiftsData, weekData, wk, selectedD
     displayLiftName = homeBlueprint.lifts[parseInt(liftName, 10)];
   } else if (isInternalLiftId(liftName)) {
     // Defense-in-depth: the v2 migration repairs stored data, but an un-migrated
-    // key could still arrive from an older device's cloud blob. Never surface a
+    // key could still arrive from an older device's saved blob. Never surface a
     // raw internal id as an exercise name — show an honest fallback instead.
     // (The primary fix is the migration; this is not a cosmetic row filter — the
     // row still renders, just with a truthful label.)

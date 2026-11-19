@@ -30,15 +30,11 @@ import {
   triggerCSVExport,
   setImportSuccessCallback,
   showToast,
-  checkActiveSession,
-  loginToSupabase,
-  signUpToSupabase,
   savePersonalRating,
   getPersonalRating,
   dismissDeloadSuggestion,
   applyDeloadToCurrentWeek,
 } from './state.js';
-import { initSyncConflictUI } from './state/sync-conflict-ui.js';
 import { confirmModal } from './ui/confirm-modal.js';
 import { paintIcons, icon as svgIcon } from './ui/icons.js';
 import { closeManagedModal, initModalStack, openManagedModal, requestCloseTopModal } from './ui/modal-stack.js';
@@ -77,12 +73,11 @@ import {
   setProgressionIncrement, setDistanceUnit, setTheme, stepCurrentWeek, setAutoAdvanceWeek,
   saveThresholdPace as saveSettingsThresholdPace,
   exportData, triggerImport, handleImportFile, confirmResetAllData,
-  recoverPreSyncSnapshot, recoverPreOverwriteCloudSnapshot,
   applySettingsOnBoot,
   hcToggleConnect, hcSyncNow, saveStepGoal, hcToggleSyncField,
   setFitnessGoal, setWeightGoal, setFitnessLevel, setWeekStartDay, setFastingDefault,
   saveReminderTime, setNotifToggle, saveStreakAlertTime, toggleEquipment, saveBandWeights,
-  saveRestPeriods, applyRestPreset, setRestTimerEnabledSetting, resetRestOverrides, signOut, deleteAccount,
+  saveRestPeriods, applyRestPreset, setRestTimerEnabledSetting, resetRestOverrides,
   openAvatarPicker, handleAvatarFile,
   selectAutomaticBackupFolder, backupNow, turnOffAutomaticBackup,
 } from './settings.js';
@@ -1201,8 +1196,6 @@ document.addEventListener('click', (e) => {
   else if (action === 'auto-backup-now') backupNow();
   else if (action === 'auto-backup-disable') turnOffAutomaticBackup();
   else if (action === 'reset-all-data') confirmResetAllData();
-  else if (action === 'recover-presync-snapshot') recoverPreSyncSnapshot();
-  else if (action === 'recover-preoverwrite-cloud') recoverPreOverwriteCloudSnapshot();
   else if (action === 'hc-toggle-connect') hcToggleConnect();
   else if (action === 'hc-sync-now') hcSyncNow();
   else if (action === 'set-fitness-goal')     setFitnessGoal(target.getAttribute('data-goal'));
@@ -1210,8 +1203,6 @@ document.addEventListener('click', (e) => {
   else if (action === 'set-fitness-level')    setFitnessLevel(target.getAttribute('data-level'));
   else if (action === 'set-week-start')       setWeekStartDay(target.getAttribute('data-day'));
   else if (action === 'set-fasting-default')  setFastingDefault(parseInt(target.getAttribute('data-hours'), 10));
-  else if (action === 'sign-out')             signOut();
-  else if (action === 'delete-account')       deleteAccount();
 
   // Onboarding
   else if (['ob-start-new','ob-back-recovery','ob-import-backup','ob-next','ob-back','ob-goal','ob-level','ob-frequency','ob-recovery','ob-equipment','ob-program','ob-unit','ob-dist-unit','ob-finish','ob-notif-enable','ob-notif-skip'].includes(action)) {
@@ -1264,26 +1255,6 @@ document.addEventListener('click', (e) => {
 
   // Export & Data
 else if (action === 'export-csv') triggerCSVExport();
-  
-  // Auth
-  else if (action === 'login-supabase') loginToSupabase();
-  else if (action === 'signup-supabase') signUpToSupabase();
-  else if (action === 'close-auth') {
-    const overlay = document.getElementById('authOverlay');
-    if (overlay) {
-      overlay.style.display = 'none';
-      closeManagedModal(overlay);
-    }
-  }
-  else if (action === 'open-auth') {
-    // Auth is opt-in now (no front-door wall): returning users open it to
-    // restore/sync, new users open it from Settings to back up their progress.
-    const overlay = document.getElementById('authOverlay');
-    if (overlay) {
-      overlay.style.display = 'flex';
-      openManagedModal(overlay, { initialFocus: '#loginEmail' });
-    }
-  }
   
   // Summary Modals
   else if (action === 'open-today-summary') {
@@ -1339,18 +1310,6 @@ document.addEventListener('keydown', (e) => {
   if (!target) return;
   e.preventDefault();
   target.click();
-});
-
-// Auth tab switching
-document.addEventListener('click', (e) => {
-  const tab = e.target.closest('[data-auth-tab]');
-  if (!tab) return;
-  const which = tab.getAttribute('data-auth-tab');
-  document.querySelectorAll('.auth-tab').forEach(t => t.classList.toggle('auth-tab--active', t.getAttribute('data-auth-tab') === which));
-  const signinPanel = document.getElementById('authPanelSignin');
-  const signupPanel = document.getElementById('authPanelSignup');
-  if (signinPanel) signinPanel.style.display = which === 'signin' ? '' : 'none';
-  if (signupPanel) signupPanel.style.display = which === 'signup' ? '' : 'none';
 });
 
 document.addEventListener('change', (e) => {
@@ -1809,7 +1768,6 @@ async function bootstrapApp() {
     paintIcons(document);                     // fill [data-icon] chrome (nav + hub) with the SVG set
     initModalStack(document);
     initOfflineIndicator();
-    initSyncConflictUI();
     initSessionRecap(() => appState);
     initAutomaticBackups(() => appState);
     // Recap entry points: after finishing a session, and tapping a logged day.
@@ -1823,7 +1781,6 @@ async function bootstrapApp() {
       directIfSingle: e.detail?.directIfSingle === true,
     }));
     determineDefaultCalendarDay();
-    await checkActiveSession();
     await pullEngineDataFromStorage();
     // Recovery may immediately attach a device-local active session to app
     // state, so the stored training history must be loaded first.

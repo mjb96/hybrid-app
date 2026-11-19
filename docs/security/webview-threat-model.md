@@ -31,12 +31,12 @@ Third-party code does not execute from a CDN:
    inline scripts, and plugins **cannot execute**.
    `frame-ancestors 'none'` blocks clickjacking; `base-uri 'self'` blocks base
    tag injection. Network destinations are separated by type: `connect-src` is
-   limited to Supabase and Sentry, `img-src` allows the approved map tiles, and
-   font/style origins allow the configured Google font.
-2. **Leaflet, Supabase, and Sentry are vendored** under `js/vendor/`, pinned to
-   exact package versions, and included in the service-worker precache.
-3. **Vendored Supabase bytes are hash-checked in tests**, and the service worker
-   has a regression guard that rejects remote-JavaScript cache entries.
+   limited to Sentry, `img-src` allows the approved map tiles, and font/style
+   origins allow the configured Google font.
+2. **Leaflet and Sentry are vendored** under `js/vendor/`, pinned to exact
+   package versions, and included in the service-worker precache.
+3. The service worker has a regression guard that rejects remote-JavaScript
+   cache entries, and tests pin the vendored Sentry build.
 4. **Sentry remains DSN-gated** and inert without an explicit configuration.
 
 ## Bridges (`addJavascriptInterface`)
@@ -71,15 +71,14 @@ reachable by trusted code. Defence-in-depth applied on top:
 - `scripts/check-precache.mjs` / `tests/precache_manifest.test.js` prove the
   offline bundle is complete (no privileged screen silently fetches remote JS).
 - `tests/csp_vendored_runtime.test.js` proves `script-src 'self'`, checks the
-  reviewed Supabase bytes, and rejects CDN/remote-JS entries in the service worker.
+  vendored runtime, and rejects CDN/remote-JS entries in the service worker.
 - Manual device checks in `docs/android-device-checklist.md` remain required to
   confirm external-link routing and GPS/Health/notification/export/backup
   behaviour on the signed candidate.
 
 ## Assumptions that remain the user's responsibility
 
-- Supabase **RLS** is the server-side isolation control (proven separately,
-  2026-07-02). The anon key is public by design and safe **only** while RLS is
-  enforced.
+- There is no backend or account system; local data is protected by the app
+  sandbox and Android backup being disabled.
 - Release builds must keep `isDebuggable=false` and WebView debugging off
   (enforced in `MainActivity` — see below).

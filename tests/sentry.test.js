@@ -20,10 +20,10 @@ test('initSentry stays disabled when the SDK is not loaded (no window.Sentry)', 
 
 test('redactUrl drops query strings and keeps only the path', () => {
   assert.equal(
-    redactUrl('https://x.supabase.co/rest/v1/user_data?user_id=eq.abc-123&select=*'),
-    '/rest/v1/user_data',
+    redactUrl('https://api.example.com/v1/user_data?user_id=eq.abc-123&select=*'),
+    '/v1/user_data',
   );
-  assert.equal(redactUrl('/rest/v1/user_data?user_id=eq.abc'), '/rest/v1/user_data');
+  assert.equal(redactUrl('/v1/user_data?user_id=eq.abc'), '/v1/user_data');
   assert.equal(redactUrl(''), '');
   assert.equal(redactUrl(null), null);
 });
@@ -46,9 +46,9 @@ test('scrubEvent strips request, user, and device context', () => {
 test('scrubBreadcrumb redacts fetch/xhr urls and drops bodies', () => {
   const crumb = scrubBreadcrumb({
     category: 'fetch',
-    data: { url: 'https://x.supabase.co/rest/v1/user_data?user_id=eq.abc', body: '{"secret":1}' },
+    data: { url: 'https://api.example.com/v1/user_data?user_id=eq.abc', body: '{"secret":1}' },
   });
-  assert.equal(crumb.data.url, '/rest/v1/user_data');
+  assert.equal(crumb.data.url, '/v1/user_data');
   assert.equal('body' in crumb.data, false);
 });
 

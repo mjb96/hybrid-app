@@ -36,7 +36,6 @@ SEE THE FULL PICTURE
 
 YOURS, AND PRIVATE
 • Works offline — your data lives on your device first.
-• Optional account to sync across devices, protected so only you can read it.
 • No ads, advertising IDs, or behavioural analytics. Limited scrubbed crash
   reporting helps us fix beta issues. We do not sell your data.
 
@@ -52,7 +51,7 @@ First public beta of Helyx 🎉
 • Hybrid strength + running planner and logger
 • GPS run tracking with live pace, splits, route quality, and recovery tools
 • Training-load, readiness, and strength/endurance analytics
-• Optional private cloud sync — offline-first, no ads or behavioural analytics
+• Fully offline — your data stays on your device, no account, no ads, no behavioural analytics
 Thanks for testing! Send feedback in-app or to {{CONTACT_EMAIL}}.
 ```
 
@@ -71,7 +70,6 @@ See `docs/legal/play-data-safety.md` for the exact form answers.
 
 ## Contact / policy links (required)
 - **Privacy policy URL:** {{HOSTED_PRIVACY_POLICY_URL}}
-- **Account deletion URL:** {{HOSTED_PRIVACY_POLICY_URL}}#account-and-data-deletion-requests
 - **Support email:** {{CONTACT_EMAIL}}
 
 ## Assets checklist ([You] — design task)

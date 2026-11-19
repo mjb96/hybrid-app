@@ -16,7 +16,7 @@
 // (a node --test), so a newly-added, offline-reachable module can never again
 // be silently omitted from the cache.
 // ==========================================
-const CACHE_NAME = 'helyx-v122-h331da96a57b3';
+const CACHE_NAME = 'helyx-v122-hc5637a4d605f';
 
 // GENERATED — do not hand-edit. Run: node scripts/gen-precache.mjs
 const REQUIRED_ASSETS = [
@@ -200,7 +200,6 @@ const REQUIRED_ASSETS = [
   "./js/settings.js",
   "./js/state.js",
   "./js/state/activation-identity.js",
-  "./js/state/auth.js",
   "./js/state/import-export.js",
   "./js/state/import-validate.js",
   "./js/state/lift-id.js",
@@ -208,13 +207,9 @@ const REQUIRED_ASSETS = [
   "./js/state/migrations.js",
   "./js/state/mirror.js",
   "./js/state/recovery-gate.js",
-  "./js/state/recovery-vault.js",
   "./js/state/route-identity.js",
   "./js/state/route-portability.js",
   "./js/state/run-sessions.js",
-  "./js/state/supabase.js",
-  "./js/state/sync-conflict-ui.js",
-  "./js/state/sync-guard.js",
   "./js/strength/duration.js",
   "./js/strength/e1rm.js",
   "./js/sw-reload.js",
@@ -239,8 +234,7 @@ const REQUIRED_ASSETS = [
   "./js/vendor/fit-parser.js",
   "./js/vendor/leaflet/leaflet.css",
   "./js/vendor/leaflet/leaflet.js",
-  "./js/vendor/sentry-browser-8.55.0.min.js",
-  "./js/vendor/supabase-js-2.45.4.umd.js",
+  "./js/vendor/sentry-browser-8.55.2.min.js",
   "./js/workout-map.js",
   "./js/workout-order.js",
   "./js/workout.js",

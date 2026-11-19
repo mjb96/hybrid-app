@@ -42,7 +42,7 @@ test('the service worker does not fetch or cache remote JavaScript', () => {
 });
 
 test('vendored runtime libraries are referenced and present on disk', () => {
-  for (const rel of ['js/vendor/supabase-js-2.45.4.umd.js', 'js/vendor/sentry-browser-8.55.0.min.js']) {
+  for (const rel of ['js/vendor/sentry-browser-8.55.2.min.js']) {
     assert.ok(html.includes('./' + rel), `index.html references ${rel}`);
     const p = join(ROOT, rel);
     assert.ok(existsSync(p), `${rel} exists`);
@@ -50,15 +50,8 @@ test('vendored runtime libraries are referenced and present on disk', () => {
   }
 });
 
-test('vendored Supabase matches the reviewed SRI pin (reproducible bytes)', async () => {
-  const { createHash } = await import('node:crypto');
-  const bytes = readFileSync(join(ROOT, 'js/vendor/supabase-js-2.45.4.umd.js'));
-  const sri = 'sha384-' + createHash('sha384').update(bytes).digest('base64');
-  assert.equal(sri, 'sha384-0w2KAL2YHP6wKOkUDzkCDGgVvfmHnj02DHeQ6XcHOgTfFsGyonKOpShMH1x6nk9o');
-});
-
 test('vendored Sentry exposes Sentry.init and captureException', () => {
-  const code = readFileSync(join(ROOT, 'js/vendor/sentry-browser-8.55.0.min.js'), 'utf8');
+  const code = readFileSync(join(ROOT, 'js/vendor/sentry-browser-8.55.2.min.js'), 'utf8');
   const g = {};
   // The IIFE bundle declares a top-level `var Sentry`; return it explicitly.
   // eslint-disable-next-line no-new-func

@@ -33,7 +33,6 @@ test('no icon-only button lacks an accessible name', () => {
 
 test('key interactive inputs have an accessible name', () => {
   const mustHaveName = [
-    'loginEmail', 'loginPassword', 'signupEmail', 'signupPassword',
     'runInputDist', 'runInputTime', 'progSearchInput', 'rlDate',
   ];
   for (const id of mustHaveName) {
