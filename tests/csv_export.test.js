@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { buildTrainingCsv } from '../js/portability/csv-export.js';
+import { buildBodyweightCsv, buildTrainingCsv } from '../js/portability/csv-export.js';
 
 function parseCsv(text) {
   const rows = [];
@@ -65,4 +65,18 @@ test('CSV retains a notes/bodyweight-only archived day', () => {
   assert.equal(rows[1][0], 'arch:a:4');
   assert.equal(rows[1][18], '81.5');
   assert.equal(rows[1][20], 'Rest day check-in');
+});
+
+test('exports bodyweight history as its own CSV, sorted and deduped', () => {
+  const csv = buildBodyweightCsv({
+    bodyWeightLog: [
+      { date: '2026-11-19', weight: 83.5 },
+      { date: '2026-11-01', weight: 85 },
+      { date: '2026-11-19', weight: 83.4 },
+      { date: 'bad', weight: 70 },
+    ],
+  });
+  const rows = parseCsv(csv);
+  assert.deepEqual(rows[0], ['Date', 'Weight']);
+  assert.deepEqual(rows.slice(1), [['2026-11-01', '85'], ['2026-11-19', '83.4']]);
 });

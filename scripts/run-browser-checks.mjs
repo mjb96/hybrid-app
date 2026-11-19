@@ -17,11 +17,13 @@ const checks = [
   'scripts/train-landing-browser-check.mjs',
   'scripts/session-outline-browser-check.mjs',
   'scripts/set-row-browser-check.mjs',
+  'scripts/warmup-ramp-browser-check.mjs',
   'scripts/rest-timer-browser-check.mjs',
   'scripts/finish-review-browser-check.mjs',
   'scripts/active-run-browser-check.mjs',
   'scripts/recovery-metric-browser-check.mjs',
   'scripts/bodyweight-browser-check.mjs',
+  'scripts/muscle-load-browser-check.mjs',
   'scripts/running-analytics-check.mjs',
   'scripts/gym-performance-browser-check.mjs',
   'scripts/run-performance-browser-check.mjs',
@@ -62,7 +64,7 @@ const checks = [
 // Checks are independent (each binds port 0 and launches its own Playwright
 // context), so they run through a small worker pool instead of one blocking
 // spawnSync at a time. Output is buffered per check and printed as one block
-// when it finishes: the suite is 35 checks and ~7 minutes serially, mostly
+// when it finishes: the suite is 37 checks and ~7 minutes serially, mostly
 // browser startup, so overlapping them is the difference between a coffee and
 // a glance. `--serial` restores the sequential loop when debugging.
 const args = process.argv.slice(2);

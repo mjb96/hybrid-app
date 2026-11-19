@@ -5,7 +5,7 @@
 import { showToast } from '../toast.js';
 import { isStateMigrationError, CURRENT_SCHEMA_VERSION } from './migrations.js';
 import { validateImport, importReasonMessage } from './import-validate.js';
-import { buildTrainingCsv } from '../portability/csv-export.js';
+import { buildBodyweightCsv, buildTrainingCsv } from '../portability/csv-export.js';
 import { exportResultMessage, saveTextExport } from '../portability/export-service.js';
 
 let _getState       = null;
@@ -61,6 +61,17 @@ export async function triggerCSVExport() {
     mime: 'text/csv',
   });
   const copy = exportResultMessage(result, 'CSV');
+  showToast(copy.message, copy.error);
+}
+
+export async function triggerBodyweightCSVExport() {
+  const appState = _getState();
+  const result = await saveTextExport({
+    filename: 'openhybrid-bodyweight-export.csv',
+    content: buildBodyweightCsv(appState),
+    mime: 'text/csv',
+  });
+  const copy = exportResultMessage(result, 'Bodyweight CSV');
   showToast(copy.message, copy.error);
 }
 

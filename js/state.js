@@ -11,7 +11,7 @@ import { getWeekModifier } from './schema.js';
 export { showToast } from './toast.js';
 import { showToast } from './toast.js';
 import { recomputeLoadMetrics } from './brain/load_models.js';
-import { initImportExport, triggerEngineExport, triggerCSVExport, triggerEngineImport, setImportSuccessCallback } from './state/import-export.js';
+import { initImportExport, triggerEngineExport, triggerCSVExport, triggerBodyweightCSVExport, triggerEngineImport, setImportSuccessCallback } from './state/import-export.js';
 import { migrateState, CURRENT_SCHEMA_VERSION } from './state/migrations.js';
 import { showMigrationRecovery } from './state/migration-recovery-ui.js';
 import { writeMirror, restoreStateMirror, mirrorSupported } from './state/mirror.js';
@@ -28,7 +28,7 @@ import {
   isRecoveryGatePending,
 } from './state/recovery-gate.js';
 
-export { triggerEngineExport, triggerCSVExport, triggerEngineImport, setImportSuccessCallback };
+export { triggerEngineExport, triggerCSVExport, triggerBodyweightCSVExport, triggerEngineImport, setImportSuccessCallback };
 
 export const STORAGE_KEY = 'hybrid_engine_v2_state';
 // Written beside the state so the native mirror can tell which copy is newer.
@@ -793,7 +793,7 @@ export async function pullEngineDataFromStorage() {
     wellnessLog: [],
     fastingSession: { active: false, startTime: null, goal: 16, history: [] },
     programLibrary: { bookmarks: [], completions: [], recentlyViewed: [], personalRatings: {}, activeFilters: {} },
-    settings: { name: '', weightUnit: 'kg', distanceUnit: 'km', progressionIncrement: 2.5, defaultBodyWeight: null, autoAdvanceWeek: true, theme: 'dark', onboardingComplete: false, fitnessGoal: 'hybrid', weightGoal: 'maintain', fitnessLevel: 'intermediate', equipmentTier: 'gym', weekStartDay: 'mon', fastingDefault: 16, reminderTime: { hour: 7, minute: 30 }, notifWeeklySummary: false, notifStreak: false, streakAlertTime: { hour: 20, minute: 0 }, notifMissedWorkout: false, notifFastingStage: true, musclePriorities: {}, equipment: { barbell: true, rack: true, dumbbells: true, cables: true, pullupBar: true, bands: false, kettlebells: false, ezBar: false, treadmill: false }, bandWeights: { L: 10, M: 20, H: 30 }, equipmentProfiles: [], activeEquipmentProfileId: null, restPeriods: { compound: 180, accessory: 120, isolation: 90 }, restTimerEnabled: true, restOverrides: {}, showPlateHints: false, targetWeight: null, rateGoal: null, avatarDataUrl: null },
+    settings: { name: '', weightUnit: 'kg', distanceUnit: 'km', progressionIncrement: 2.5, defaultBodyWeight: null, autoAdvanceWeek: true, theme: 'dark', onboardingComplete: false, fitnessGoal: 'hybrid', weightGoal: 'maintain', fitnessLevel: 'intermediate', equipmentTier: 'gym', weekStartDay: 'mon', fastingDefault: 16, reminderTime: { hour: 7, minute: 30 }, notifWeeklySummary: false, notifStreak: false, streakAlertTime: { hour: 20, minute: 0 }, notifMissedWorkout: false, notifFastingStage: true, musclePriorities: {}, equipment: { barbell: true, rack: true, dumbbells: true, cables: true, pullupBar: true, bands: false, kettlebells: false, ezBar: false, treadmill: false }, bandWeights: { L: 10, M: 20, H: 30 }, equipmentProfiles: [], activeEquipmentProfileId: null, restPeriods: { compound: 180, accessory: 120, isolation: 90 }, restTimerEnabled: true, restOverrides: {}, showPlateHints: false, autoWarmupRamp: false, targetWeight: null, rateGoal: null, avatarDataUrl: null },
     profileSections: { order: null, hidden: [] },
     dashboardTiles: { order: null, hidden: null },   // hidden:null = focused default set (R4)
     hybridScore: { history: [], xp: 0, lastRecordedDate: null },

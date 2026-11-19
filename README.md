@@ -25,10 +25,13 @@ the same training picture.
   training strip, one coach insight and quick actions. Deep charts stay in
   Progress and the secondary In Focus section.
 - **Strength logging** — routines, set types, RPE/RIR, rest timers, supersets,
-  exercise swaps, plate math, estimated 1RM and PRs.
+  exercise swaps, plate math, estimated 1RM and PRs. An optional warm-up ramp
+  adds editable 40/60/80% sets once you enter the first working weight.
 - **Running** — manual entries, native GPS tracking with a route map, splits,
   FIT-file import and run analytics.
 - **Recovery and load** — readiness, training load, ACWR and a weekly review.
+  Progress → Muscle Load shows weekly volume, recovery and untrained muscles per
+  muscle group.
 - **Health Connect** (Android) — steps, resting heart rate, HRV and sleep, read
   only and field by field.
 - **Bodyweight and fasting** — a Progress graph with daily weigh-ins, a 7-day
@@ -51,9 +54,10 @@ the same training picture.
 - **Progression styles** — custom programs can choose Double, Linear or Rep-first
   coaching. The suggested next load follows that program's style while keeping
   RPE, fatigue, cutting and stall safeguards.
-- **Import your history** — bring workout history and bodyweight from OpenGym,
-  Strong or Hevy CSV exports. Strength sets and weigh-ins import directly; cardio
-  rows are skipped for now. No account or server involved.
+- **Import and export your history** — bring workout history and bodyweight from
+  OpenGym, Strong or Hevy CSV exports. Strength sets and weigh-ins import
+  directly; cardio rows are skipped for now. Export the full training log or a
+  clean bodyweight CSV. No account or server involved.
 - **Durable on Android** — the shell mirrors the same state into app-private
   storage, so WebView eviction or a full localStorage quota does not lose the
   last change; a failed write is reported instead of silently claiming success.
@@ -134,7 +138,7 @@ format, not branding.
 | --- | --- |
 | `npm test` | Node unit tests |
 | `npm run verify` | Type check, precache check, workflow gates, unit tests, smoke render |
-| `npm run browser:verify` | 35 Playwright product checks (parallel, 180 s per-check kill with one timeout retry; `-- --serial` to debug) |
+| `npm run browser:verify` | 37 Playwright product checks (parallel, 180 s per-check kill with one timeout retry; `-- --serial` to debug) |
 | `npm run perf:baseline` | Boot performance and bounded-DOM baseline |
 | `npm run precache:gen` | Regenerate the service-worker precache manifest |
 

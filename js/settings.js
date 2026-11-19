@@ -263,6 +263,8 @@ function _syncSettingsUI() {
   if (ri) ri.value = _fmtRest(rp.isolation);
   const rEnabled = document.getElementById('settingsRestEnabled');
   if (rEnabled) rEnabled.checked = s.restTimerEnabled !== false;
+  const autoWarmup = document.getElementById('settingsAutoWarmup');
+  if (autoWarmup) autoWarmup.checked = s.autoWarmupRamp === true;
 
   // Notification toggles
   const notifCheckbox = document.getElementById('settingsNotifications');
@@ -822,6 +824,13 @@ export function savePlateSetup() {
   saveStateToLocalStorage(true);
   _syncPlateSetupUI(appState);
   showToast(`Plate setup saved (${unit})`);
+}
+
+export function setAutoWarmupRamp(enabled) {
+  const appState = _ensureSettings();
+  appState.settings.autoWarmupRamp = !!enabled;
+  saveStateToLocalStorage(true);
+  showToast(enabled ? 'Auto warm-up ramp on' : 'Auto warm-up ramp off');
 }
 
 export function setShowPlateHints(enabled) {

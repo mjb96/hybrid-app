@@ -1626,6 +1626,18 @@ testable on its own.
 
 ## 12. Session log
 
+- **2026-11-20 — Warm-up ramp, muscle load and bodyweight export.**
+  - Optional warm-up ramp: editable 40/60/80% rows above the bar, rounded to
+    the active profile's plates/pair counts, inserted once after the first
+    working weight. `settings.autoWarmupRamp` is opt-in; schema v9 seeds false.
+  - Progress → Muscle Load: per-muscle weekly credits/status from the Volume
+    Guide plus a simple last-trained recovery label, summary and recovery-first
+    ordering.
+  - Bodyweight CSV export: every weigh-in, sorted and deduped, alongside the
+    existing full training CSV.
+  - Added `docs/UI_REFRESH_PLAN.md`: tokens/themes/accents, customizable Home
+    and Progress data, openGym-inspired visual batches, and the Hybrid Score
+    removal recommendation.
 - **2026-11-20 — Bodyweight graph and weekly rate.**
   - Progress → Body weight now has a real chart with labelled axes, daily
     weigh-ins, a 7-day average and an optional goal line, plus 30-day/90-day/all
