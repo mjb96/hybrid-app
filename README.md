@@ -158,7 +158,7 @@ format, not branding.
 | --- | --- |
 | `npm test` | Node unit tests |
 | `npm run verify` | Type check, precache check, workflow gates, unit tests, smoke render |
-| `npm run browser:verify` | 41 Playwright product checks (parallel, 180 s per-check kill with one timeout retry; `-- --serial` to debug) |
+| `npm run browser:verify` | 42 Playwright product checks (parallel, 180 s per-check kill with one timeout retry; `-- --serial` to debug) |
 | `npm run perf:baseline` | Boot performance and bounded-DOM baseline |
 | `npm run precache:gen` | Regenerate the service-worker precache manifest |
 
