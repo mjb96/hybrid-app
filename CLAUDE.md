@@ -1,10 +1,10 @@
-# Helyx — Claude Code Working Brief
+# openHybrid — Claude Code Working Brief
 
-Helyx is a hybrid strength + running PWA (~55k lines vanilla JS ES modules, no
+openHybrid is a hybrid strength + running PWA (~55k lines vanilla JS ES modules, no
 framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session.
 
 ## License
-- **AGPL-3.0-only** (`LICENSE`), copyright Matthew Boman. Third-party notices
+- **AGPL-3.0-only** (`LICENSE`), copyright the openHybrid contributors. Third-party notices
   are in `NOTICE.md`; update them before adding vendored code, fonts or media.
 - Contributions are accepted under the same licence. The hosted PWA and Android
   app keep a source link under Settings → App → Source code.

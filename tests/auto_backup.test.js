@@ -30,7 +30,7 @@ function nativeRuntime(handlers = {}) {
     },
     chooseFolder(callbackId) {
       calls.push(['chooseFolder']);
-      resolve(callbackId, handlers.folder || { status: 'configured', available: true, configured: true, folderName: 'Helyx' });
+      resolve(callbackId, handlers.folder || { status: 'configured', available: true, configured: true, folderName: 'openHybrid' });
     },
     disable(callbackId) {
       calls.push(['disable']);
@@ -58,7 +58,7 @@ test('automatic backup is Android-only and reports unavailable in a browser', as
 test('folder setup and disable resolve through the native completion callback', async () => {
   const { runtime, calls } = nativeRuntime();
   assert.equal(automaticBackupSupported(runtime), true);
-  assert.equal((await chooseAutomaticBackupFolder(runtime)).folderName, 'Helyx');
+  assert.equal((await chooseAutomaticBackupFolder(runtime)).folderName, 'openHybrid');
   assert.equal((await disableAutomaticBackup(runtime)).status, 'disabled');
   assert.deepEqual(calls, [['chooseFolder'], ['disable']]);
   assert.deepEqual(runtime.window.__autoBackupCB, {});
@@ -83,7 +83,7 @@ test('Android WebView timers keep their Window receiver instead of throwing Ille
   win.HybridAutoBackupBridge = {
     chooseFolder(callbackId) {
       win.__autoBackupCB[callbackId](JSON.stringify({
-        status: 'configured', available: true, configured: true, folderName: 'Helyx',
+        status: 'configured', available: true, configured: true, folderName: 'openHybrid',
       }));
     },
   };
@@ -100,7 +100,7 @@ test('complete backup is the portable v4 envelope and includes every GPS route',
     appVersion: 'test-version',
   });
   const parsed = JSON.parse(complete.content);
-  assert.equal(parsed.format, 'helyx-export');
+  assert.equal(parsed.format, 'openhybrid-export');
   assert.equal(parsed.version, 4);
   assert.equal(parsed.appVersion, 'test-version');
   assert.equal(parsed.state.currentWeek, '1');

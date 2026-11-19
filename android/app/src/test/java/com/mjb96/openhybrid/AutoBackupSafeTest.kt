@@ -1,4 +1,4 @@
-package com.helyx.app
+package com.mjb96.openhybrid
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -10,16 +10,16 @@ import org.junit.Test
 class AutoBackupSafeTest {
     @Test
     fun acceptsValidRequestAndBuildsBoundedNames() {
-        val request = AutoBackupSafe.request("{\"format\":\"helyx-export\"}", "2026-07-22", "2026-07-20", "session", "backup_123")
+        val request = AutoBackupSafe.request("{\"format\":\"openhybrid-export\"}", "2026-07-22", "2026-07-20", "session", "backup_123")
         assertNotNull(request)
         assertEquals("2026-07-22", request?.dayKey)
         assertEquals("2026-07-20", request?.weekKey)
         assertEquals("session", request?.reason)
 
         val names = AutoBackupSafe.names("2026-07-22", "2026-07-20")
-        assertEquals("helyx-auto-latest.json", names.latest)
-        assertEquals("helyx-auto-2026-07-22.json", names.daily)
-        assertEquals("helyx-auto-week-2026-07-20.json", names.weekly)
+        assertEquals("openhybrid-auto-latest.json", names.latest)
+        assertEquals("openhybrid-auto-2026-07-22.json", names.daily)
+        assertEquals("openhybrid-auto-week-2026-07-20.json", names.weekly)
     }
 
     @Test
@@ -32,17 +32,17 @@ class AutoBackupSafeTest {
 
     @Test
     fun retentionKeepsLatestSevenDailyAndFourWeeklyFiles() {
-        val daily = (1..10).map { "helyx-auto-2026-07-${it.toString().padStart(2, '0')}.json" }
+        val daily = (1..10).map { "openhybrid-auto-2026-07-${it.toString().padStart(2, '0')}.json" }
         val weekly = listOf("2026-06-22", "2026-06-29", "2026-07-06", "2026-07-13", "2026-07-20")
-            .map { "helyx-auto-week-$it.json" }
+            .map { "openhybrid-auto-week-$it.json" }
         val existing = daily + weekly + AutoBackupSafe.LATEST_NAME + "my-notes.json"
         val deleted = AutoBackupSafe.namesToDelete(existing)
 
         assertEquals(setOf(
-            "helyx-auto-2026-07-01.json",
-            "helyx-auto-2026-07-02.json",
-            "helyx-auto-2026-07-03.json",
-            "helyx-auto-week-2026-06-22.json",
+            "openhybrid-auto-2026-07-01.json",
+            "openhybrid-auto-2026-07-02.json",
+            "openhybrid-auto-2026-07-03.json",
+            "openhybrid-auto-week-2026-06-22.json",
         ), deleted)
         assertFalse(deleted.contains(AutoBackupSafe.LATEST_NAME))
         assertFalse(deleted.contains("my-notes.json"))

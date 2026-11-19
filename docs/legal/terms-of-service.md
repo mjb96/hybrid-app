@@ -6,18 +6,18 @@
   Note the health/safety disclaimer in section 4 — important for a fitness app.
 -->
 
-# Helyx — Terms of Service
+# openHybrid — Terms of Service
 
 **Last updated: {{DATE}}**
 
-These Terms govern your use of the Helyx app. By using Helyx, you agree to them.
+These Terms govern your use of the openHybrid app. By using openHybrid, you agree to them.
 
 ## 1. Who we are
-Helyx is provided by {{YOUR NAME OR COMPANY}} ("we", "us"). Contact:
+openHybrid is provided by {{YOUR NAME OR COMPANY}} ("we", "us"). Contact:
 {{CONTACT_EMAIL}}.
 
 ## 2. The service
-Helyx helps you plan and log strength and running training, view analytics, and
+openHybrid helps you plan and log strength and running training, view analytics, and
 optionally sync across devices with an account. Features that depend on device
 capabilities or permissions (Health Connect, GPS, notifications) require your
 consent and a compatible device.
@@ -25,10 +25,10 @@ consent and a compatible device.
 ## 3. Your account
 - You are responsible for keeping your login credentials secure.
 - You must provide a valid email to create an account.
-- You must be at least {{MIN_AGE, e.g. 16}} years old to use Helyx.
+- You must be at least {{MIN_AGE, e.g. 16}} years old to use openHybrid.
 
 ## 4. Health & safety disclaimer (important)
-Helyx provides **general fitness information and tools, not medical advice**.
+openHybrid provides **general fitness information and tools, not medical advice**.
 Training recommendations, load metrics, readiness scores, and reminders are for
 informational purposes only. **Consult a qualified professional before starting
 or changing an exercise program**, especially if you have a medical condition or
@@ -45,7 +45,7 @@ limited permission needed to store and sync it to provide the service, as
 described in the Privacy Policy.
 
 ## 7. Availability & changes
-Helyx is provided "as is" and "as available". We may update, change, or
+openHybrid is provided "as is" and "as available". We may update, change, or
 discontinue features. We aim to avoid data loss but you are responsible for
 keeping your own backups (use Settings → Export).
 
@@ -56,7 +56,7 @@ Terms limits liability that cannot be limited by law (e.g. for death or personal
 injury caused by negligence).
 
 ## 9. Termination
-You may stop using Helyx at any time and delete your account. We may suspend
+You may stop using openHybrid at any time and delete your account. We may suspend
 access for breach of these Terms.
 
 ## 10. Governing law

@@ -25,7 +25,7 @@ export function _setErrorHook(fn) { _testHook = fn; }
 export function reportHandledError(context, err) {
   // 1) Always visible in dev + CI (the smoke test fails on unexpected
   //    console.error, so a swallowed throw can no longer pass unnoticed).
-  try { console.error(`[Helyx] handled error in ${context}:`, err && err.stack ? err.stack : err); } catch (_) { /* no console */ }
+  try { console.error(`[openHybrid] handled error in ${context}:`, err && err.stack ? err.stack : err); } catch (_) { /* no console */ }
   // 2) Production telemetry (DSN-gated; scrubbed by the Sentry config).
   try {
     const S = (typeof window !== 'undefined') ? /** @type {any} */ (window).Sentry : null;

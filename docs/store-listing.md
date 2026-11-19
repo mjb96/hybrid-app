@@ -1,11 +1,11 @@
-# Helyx — Google Play store listing (draft copy)
+# openHybrid — Google Play store listing (draft copy)
 
 Draft text for the Play listing. `[You]`: tweak voice to taste, then paste into
 Play Console. Character limits are Play's current maxima.
 
 ## App name (max 30)
-`Helyx — Hybrid Training`
-*(23 chars. Alternatives: "Helyx: Strength & Running" · "Helyx Hybrid Trainer")*
+`openHybrid — Hybrid Training`
+*(23 chars. Alternatives: "openHybrid: Strength & Running" · "openHybrid Hybrid Trainer")*
 
 ## Short description (max 80)
 `Train strength and running in one plan. Smart logging, real analytics, no fluff.`
@@ -13,7 +13,7 @@ Play Console. Character limits are Play's current maxima.
 
 ## Full description (max 4000)
 ```
-Helyx is one app for the hybrid athlete — the lifter who runs and the runner who
+openHybrid is one app for the hybrid athlete — the lifter who runs and the runner who
 lifts. Plan your week, log every set and every mile, and see how the two sides
 of your training actually add up.
 
@@ -39,7 +39,7 @@ YOURS, AND PRIVATE
 • No ads, advertising IDs, or behavioural analytics. Limited scrubbed crash
   reporting helps us fix beta issues. We do not sell your data.
 
-Helyx gives general fitness information, not medical advice. Talk to a qualified
+openHybrid gives general fitness information, not medical advice. Talk to a qualified
 professional before starting a new program.
 
 Free at launch.
@@ -47,7 +47,7 @@ Free at launch.
 
 ## What's new (release notes, max 500) — first release
 ```
-First public beta of Helyx 🎉
+First public beta of openHybrid 🎉
 • Hybrid strength + running planner and logger
 • GPS run tracking with live pace, splits, route quality, and recovery tools
 • Training-load, readiness, and strength/endurance analytics
@@ -78,5 +78,5 @@ See `docs/legal/play-data-safety.md` for the exact form answers.
 - Phone screenshots (min 2, recommend 4–8): home/coaching, workout logging,
   GPS run + map, analytics/readiness, program library.
 - Optional: 7"/10" tablet screenshots, short promo video.
-- Keep the visual language consistent with the in-app Helyx look (dark theme,
+- Keep the visual language consistent with the in-app openHybrid look (dark theme,
   Coros-orange accent).

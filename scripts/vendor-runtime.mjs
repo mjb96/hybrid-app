@@ -32,9 +32,9 @@ function sriSha384(buf) {
   return 'sha384-' + createHash('sha384').update(buf).digest('base64');
 }
 
-const work = mkdtempSync(join(tmpdir(), 'helyx-vendor-'));
+const work = mkdtempSync(join(tmpdir(), 'openhybrid-vendor-'));
 try {
-  writeFileSync(join(work, 'package.json'), JSON.stringify({ name: 'helyx-vendor-build', private: true }));
+  writeFileSync(join(work, 'package.json'), JSON.stringify({ name: 'openhybrid-vendor-build', private: true }));
   console.log(`Installing ${SENTRY.pkg}@${SENTRY.version} …`);
   execFileSync('npm', ['install', '--no-audit', '--no-fund', '--silent',
     `${SENTRY.pkg}@${SENTRY.version}`],

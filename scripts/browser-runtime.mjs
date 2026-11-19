@@ -2,7 +2,7 @@ import { existsSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 
 export function browserIsRequired(argv = process.argv, env = process.env) {
-  return argv.includes('--required') || env.HELYX_BROWSER_REQUIRED === '1';
+  return argv.includes('--required') || env.OPENHYBRID_BROWSER_REQUIRED === '1';
 }
 
 function managedChromiumCandidates() {

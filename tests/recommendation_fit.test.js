@@ -79,7 +79,7 @@ test('every returned recommendation carries at least one reason', () => {
 });
 
 test('editorial badges are no longer offered as reasons', () => {
-  // "Staff Pick" and "Helyx Certified" describe the programme, not the fit.
+  // "Staff Pick" and "openHybrid Certified" describe the programme, not the fit.
   const recs = getRecommendations(state({
     fitnessGoal: 'strength', fitnessLevel: 'intermediate',
     equipmentTier: 'gym', equipment: FULL_GYM,

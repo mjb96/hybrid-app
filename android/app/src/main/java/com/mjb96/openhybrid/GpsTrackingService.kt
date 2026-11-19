@@ -1,4 +1,4 @@
-package com.helyx.app
+package com.mjb96.openhybrid
 
 import android.Manifest
 import android.app.Notification
@@ -218,9 +218,9 @@ object GpsPointStore {
 class GpsTrackingService : Service(), LocationListener {
 
     companion object {
-        const val ACTION_START  = "com.helyx.app.gps.START"
-        const val ACTION_PAUSE  = "com.helyx.app.gps.PAUSE"
-        const val ACTION_RESUME = "com.helyx.app.gps.RESUME"
+        const val ACTION_START  = "com.mjb96.openhybrid.gps.START"
+        const val ACTION_PAUSE  = "com.mjb96.openhybrid.gps.PAUSE"
+        const val ACTION_RESUME = "com.mjb96.openhybrid.gps.RESUME"
 
         const val CHANNEL_ID = "run_tracking"
         private const val NOTIFICATION_ID = 2001
@@ -260,7 +260,7 @@ class GpsTrackingService : Service(), LocationListener {
                 val tracking = GpsPointStore.getStatus() == GpsPointStore.STATUS_TRACKING
                 startForeground(
                     NOTIFICATION_ID,
-                    buildNotification(if (tracking) "Run in progress" else "Run recovered — open Helyx to resume"),
+                    buildNotification(if (tracking) "Run in progress" else "Run recovered — open openHybrid to resume"),
                 )
                 if (tracking) startListening()
             }
@@ -287,7 +287,7 @@ class GpsTrackingService : Service(), LocationListener {
                 if (GpsPointStore.getStatus() == GpsPointStore.STATUS_PAUSED) {
                     startForeground(
                         NOTIFICATION_ID,
-                        buildNotification("Run recovered — open Helyx to resume"),
+                        buildNotification("Run recovered — open openHybrid to resume"),
                     )
                 } else {
                     stopSelf()
@@ -366,7 +366,7 @@ class GpsTrackingService : Service(), LocationListener {
         )
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle("Helyx")
+            .setContentTitle("openHybrid")
             .setContentText(text)
             .setOngoing(true)
             .setOnlyAlertOnce(true)

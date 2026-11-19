@@ -81,7 +81,7 @@ test('pickWeeklyFocus: a deload week overrides the volume-dip / momentum praise'
 test('reviewToText: numbers-first share copy with unit conversion', () => {
   const r = buildWeeklyReview(makeState(), DAYS, PROGRAM);
   const txt = reviewToText(r, 'km');
-  assert.match(txt, /Week 3 on Helyx: 1,100 kg lifted · 7 km run · 2 sessions · 1 PR 🏆\./);
+  assert.match(txt, /Week 3 on openHybrid: 1,100 kg lifted · 7 km run · 2 sessions · 1 PR 🏆\./);
   assert.match(txt, /Hybrid Score 84 \(\+12 this week\)/);
   assert.match(txt, /Next week's focus — /);
   assert.match(reviewToText(r, 'mi'), /4\.3 mi run/);

@@ -98,23 +98,23 @@ function installBridge(mirror, onWrite = null) {
     HybridStateMirrorBridge: {
       read(callbackId) {
         queueMicrotask(() => {
-          w.__helyxStateMirrorCB[callbackId](JSON.stringify(mirror));
+          w.__openhybridStateMirrorCB[callbackId](JSON.stringify(mirror));
         });
       },
       write(json, callbackId) {
         if (onWrite) onWrite(json);
         queueMicrotask(() => {
-          w.__helyxStateMirrorCB[callbackId](JSON.stringify({ status: 'saved' }));
+          w.__openhybridStateMirrorCB[callbackId](JSON.stringify({ status: 'saved' }));
         });
       },
       clear(callbackId) {
         queueMicrotask(() => {
-          w.__helyxStateMirrorCB[callbackId](JSON.stringify({ status: 'cleared' }));
+          w.__openhybridStateMirrorCB[callbackId](JSON.stringify({ status: 'cleared' }));
         });
       },
       status(callbackId) {
         queueMicrotask(() => {
-          w.__helyxStateMirrorCB[callbackId](JSON.stringify({ status: 'ok' }));
+          w.__openhybridStateMirrorCB[callbackId](JSON.stringify({ status: 'ok' }));
         });
       },
     },

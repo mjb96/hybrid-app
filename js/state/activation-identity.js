@@ -2,7 +2,7 @@
 // =============================================================================
 // PROGRAM ACTIVATION IDENTITY (js/state/activation-identity.js)
 //
-// Helyx stores logged training under `state.weeks["N"].lifts[dayKey]`, keyed
+// openHybrid stores logged training under `state.weeks["N"].lifts[dayKey]`, keyed
 // ONLY by program-week number + weekday. Nothing in that key names the program
 // run it belongs to, so two different programs — or two runs of the SAME program
 // — that both touch "Week 1 / Monday" share one physical storage slot. When the

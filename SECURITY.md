@@ -9,7 +9,7 @@ Only the `main` branch is supported. Older commits and the rejected
 
 Please use GitHub's private vulnerability reporting:
 
-<https://github.com/mjb96/hybrid-app/security/advisories/new>
+<https://github.com/mjb96/openHybrid/security/advisories/new>
 
 Do not open a public issue containing exploit details, credentials, personal
 health data or precise location data. If private reporting is unavailable,

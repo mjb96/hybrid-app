@@ -1,4 +1,4 @@
-package com.helyx.app
+package com.mjb96.openhybrid
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

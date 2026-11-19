@@ -2,7 +2,7 @@
 // =============================================================================
 // HEALTH CONNECT SUPPORTED-FIELD CONTRACT (js/health/health-fields.js)
 //
-// THE single source of truth for which Health Connect fields Helyx supports.
+// THE single source of truth for which Health Connect fields openHybrid supports.
 // This contract is shared, unchanged, by every layer:
 //   Settings toggles → permission requests → native record reads → returned
 //   per-day payload keys → stored appState.healthConnect series → per-field

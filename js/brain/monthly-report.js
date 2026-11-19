@@ -79,7 +79,7 @@ export function reportToText(r, distUnit = 'km', weightUnit = 'kg') {
   if (!r.hasData) return 'Your 30-day report will build as you train.';
   const dist = distUnit === 'mi' ? `${Math.round(r.totals.distanceKm * 0.621371)} mi` : `${r.totals.distanceKm} km`;
   const bits = [`${r.totals.sessions} sessions`, `${r.totals.volume.toLocaleString()} ${weightUnit}`, dist];
-  let txt = `Last 30 days on Helyx: ${bits.join(' · ')}.`;
+  let txt = `Last 30 days on openHybrid: ${bits.join(' · ')}.`;
   if (r.hybridScore.avg !== null) txt += ` Avg Hybrid Score ${r.hybridScore.avg}${r.hybridScore.delta ? ` (${r.hybridScore.delta > 0 ? '+' : ''}${r.hybridScore.delta} vs prior month)` : ''}.`;
   txt += ` Fitness ${r.fitness.trend}.`;
   if (r.projection) txt += ` ${r.projection}`;

@@ -105,7 +105,7 @@ const shedPplulPrograms = [
     name: 'Shed PPLUL',
     tagline: 'Five lifting days · performance-based progression · easy conditioning',
     description: 'An ongoing five-day push/pull/legs/upper/lower block for intermediate lifters prioritising strength, hypertrophy and body composition. Stable rep ranges let performance determine progression, Thursday provides easy recovery conditioning, and fatigue is reviewed every four weeks without an automatic deload.',
-    author: { name: 'Helyx', type: 'community', verified: false },
+    author: { name: 'openHybrid', type: 'community', verified: false },
     category: 'hypertrophy',
     subcategory: 'strength-hypertrophy',
     tags: ['intermediate', 'strength', 'hypertrophy', 'muscle-gain', 'body-composition', 'work-capacity', 'home-gym', 'ppl', 'pplul', '5-day'],
@@ -149,7 +149,7 @@ const shedPplulPrograms = [
       deadlift: ['Historical 1RM: 200 kg', 'Current heavy loading limited by available plates'],
     },
     dossier: {
-      creator: 'Helyx',
+      creator: 'openHybrid',
       focus: 'Strength + Hypertrophy (home gym)',
       philosophy: 'Give every session one clear job, then let actual performance and recovery determine progression. Rep quality, total repetitions, RIR and repeatable technique matter more than obeying a predetermined calendar.',
     },

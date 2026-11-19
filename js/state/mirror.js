@@ -12,7 +12,7 @@
 // it can never overwrite a newer browser copy.
 // =============================================================================
 
-const REGISTRY = '__helyxStateMirrorCB';
+const REGISTRY = '__openhybridStateMirrorCB';
 const CALLBACK_PREFIX = 'state_mirror_';
 const DEFAULT_TIMEOUT_MS = 4000;
 const SAVED_AT_KEY_SUFFIX = '_saved_at';

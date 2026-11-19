@@ -1,4 +1,4 @@
-package com.helyx.app
+package com.mjb96.openhybrid
 
 /**
  * The native half of the Health Connect supported-field contract.

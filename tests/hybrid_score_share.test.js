@@ -14,7 +14,7 @@ test('V2-5 — caption carries name, score, status, level', () => {
   assert.match(cap, /78/);
   assert.match(cap, /Strong/);
   assert.match(cap, /Hybrid Athlete/);
-  assert.match(cap, /Helyx/);
+  assert.match(cap, /openHybrid/);
 });
 
 test('V2-5 — weekly variant caption says "this week"', () => {

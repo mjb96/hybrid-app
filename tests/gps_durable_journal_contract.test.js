@@ -3,10 +3,10 @@ import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
 const service = readFileSync(new URL(
-  '../android/app/src/main/java/com/helyx/app/GpsTrackingService.kt', import.meta.url,
+  '../android/app/src/main/java/com/mjb96/openhybrid/GpsTrackingService.kt', import.meta.url,
 ), 'utf8');
 const bridge = readFileSync(new URL(
-  '../android/app/src/main/java/com/helyx/app/GpsBridge.kt', import.meta.url,
+  '../android/app/src/main/java/com/mjb96/openhybrid/GpsBridge.kt', import.meta.url,
 ), 'utf8');
 const tracker = readFileSync(new URL('../js/gps-tracker.js', import.meta.url), 'utf8');
 

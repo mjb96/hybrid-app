@@ -12,8 +12,8 @@ export function migrationRecoveryCopy(error) {
   return {
     title: 'Your data is safe',
     message: futureSchema
-      ? 'This data was saved by a newer version of Helyx. Update the app, then retry.'
-      : 'Helyx could not finish a data upgrade, so it stopped before saving any changes. Update the app or retry when you are ready.',
+      ? 'This data was saved by a newer version of openHybrid. Update the app, then retry.'
+      : 'openHybrid could not finish a data upgrade, so it stopped before saving any changes. Update the app or retry when you are ready.',
     action: 'Retry',
   };
 }

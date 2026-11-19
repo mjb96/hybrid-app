@@ -39,7 +39,7 @@ export function locationErrorNotice(code) {
     case 1:
       return {
         kind: 'permission',
-        title: 'Location is turned off for Helyx',
+        title: 'Location is turned off for openHybrid',
         body: 'Tracking a run needs location access. Turn it on in your browser or device settings, then start the run again.',
         retry: true,
       };
@@ -120,7 +120,7 @@ export function backgroundTrackingNotice({ nativeAvailable = false } = {}) {
   }
   return {
     kind: 'foreground-only',
-    text: 'Keep Helyx open — browser tracking stops if you switch apps or lock the screen',
+    text: 'Keep openHybrid open — browser tracking stops if you switch apps or lock the screen',
   };
 }
 
@@ -131,7 +131,7 @@ export function backgroundTrackingNotice({ nativeAvailable = false } = {}) {
  * `restored: true` when it had to fall back to the last durably-journalled
  * point, which means a short stretch just before the restart is gone — an
  * athlete comparing this against their watch deserves to know that rather than
- * to conclude Helyx miscounted.
+ * to conclude openHybrid miscounted.
  *
  * @param {{restored?:boolean, status?:string}} [recovery]
  * @returns {RunNotice}
@@ -141,7 +141,7 @@ export function runRecoveryNotice({ restored = false, status = 'TRACKING' } = {}
     return {
       kind: 'recovered-finalizing',
       title: 'Recovered — finish saving this run',
-      body: 'Helyx restarted while this run was being saved. Finish below and it will be stored.',
+      body: 'openHybrid restarted while this run was being saved. Finish below and it will be stored.',
       retry: false,
     };
   }
@@ -149,14 +149,14 @@ export function runRecoveryNotice({ restored = false, status = 'TRACKING' } = {}
     return {
       kind: 'recovered-partial',
       title: 'Recovered to the last saved point',
-      body: 'Helyx restarted mid-run. Everything up to the last saved GPS point is here; a short stretch just before the restart may be missing.',
+      body: 'openHybrid restarted mid-run. Everything up to the last saved GPS point is here; a short stretch just before the restart may be missing.',
       retry: false,
     };
   }
   return {
     kind: 'recovered',
     title: 'Run restored',
-    body: 'Helyx restarted, but GPS kept recording the whole time — nothing is missing.',
+    body: 'openHybrid restarted, but GPS kept recording the whole time — nothing is missing.',
     retry: false,
   };
 }
@@ -181,7 +181,7 @@ export function runSaveNotice({
       body: nativeProtected
         // Android still holds the run in its journal, which is the difference
         // between "not saved yet" and "lost". Saying so is the whole point.
-        ? 'Your device would not store it, so Helyx is keeping its Android recovery copy — the run is not lost. Free some space and restart Helyx to finish saving it.'
+        ? 'Your device would not store it, so openHybrid is keeping its Android recovery copy — the run is not lost. Free some space and restart openHybrid to finish saving it.'
         : 'Your device would not store it — usually a full disk. Free some space and finish again; the run is still on screen until you do.',
       retry: false,
     };
@@ -198,7 +198,7 @@ export function runSaveNotice({
     return {
       kind: 'journal-open',
       title: 'Saved — recovery copy still open',
-      body: 'The run is recorded. Android could not close its backup copy, so restart Helyx before your next run to clear it.',
+      body: 'The run is recorded. Android could not close its backup copy, so restart openHybrid before your next run to clear it.',
       retry: false,
     };
   }

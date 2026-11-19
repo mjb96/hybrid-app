@@ -4,7 +4,7 @@
 // Seven daily bars for the selected week (Mon–Sun), a clear week-range label,
 // prev/next navigation, an honest week-to-week comparison, and a tap target
 // into the matching activity or analytics detail view. Clean + glanceable,
-// Helyx-styled.
+// openHybrid-styled.
 //
 // ALL numbers come from the shared `buildWeekChart` model (analytics/
 // week-chart-model.js) — the graph never computes analytics itself, so it can

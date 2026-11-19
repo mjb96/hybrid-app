@@ -120,7 +120,7 @@ function runAttempt(check) {
   return new Promise((resolve) => {
     const child = spawn(process.execPath, [check, '--required'], {
       cwd: process.cwd(),
-      env: { ...process.env, HELYX_BROWSER_REQUIRED: '1' },
+      env: { ...process.env, OPENHYBRID_BROWSER_REQUIRED: '1' },
       stdio: ['ignore', 'pipe', 'pipe'],
       // A dedicated process group lets one kill take the check's Chromium with it.
       detached: process.platform !== 'win32',

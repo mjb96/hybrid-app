@@ -1,5 +1,5 @@
 // ============================================================================
-// Helyx — Program-detail viewport check (week-at-a-glance + progression + CTA)
+// openHybrid — Program-detail viewport check (week-at-a-glance + progression + CTA)
 // ----------------------------------------------------------------------------
 // jsdom can't verify pixel geometry, so this drives the REAL detail page in a
 // headless Chromium and asserts the mobile layout contract for the progression

@@ -22,10 +22,10 @@ const DIAL_COLOR = { train: '#3b82f6', recover: '#10b981', progress: '#f59e0b' }
 export function shareCaption(result, state, opts = {}) {
   const name = (state?.settings?.name || '').trim();
   const who = name ? `${name} · ` : '';
-  if (!result || result.score == null) return `${who}Hybrid Score — calibrating on Helyx`;
+  if (!result || result.score == null) return `${who}Hybrid Score — calibrating on openHybrid`;
   const lvl = result.level ? ` · ${result.level.name}` : '';
   const scope = opts.variant === 'weekly' ? ' this week' : '';
-  return `${who}Hybrid Score ${result.score}${scope} — ${result.band?.status || ''}${lvl} on Helyx`.trim();
+  return `${who}Hybrid Score ${result.score}${scope} — ${result.band?.status || ''}${lvl} on openHybrid`.trim();
 }
 
 function roundRect(ctx, x, y, w, h, r) {
@@ -117,7 +117,7 @@ export function drawScoreCard(ctx, W, H, result, state, opts = {}) {
   // Divider + footer (name · streak)
   ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 2;
   ctx.beginPath(); ctx.moveTo(120, 1200); ctx.lineTo(W - 120, 1200); ctx.stroke();
-  const footer = streak > 0 ? `${name} · 🔥 ${streak}-day streak` : `${name} · ⚡ Helyx`;
+  const footer = streak > 0 ? `${name} · 🔥 ${streak}-day streak` : `${name} · ⚡ openHybrid`;
   ctx.fillStyle = '#94a3b8'; ctx.font = `700 32px ${FONT}`;
   ctx.fillText(footer, W / 2, 1268);
 }
@@ -150,7 +150,7 @@ export function shareHybridScoreCard(result, state, { showToast, variant, weekLa
   drawScoreCard(ctx, W, H, result, state, { variant, weekLabel });
 
   const caption = shareCaption(result, state, { variant });
-  const fname = variant === 'weekly' ? 'helyx-week.png' : 'helyx-score.png';
+  const fname = variant === 'weekly' ? 'openhybrid-week.png' : 'openhybrid-score.png';
   const finish = (blob) => {
     const file = blob && typeof File !== 'undefined' ? new File([blob], fname, { type: 'image/png' }) : null;
     if (file && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {

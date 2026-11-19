@@ -2,7 +2,7 @@
 // =============================================================================
 // INTERNAL LIFT-ID DETECTION (js/state/lift-id.js)
 //
-// Helyx once had a "lift identity" subsystem (removed in commit e2e624f) that
+// openHybrid once had a "lift identity" subsystem (removed in commit e2e624f) that
 // keyed a day's logged sets by an opaque generated id — literally
 // `'lift_' + Math.random().toString(36).slice(2, 10)` — and resolved it back to
 // a display name via a `liftNames` (id -> name) map plus a `liftIdMap`

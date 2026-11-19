@@ -17,7 +17,7 @@
 import { makeRouteRecord } from './route-identity.js';
 import { sanitizeGpsQuality } from '../gps/route-quality.js';
 
-export const EXPORT_FORMAT = 'helyx-export';
+export const EXPORT_FORMAT = 'openhybrid-export';
 export const EXPORT_VERSION = 4;
 
 // Guards against malformed or maliciously huge route payloads on import.
@@ -159,7 +159,7 @@ export function wrapExport(state, routePayload = {}, meta = {}) {
  *   • v3 envelope: rich routeRecords (same-day sessions preserved)
  *   • v2 envelope: legacy { "week_day": coordinates } route map
  *   • legacy: a raw appState object (has currentWeek + weeks) — no routes
- * Returns null when the payload isn't a recognisable Helyx export.
+ * Returns null when the payload isn't a recognisable openHybrid export.
  * @param {any} parsed
  * @returns {{ state: any, routeRecords: any[], routes: Record<string, [number,number][]>, legacy: boolean } | null}
  */

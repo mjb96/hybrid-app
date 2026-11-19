@@ -16,7 +16,7 @@
 // are pinned identical below the title line, and drift fails the build.
 //
 // To change the brief: edit AGENTS.md, then regenerate CLAUDE.md with
-//   { echo "# Helyx — Claude Code Working Brief"; tail -n +2 AGENTS.md; } > CLAUDE.md
+//   { echo "# openHybrid — Claude Code Working Brief"; tail -n +2 AGENTS.md; } > CLAUDE.md
 // =============================================================================
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -38,7 +38,7 @@ test('CLAUDE.md and AGENTS.md carry an identical brief', () => {
     body(CLAUDE),
     body(AGENTS),
     'The two agent briefs have drifted. Edit AGENTS.md, then regenerate CLAUDE.md:\n' +
-      '  { echo "# Helyx — Claude Code Working Brief"; tail -n +2 AGENTS.md; } > CLAUDE.md',
+      '  { echo "# openHybrid — Claude Code Working Brief"; tail -n +2 AGENTS.md; } > CLAUDE.md',
   );
 });
 

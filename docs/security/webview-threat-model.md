@@ -1,8 +1,8 @@
-# Helyx Android WebView — Threat Model & Hardening
+# openHybrid Android WebView — Threat Model & Hardening
 
 _Last reviewed against the shipped code: 2026-08-03._
 
-Helyx ships as a custom Android **WebView shell** (not Capacitor/TWA). The web
+openHybrid ships as a custom Android **WebView shell** (not Capacitor/TWA). The web
 layer runs bundled assets and talks to six native `@JavascriptInterface`
 bridges. Because those bridges reach real device capabilities (location, Health
 Connect, notifications, file saving), the WebView is a **privileged execution

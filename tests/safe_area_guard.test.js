@@ -178,7 +178,7 @@ test('the close button keeps a 44px+ touch target', () => {
 // ── The native half ──────────────────────────────────────────────────────────
 
 test('the Android shell publishes --app-safe-top from the real status-bar inset', () => {
-  const kt = read('android/app/src/main/java/com/helyx/app/MainActivity.kt');
+  const kt = read('android/app/src/main/java/com/mjb96/openhybrid/MainActivity.kt');
 
   assert.match(kt, /setOnApplyWindowInsetsListener/, 'MainActivity must observe window insets');
   assert.match(
@@ -198,7 +198,7 @@ test('the Android shell publishes --app-safe-top from the real status-bar inset'
 
 test('the Android shell stays edge-to-edge (the reason the inset is needed)', () => {
   assert.match(
-    read('android/app/src/main/java/com/helyx/app/MainActivity.kt'),
+    read('android/app/src/main/java/com/mjb96/openhybrid/MainActivity.kt'),
     /setDecorFitsSystemWindows\(window,\s*false\)/,
     'if this ever becomes true the WebView no longer draws behind the status bar ' +
       'and the --app-safe-top plumbing should be revisited',

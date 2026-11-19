@@ -70,7 +70,7 @@ test('rejects non-workout CSV shapes', () => {
   assert.throws(() => parseWorkoutCsv('date,note\n2026-11-02,hello\n', { unit: 'kg' }));
 });
 
-test('maps common external names onto Helyx catalogue names', () => {
+test('maps common external names onto openHybrid catalogue names', () => {
   const parsed = parseWorkoutCsv('date,exercise,weight,reps\n2026-11-02,Barbell Deadlift,100,5\n', { unit: 'kg' });
   const state = { currentWeek: '1', weeks: {}, customExercises: [] };
   const result = applyWorkoutCsvImport(state, parsed, {

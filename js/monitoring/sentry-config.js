@@ -10,4 +10,4 @@ export const SENTRY_DSN = 'https://ebeda354909c9ebb5d9b5d7b22537db1@o45116637263
 // APP_VERSION source so Sentry releases stay aligned with package.json + the
 // Android versionName instead of drifting on a hand-edited string.
 import { APP_VERSION } from '../constants.js';
-export const SENTRY_RELEASE = `helyx@${APP_VERSION}`;
+export const SENTRY_RELEASE = `openhybrid@${APP_VERSION}`;

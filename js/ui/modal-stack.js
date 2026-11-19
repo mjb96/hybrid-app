@@ -137,7 +137,7 @@ function focusEntry(entry) {
 function pushHistory(entry) {
   if (entry.opts.history === false || typeof history === 'undefined' || !history.pushState) return;
   try {
-    history.pushState({ helyxModal: entry.root.id || true }, '');
+    history.pushState({ openhybridModal: entry.root.id || true }, '');
     entry.historyPushed = true;
   } catch { /* unavailable */ }
 }

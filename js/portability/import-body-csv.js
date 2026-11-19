@@ -87,7 +87,7 @@ export function parseBodyCsv(text, opts = {}) {
     const weight = unit === targetUnit ? raw
       : targetUnit === 'kg' ? raw * 0.45359237 : raw / 0.45359237;
     if (byDate.has(date)) duplicates++;
-    // The last reading for a day wins; Helyx stores one bodyweight per date.
+    // The last reading for a day wins; openHybrid stores one bodyweight per date.
     byDate.set(date, { date, weight: round2(weight) });
   }
 

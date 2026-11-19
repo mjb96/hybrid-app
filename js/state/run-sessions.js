@@ -2,7 +2,7 @@
 // =============================================================================
 // RUN SESSION IDENTITY (js/state/run-sessions.js)
 //
-// Legacy Helyx state stores one run at `week.runs[day]`. That object remains the
+// Legacy openHybrid state stores one run at `week.runs[day]`. That object remains the
 // editable cockpit projection for backward compatibility, while the canonical
 // history now lives at `week.runSessions[day]` as an appendable list. Every
 // session has a stable `sessionId`, so two runs on the same calendar day do not

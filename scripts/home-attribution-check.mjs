@@ -1,5 +1,5 @@
 // ============================================================================
-// Helyx — Home weekly-attribution check (real-browser)
+// openHybrid — Home weekly-attribution check (real-browser)
 // ----------------------------------------------------------------------------
 // Drives the REAL app in headless Chromium at a phone width and proves the
 // calendar-attribution fix end to end: with a frozen program week whose logged

@@ -1,20 +1,17 @@
 # Notices
 
-**Helyx** — Copyright (C) 2026 Matthew Boman.
+**openHybrid** — Copyright (C) 2026 the openHybrid contributors.
 
-Helyx is free software: you can redistribute it and/or modify it under the
+openHybrid is free software: you can redistribute it and/or modify it under the
 terms of the **GNU Affero General Public License, version 3 only**
 (`AGPL-3.0-only`). The full licence text is in [LICENSE](LICENSE).
 
 The corresponding source for the hosted PWA and the Android app is this
-repository: <https://github.com/mjb96/hybrid-app>.
-
-> Helyx is the current working name. This notice will be updated when the
-> project is renamed.
+repository: <https://github.com/mjb96/openHybrid>.
 
 ## Third-party components
 
-Helyx distributes the following third-party code. Their licences are compatible
+openHybrid distributes the following third-party code. Their licences are compatible
 with the AGPL; the notices below are kept with the distributed application.
 
 ### Leaflet 1.9.4 — BSD-2-Clause
@@ -127,7 +124,7 @@ Licensed under the SIL Open Font License, Version 1.1:
 
 ## Exercise catalogue
 
-Helyx's exercise names, cues and muscle mappings are original text. No exercise
+openHybrid's exercise names, cues and muscle mappings are original text. No exercise
 media from openGym or Gym visual is included. If a future change imports
 third-party exercise content, its licence and attribution must be added here
 before it ships.

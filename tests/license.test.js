@@ -32,8 +32,9 @@ test('README carries the AGPL grant and the corresponding-source link', () => {
   const readme = read('README.md');
   assert.match(readme, /GNU Affero General Public License/);
   assert.match(readme, /AGPL-3\.0-only/);
-  assert.match(readme, /https:\/\/github\.com\/mjb96\/hybrid-app/);
+  assert.match(readme, /https:\/\/github\.com\/mjb96\/openHybrid/);
   assert.doesNotMatch(readme, /All rights reserved/i);
+  assert.doesNotMatch(readme, /Matthew Boman/, 'the README must not publish a personal copyright name');
 });
 
 test('third-party notices cover every vendored runtime component', () => {
@@ -45,7 +46,7 @@ test('third-party notices cover every vendored runtime component', () => {
 
 test('Settings exposes the AGPL source link for network users', () => {
   const html = read('index.html');
-  assert.match(html, /href="https:\/\/github\.com\/mjb96\/hybrid-app"/);
+  assert.match(html, /href="https:\/\/github\.com\/mjb96\/openHybrid"/);
   assert.match(html, /GitHub · AGPL-3\.0/);
   assert.match(html, /rel="noopener noreferrer"/);
 });

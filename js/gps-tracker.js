@@ -542,7 +542,7 @@ async function resolveNativeRecoveryError() {
     danger: true,
   });
   if (!discard) {
-    showToast('Recovery copy kept — restart Helyx when you are ready to decide');
+    showToast('Recovery copy kept — restart openHybrid when you are ready to decide');
     return;
   }
   if (!nativeDiscardRun()) {

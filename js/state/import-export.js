@@ -45,7 +45,7 @@ export function setImportSuccessCallback(fn) {
 export async function triggerEngineExport() {
   const appState = _getState();
   const result = await saveTextExport({
-    filename: `helyx-snapshot-wk${appState.currentWeek}.json`,
+    filename: `openhybrid-snapshot-wk${appState.currentWeek}.json`,
     content: JSON.stringify(appState),
     mime: 'application/json',
   });
@@ -56,7 +56,7 @@ export async function triggerEngineExport() {
 export async function triggerCSVExport() {
   const appState = _getState();
   const result = await saveTextExport({
-    filename: 'helyx-data-export.csv',
+    filename: 'openhybrid-data-export.csv',
     content: buildTrainingCsv(appState, _DEFAULT_DAYS),
     mime: 'text/csv',
   });

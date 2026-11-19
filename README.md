@@ -1,15 +1,15 @@
 <p align="center">
-  <img src="icon-512.png" width="112" alt="Helyx app icon">
+  <img src="icon-512.png" width="112" alt="openHybrid app icon">
 </p>
 
-<h1 align="center">Helyx</h1>
+<h1 align="center">openHybrid</h1>
 
 <p align="center">
   Offline-first hybrid strength and running tracker.<br>
   Vanilla JavaScript PWA with a custom Android WebView shell.
 </p>
 
-> **Status: pre-release, local-first, open source.** Helyx is licensed under the
+> **Status: pre-release, local-first, open source.** openHybrid is licensed under the
 > GNU Affero General Public License v3.0 (`AGPL-3.0-only`). There is no account
 > system and no cloud sync: training data stays on the device, with JSON/CSV
 > export and Android automatic backups for moving it. The hosted PWA is a
@@ -17,7 +17,7 @@
 
 ## What it does
 
-Helyx is a training app for people who lift and run. It keeps the fast logging
+openHybrid is a training app for people who lift and run. It keeps the fast logging
 workflow of a strength app while treating running, recovery and load as part of
 the same training picture.
 
@@ -104,9 +104,25 @@ python3 -m http.server 8770 --bind 127.0.0.1
 Open <http://127.0.0.1:8770/>.
 
 The first launch runs onboarding. No account is required. Use **Restore backup
-file** for a Helyx JSON export, or **Settings → Data & backup → Import from
+file** for a openHybrid JSON export, or **Settings → Data & backup → Import from
 Another App (CSV)** for an OpenGym/Strong/Hevy workout or bodyweight export. All
 logging works offline.
+
+## Renaming from Helyx
+
+The project is now **openHybrid**. This is a new Android application ID
+(`com.mjb96.openhybrid`), so the renamed APK installs alongside Helyx rather
+than upgrading it. The hosted PWA lives at <https://mjb96.github.io/openHybrid/>, and browser
+storage is origin-scoped.
+
+In both cases, move your data deliberately:
+
+1. In Helyx, open **Settings → Data & backups** and export a JSON backup.
+2. Install/open openHybrid (or open the new PWA URL).
+3. Restore the JSON backup.
+
+The internal state key (`hybrid_engine_v2_state`) is unchanged; it is a data
+format, not branding.
 
 ## Verification
 
@@ -159,7 +175,7 @@ gradle testDebugUnitTest lintDebug assembleDebug
 
 ## Security and privacy
 
-Helyx handles health and location data. The app is local-first: training data
+openHybrid handles health and location data. The app is local-first: training data
 stays on the device, and exports/backups are the deliberate way to move it.
 Crash reporting is error-only and scrubbed. The Android shell disables platform
 backups and keeps the privileged WebView on a single bundled origin.
@@ -178,23 +194,23 @@ data.
 - There is no iOS project; iOS and billing are out of scope.
 - The legal documents in `docs/legal/` are drafts with placeholders and are not
   legal advice.
-- Helyx provides general fitness information, not medical advice.
+- openHybrid provides general fitness information, not medical advice.
 
 ## License
 
-Copyright (C) 2026 Matthew Boman.
+Copyright (C) 2026 the openHybrid contributors.
 
-Helyx is free software: you can redistribute it and/or modify it under the
+openHybrid is free software: you can redistribute it and/or modify it under the
 terms of the **GNU Affero General Public License, version 3 only**
 (`AGPL-3.0-only`) as published by the Free Software Foundation.
 
-Helyx is distributed in the hope that it will be useful, but **WITHOUT ANY
+openHybrid is distributed in the hope that it will be useful, but **WITHOUT ANY
 WARRANTY**; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
 A PARTICULAR PURPOSE. See the [LICENSE](LICENSE) for the full text.
 
 Third-party notices are in [NOTICE.md](NOTICE.md). The corresponding source for
 the hosted PWA and the Android app is this repository:
-<https://github.com/mjb96/hybrid-app>.
+<https://github.com/mjb96/openHybrid>.
 
 If you run a modified version as a network service, the AGPL requires you to
 offer its users the corresponding source. Contributions are accepted under the

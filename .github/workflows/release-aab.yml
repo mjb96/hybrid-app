@@ -69,43 +69,57 @@ jobs:
             echo "::error::KEYSTORE_BASE64 secret is not set — add the signing secrets before building a release."
             exit 1
           fi
-          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/helyx-release.keystore"
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/openhybrid-release.keystore"
 
       - name: Build signed release bundle + APK
         working-directory: android
         env:
           ANDROID_HOME: /usr/local/lib/android/sdk
           ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
-          KEYSTORE_PATH: ${{ runner.temp }}/helyx-release.keystore
+          KEYSTORE_PATH: ${{ runner.temp }}/openhybrid-release.keystore
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           INPUT_VERSION_NAME: ${{ inputs.versionName }}
+          GRADLE_OPTS: "-Dorg.gradle.internal.repository.max.retries=5 -Dorg.gradle.internal.repository.initial.backoff=2000"
         run: |
+          set -o pipefail
           export VERSION_CODE=$(git rev-list --count HEAD)
           # Manual dispatch can pin a versionName; an automatic merge-to-main
           # build derives 1.0.<commitCount> so it always increments.
           export VERSION_NAME="${INPUT_VERSION_NAME:-1.0.$VERSION_CODE}"
           echo "Building versionName=$VERSION_NAME versionCode=$VERSION_CODE"
           # bundleRelease → .aab for Play; assembleRelease → signed .apk for sideload testing.
-          # Retry once: Maven Central/the Actions cache can return transient
-          # 429/5xx responses that leave common dependencies unresolved.
-          if ! gradle assembleRelease bundleRelease --no-daemon; then
-            echo "::warning::Release build failed; retrying once for a transient dependency or cache error."
-            sleep 20
-            gradle assembleRelease bundleRelease --no-daemon
-          fi
+          # Maven Central rate-limits shared runner IPs (429); the Google mirror in
+          # settings.gradle.kts is primary, and only dependency failures retry.
+          attempt=1
+          while [ "$attempt" -le 3 ]; do
+            echo "Release build attempt $attempt/3"
+            if gradle assembleRelease bundleRelease --no-daemon --max-workers=2 2>&1 | tee /tmp/openhybrid-release-build.log; then
+              exit 0
+            fi
+            if ! grep -qE "429|Too Many Requests|Could not resolve|Could not GET" /tmp/openhybrid-release-build.log; then
+              echo "::error::Release build failed for a non-dependency reason."
+              exit 1
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "::error::Release build still blocked by dependency resolution after 3 attempts."
+              exit 1
+            fi
+            sleep $((attempt * 30))
+            attempt=$((attempt + 1))
+          done
 
       - name: Upload AAB artifact (Play upload)
         uses: actions/upload-artifact@v7
         with:
-          name: helyx-release-aab
+          name: openhybrid-release-aab
           path: android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 30
 
       - name: Upload APK artifact (sideload / device test)
         uses: actions/upload-artifact@v7
         with:
-          name: helyx-release-apk
+          name: openhybrid-release-apk
           path: android/app/build/outputs/apk/release/app-release.apk
           retention-days: 30

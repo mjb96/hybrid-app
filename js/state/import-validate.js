@@ -184,7 +184,7 @@ export function validateImport(parsed, { currentSchemaVersion = Infinity, rawTex
 export function importReasonMessage(reason) {
   switch (reason) {
     case 'too-large': return 'That file is too large to import.';
-    case 'future-schema': return 'This backup is from a newer app version. Update Helyx, then import.';
+    case 'future-schema': return 'This backup is from a newer app version. Update openHybrid, then import.';
     default: return 'File structure failed validation — your data was not replaced.';
   }
 }

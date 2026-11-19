@@ -2,7 +2,7 @@
 // =============================================================================
 // WORKOUT CSV IMPORT — clean-room reader for the public OpenGym/Strong/Hevy
 // export shape. One row per set; no code or exercise media from OpenGym is
-// copied. Strength sets become archived Helyx sessions; cardio rows are counted
+// copied. Strength sets become archived openHybrid sessions; cardio rows are counted
 // and skipped in this first pass.
 // =============================================================================
 
@@ -152,7 +152,7 @@ function durationText(ms) {
 
 /**
  * Parse workout rows into sessions. Returns the raw exercise names and sets;
- * `applyWorkoutCsvImport` maps them into Helyx state.
+ * `applyWorkoutCsvImport` maps them into openHybrid state.
  *
  * @param {string} text
  * @param {{ unit?: 'kg'|'lbs' }} [opts]
@@ -193,7 +193,7 @@ export function parseWorkoutCsv(text, opts = {}) {
     const distance = number(cell(row, columns.distance));
     const seconds = number(cell(row, columns.seconds));
 
-    // Cardio is a different Helyx record type; count it and keep going.
+    // Cardio is a different openHybrid record type; count it and keep going.
     if (!(reps > 0) && ((distance || 0) > 0 || (seconds || 0) > 0)) {
       skippedCardio++;
       continue;
@@ -260,7 +260,7 @@ export function parseWorkoutCsv(text, opts = {}) {
 
 
 // Common display-name variants from external catalogues. These are names and
-// training vocabulary, not copied exercise data; they let a re-imported Helyx
+// training vocabulary, not copied exercise data; they let a re-imported openHybrid
 // history land under the same catalogue entries instead of creating duplicates.
 export const EXTERNAL_EXERCISE_ALIASES = {
   'Resistance Band Triceps Pushdown': 'Band Triceps Pushdown',

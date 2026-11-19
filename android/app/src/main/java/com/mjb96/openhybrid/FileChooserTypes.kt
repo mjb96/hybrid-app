@@ -1,4 +1,4 @@
-package com.helyx.app
+package com.mjb96.openhybrid
 
 /**
  * Converts HTML file-input accept filters into MIME types understood by

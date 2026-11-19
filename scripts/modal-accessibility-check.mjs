@@ -251,7 +251,7 @@ try {
     },
   };
   await restorePage.locator('#onboardingImportFile').setInputFiles({
-    name: 'helyx-training.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(backup)),
+    name: 'openhybrid-training.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(backup)),
   });
   await restorePage.getByRole('button', { name: 'Import backup', exact: true }).click();
   await restorePage.waitForFunction(() => {

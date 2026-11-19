@@ -1,4 +1,4 @@
-package com.helyx.app
+package com.mjb96.openhybrid
 
 import android.app.AlarmManager
 import android.app.PendingIntent
@@ -18,12 +18,12 @@ import java.util.Calendar
  * restore the alarm (all alarms are cleared across a reboot).
  */
 object ReminderScheduler {
-    private const val PREFS       = "helyx_reminders"
+    private const val PREFS       = "openhybrid_reminders"
     private const val KEY_ENABLED = "daily_enabled"
     private const val KEY_HOUR    = "daily_hour"
     private const val KEY_MINUTE  = "daily_minute"
     private const val REQUEST_CODE = 4001
-    const val ACTION_FIRE = "com.helyx.app.reminder.DAILY"
+    const val ACTION_FIRE = "com.mjb96.openhybrid.reminder.DAILY"
 
     fun schedule(context: Context, hour: Int, minute: Int) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
@@ -81,7 +81,7 @@ class ReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         NotifyBridge.post(
             context,
-            "Helyx",
+            "openHybrid",
             "Time to train — log today's session and keep your plan on track. 💪",
             "training-reminder",
         )

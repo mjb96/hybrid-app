@@ -15,7 +15,7 @@
 // The rules this module enforces:
 //
 //  1. A reason must be a TRUE statement about this athlete's own inputs.
-//     "Staff Pick" and "Helyx Certified" are badges about the programme; they
+//     "Staff Pick" and "openHybrid Certified" are badges about the programme; they
 //     say nothing about fit and are no longer reasons. Editorial signal still
 //     breaks ties, but it can never earn a place in the personalised row on its
 //     own and never appears as a reason.
