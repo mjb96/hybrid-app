@@ -1632,7 +1632,8 @@ testable on its own.
     insight; Train filters run/walk quick starts and recent runs; Progress drops
     running/recovery domains and fasting/projection destinations; Settings hides
     Fasting and Health Connect sections.
-  - Data is never deleted. Deep links and existing history remain readable.
+  - Data is never deleted. Hidden analytics sections carry `data-module` hooks,
+    so a deep link cannot reopen a disabled module; stored history stays intact.
   - Dummy run data covers the module gate in `tests/module_gates.test.js`.
 - **2026-11-19 — Home rebuilt as a decision surface.**
   - Home now reads: greeting/date → Today card → safety flags → seven-day week

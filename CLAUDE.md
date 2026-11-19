@@ -37,8 +37,9 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   switches in `settings.modules` (default on). `applyModuleVisibility` publishes
   `<html data-module-*="on|off">`; CSS hides `[data-module="…"]` entry points.
   Train quick starts/recent runs, Progress domains and Home insight/running cards
-  filter through `moduleEnabled`; Settings must also reflect the switches. Data is
-  never deleted, and deep links/history remain readable.
+  filter through `moduleEnabled`; analytics sections carry `data-module` hooks so a
+  deep link cannot reopen a hidden module. Settings must reflect the switches. Data is
+  never deleted, and stored history remains readable.
 - Home decision surface: `index.html` keeps one Today card (`#homeTodayCard`),
   a generated week strip (`js/home/week-strip.js` → `#homeWeekDays`), one coach
   insight from `model.topInsight`, and a 2×2 quick-action grid. The In Focus
