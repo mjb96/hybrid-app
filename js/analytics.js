@@ -8,7 +8,7 @@ import { parsePaceSeconds } from './analytics/utils.js';
 import { renderStrengthAnalytics, setStrengthTab } from './analytics/views/view-strength.js';
 import { renderRunningAnalytics, setRunningTab } from './analytics/views/view-running.js';
 import { renderRecoveryLoad, setRecoveryTab } from './analytics/views/view-recovery.js';
-import { renderBodyWeightAnalytics } from './analytics/views/view-bodyweight.js';
+import { renderBodyWeightAnalytics, setBodyweightRange } from './analytics/views/view-bodyweight.js';
 import { renderActivityCalendar } from './home.js';
 import { initWeekNav, updateWeekNavDisplay, resetWeekNav, getSelectedWeekStart } from './analytics/week-nav.js';
 import { renderFastingAnalytics } from './analytics/views/view-fasting.js';
@@ -104,27 +104,40 @@ export function saveThresholdPace(val) {
   renderAnalytics();
 }
 
-export function logBodyWeight() {
-  if (!_getState) return;
-  const input = document.getElementById('analyticsBwInput');
-  if (!input || !input.value) return;
-
+/** Persist the target weight and optional weekly-rate corridor. */
+export function saveBodyweightGoal() {
   const appState = _getState();
-  const weight = parseFloat(input.value);
-  if (isNaN(weight)) return;
+  if (!appState) return;
+  if (!appState.settings || typeof appState.settings !== 'object') appState.settings = {};
 
-  if (!appState.bodyWeightLog) appState.bodyWeightLog = [];
+  const targetRaw = document.getElementById('bwGoalWeight')?.value ?? '';
+  const target = parseFloat(targetRaw);
+  appState.settings.targetWeight = Number.isFinite(target) && target > 0 ? target : null;
 
-  const today = todayKey();
-  const existingIdx = appState.bodyWeightLog.findIndex(l => l.date === today);
-  if (existingIdx >= 0) {
-    appState.bodyWeightLog[existingIdx].weight = weight;
+  const dir = document.getElementById('bwRateDir')?.value || '';
+  if (!dir) {
+    appState.settings.rateGoal = null;
   } else {
-    appState.bodyWeightLog.push({ date: today, weight: weight });
+    const by = document.getElementById('bwRateBy')?.value === 'w' ? 'w' : '%';
+    const lo = Math.max(0, parseFloat(document.getElementById('bwRateLo')?.value) || 0);
+    const hi = Math.max(0, parseFloat(document.getElementById('bwRateHi')?.value) || 0);
+    if (hi <= 0) {
+      showToast('Enter a rate range first');
+      return;
+    }
+    appState.settings.rateGoal = dir === 'hold'
+      ? { dir, by, lo: 0, hi }
+      : { dir: dir === 'gain' ? 'gain' : 'lose', by, lo, hi };
   }
 
   saveStateToLocalStorage(true);
-  input.value = '';
+  renderAnalytics();
+  showToast('Body weight goal saved');
+}
+
+/** Switch the graph between 30 days, 90 days and all history. */
+export function setBodyweightRangeAction(days) {
+  setBodyweightRange(days);
   renderAnalytics();
 }
 

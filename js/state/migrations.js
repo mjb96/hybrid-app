@@ -338,9 +338,19 @@ const MIGRATIONS = [
       }
     }
   },
+  // v7 → v8: optional body-weight goal and weekly-rate corridor. Absent values
+  // mean "not set"; the graph and rate verdict stay out of the way until the
+  // athlete chooses a target.
+  (state) => {
+    if (!state.settings || typeof state.settings !== 'object' || Array.isArray(state.settings)) {
+      state.settings = {};
+    }
+    if (!('targetWeight' in state.settings)) state.settings.targetWeight = null;
+    if (!('rateGoal' in state.settings)) state.settings.rateGoal = null;
+  },
 ];
 
-export const CURRENT_SCHEMA_VERSION = MIGRATIONS.length; // 7
+export const CURRENT_SCHEMA_VERSION = MIGRATIONS.length; // 8
 
 /** Error raised when a state upgrade cannot safely commit. */
 export class StateMigrationError extends Error {

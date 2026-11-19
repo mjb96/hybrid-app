@@ -9515,3 +9515,46 @@ html[data-module-health="off"] [data-module="health"],
 html[data-module-recovery="off"] [data-module="recovery"] {
   display: none !important;
 }
+
+/* Weigh-in sheet — prefilled, stepper-first, no repeated typing. */
+.bw-log-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.bw-log-hint { color: var(--text-muted); font-size: .72rem; }
+.bw-sheet-step {
+  display: grid; grid-template-columns: 56px minmax(0, 1fr) 56px; gap: 10px; align-items: stretch;
+  margin: 6px 0 8px;
+}
+.bw-sheet-pm {
+  min-height: 64px; border: 1px solid var(--border-medium); border-radius: 16px;
+  background: var(--overlay-md); color: var(--text-primary);
+  font-size: 1.6rem; font-weight: 700; line-height: 1;
+}
+.bw-sheet-read {
+  display: flex; align-items: baseline; justify-content: center; gap: 6px;
+  min-height: 64px; padding: 6px 12px; border-radius: 16px;
+  border: 1px solid var(--border-medium); background: var(--overlay-md);
+}
+.bw-sheet-read input {
+  width: 100%; min-width: 0; border: 0; background: transparent; color: var(--text-primary);
+  font-size: 2rem; font-weight: 800; text-align: center; font-variant-numeric: tabular-nums;
+  outline: none; appearance: textfield; -moz-appearance: textfield;
+}
+.bw-sheet-read input::-webkit-outer-spin-button,
+.bw-sheet-read input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.bw-sheet-read span { color: var(--text-muted); font-size: .8rem; font-weight: 700; }
+.bw-sheet-chips { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 8px; }
+.bw-sheet-chips button {
+  min-height: 44px; border: 1px solid var(--border-light); border-radius: 11px;
+  background: var(--bg-card); color: var(--text-secondary); font-size: .82rem; font-weight: 800;
+}
+.bw-sheet-recent { margin-top: 8px; }
+.bw-sheet-recent-title { color: var(--text-muted); font-size: .7rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; margin: 10px 0 4px; }
+.bw-sheet-recent-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  min-height: 44px; border-bottom: 1px solid var(--border-subtle); font-size: .78rem;
+}
+.bw-sheet-recent-row:last-child { border-bottom: none; }
+.bw-sheet-recent-row strong { color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.bw-sheet-recent-row button {
+  min-height: 44px; min-width: 44px; border: 0; background: transparent;
+  color: var(--text-muted); font-size: .72rem; font-weight: 700;
+}

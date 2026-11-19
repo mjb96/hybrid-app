@@ -31,8 +31,10 @@ the same training picture.
 - **Recovery and load** — readiness, training load, ACWR and a weekly review.
 - **Health Connect** (Android) — steps, resting heart rate, HRV and sleep, read
   only and field by field.
-- **Bodyweight and fasting** — trend tracking, calendar-window averages and
-  fasting protocols.
+- **Bodyweight and fasting** — a Progress graph with daily weigh-ins, a 7-day
+  average, weekly means, an optional goal line and a 21-day weekly-rate corridor.
+  Weigh-ins open a prefilled sheet with ±0.1/±0.5/±1 steppers and recent entries,
+  so the usual log is one tap. Plus fasting protocols.
 - **Programs** — a catalogue of strength, hypertrophy, running and hybrid
   programmes, plus a program builder.
 - **Offline-first** — the PWA precaches its runtime and keeps training data on
@@ -132,7 +134,7 @@ format, not branding.
 | --- | --- |
 | `npm test` | Node unit tests |
 | `npm run verify` | Type check, precache check, workflow gates, unit tests, smoke render |
-| `npm run browser:verify` | 34 Playwright product checks (parallel, 180 s per-check kill with one timeout retry; `-- --serial` to debug) |
+| `npm run browser:verify` | 35 Playwright product checks (parallel, 180 s per-check kill with one timeout retry; `-- --serial` to debug) |
 | `npm run perf:baseline` | Boot performance and bounded-DOM baseline |
 | `npm run precache:gen` | Regenerate the service-worker precache manifest |
 

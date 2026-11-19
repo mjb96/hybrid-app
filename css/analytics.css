@@ -1904,7 +1904,6 @@ html[data-theme="light"] .ph-card__say { color: var(--text-secondary, #334155); 
   .gym-performance__bin-label, .gym-performance__bin-value { font-size: .52rem; }
 }
 
-<<<<<<< HEAD
 /* ==========================================
    RECOVERY METRIC DETAIL (roadmap 3D)
 
@@ -1921,7 +1920,6 @@ html[data-theme="light"] .ph-card__say { color: var(--text-secondary, #334155); 
 }
 .rm-chart__range { font-variant-numeric:tabular-nums; opacity:.8; }
 .metric-evidence-row--static { cursor:default; }
-=======
 /* Projection confidence (roadmap 3D) — an ETA from three uneven weeks must not
    look like one from six clean ones. */
 .proj-confidence {
@@ -1935,4 +1933,38 @@ html[data-theme="light"] .ph-card__say { color: var(--text-secondary, #334155); 
 .proj-lift__confidence { display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:6px; }
 .proj-lift__confidence span { color:var(--text-muted); font-size:.64rem; line-height:1.4; }
 .proj-eta__note { display:block; margin-top:4px; color:var(--text-muted); font-size:.64rem; line-height:1.4; }
->>>>>>> claude/projection-confidence
+
+/* Body weight goal + weekly rate */
+.bw-goal-editor { margin-top: 10px; border-top: 1px solid var(--border-subtle); padding-top: 6px; }
+.bw-goal-editor summary {
+  min-height: 44px; display: flex; align-items: center; cursor: pointer;
+  color: var(--text-secondary); font-size: .78rem; font-weight: 800;
+}
+.bw-goal-grid {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 6px 0 4px;
+}
+.bw-goal-grid label { display: flex; flex-direction: column; gap: 4px; color: var(--text-muted); font-size: .68rem; font-weight: 700; }
+.bw-goal-grid input, .bw-goal-grid select {
+  min-height: 44px; width: 100%; box-sizing: border-box;
+  border: 1px solid var(--border-medium); border-radius: 9px;
+  background: var(--overlay-md); color: var(--text-primary);
+  padding: 8px 10px; font: inherit; font-size: .8rem;
+}
+.bw-summary { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.bw-summary__row {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  min-height: 30px; color: var(--text-secondary); font-size: .78rem;
+}
+.bw-summary__row strong { color: var(--text-primary); font-size: .9rem; font-variant-numeric: tabular-nums; }
+.bw-summary__status { font-weight: 800; }
+.bw-summary__note { color: var(--text-muted); font-size: .7rem; line-height: 1.45; }
+.bw-week-card { margin-top: 10px; }
+.bw-week-row {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  width: 100%; min-height: 44px; padding: 4px 0; border: 0; border-bottom: 1px solid var(--border-subtle);
+  background: none; text-align: left; cursor: pointer;
+  font: inherit; font-size: .76rem; color: var(--text-secondary);
+}
+.bw-week-row:last-child { border-bottom: none; }
+.bw-week-row strong { color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.bw-week-row small { color: var(--text-muted); font-size: .66rem; }

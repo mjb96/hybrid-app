@@ -14,7 +14,7 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
 - `npm run typecheck` — tsc over jsconfig
 - `npm run smoke` — scripts/smoke.mjs (jsdom import + home render)
 - `npm run icons:gen` — regenerate PWA/Android icons from `assets/brand/icon.svg`
-- `npm run browser:verify` — 34 real-Chromium product checks through a parallel
+- `npm run browser:verify` — 35 real-Chromium product checks through a parallel
   worker pool (3 workers by default; `-- --serial` for one-at-a-time debugging,
   `-- --concurrency=N` to pin workers, `-- --timeout=N` for the 180 s per-check
   kill, `-- --retries=N` for the default single retry after a timeout)
@@ -51,6 +51,12 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   filter through `moduleEnabled`; analytics sections carry `data-module` hooks so a
   deep link cannot reopen a hidden module. Settings must reflect the switches. Data is
   never deleted, and stored history remains readable.
+- Bodyweight: `js/metrics/bodyweight.js` is the pure trend model behind the
+  Progress graph (weekly means, 21-day least-squares rate, goal/corridor status).
+  `settings.targetWeight` and `settings.rateGoal` are optional; v7→v8 seeds them.
+  The view lives in `js/analytics/views/view-bodyweight.js`, the SVG chart in
+  `js/analytics/charts.js`, and the prefilled weigh-in sheet (steppers, date,
+  recent edit/delete) in `js/bodyweight-sheet.js`.
 - Progression styles: `js/programs/progression-style.js` defines `double`
   (default), `linear` and `rep-first`. Custom programs store `progressionStyle`;
   `computeDiagnosticForLift(..., { progressionStyle })` forwards it to
