@@ -28,6 +28,7 @@ import {
   scheduleLocalSave,
   pullEngineDataFromStorage,
   triggerCSVExport,
+  triggerBodyweightCSVExport,
   setImportSuccessCallback,
   showToast,
   savePersonalRating,
@@ -82,7 +83,7 @@ import {
   hcToggleConnect, hcSyncNow, saveStepGoal, hcToggleSyncField,
   setFitnessGoal, setWeightGoal, setFitnessLevel, setWeekStartDay, setFastingDefault,
   saveReminderTime, setNotifToggle, saveStreakAlertTime, toggleEquipment, saveBandWeights,
-  savePlateSetup, savePlateCounts, resetPlateSetup, setShowPlateHints,
+  savePlateSetup, savePlateCounts, resetPlateSetup, setShowPlateHints, setAutoWarmupRamp,
   saveDumbbells, saveMachineStack, removeMachineStack,
   saveRestPeriods, applyRestPreset, setRestTimerEnabledSetting, resetRestOverrides,
   openAvatarPicker, handleAvatarFile,
@@ -1276,6 +1277,7 @@ document.addEventListener('click', (e) => {
 
   // Export & Data
 else if (action === 'export-csv') triggerCSVExport();
+else if (action === 'export-bodyweight-csv') triggerBodyweightCSVExport();
   
   // Summary Modals
   else if (action === 'open-today-summary') {
@@ -1393,6 +1395,7 @@ document.addEventListener('change', (e) => {
   if (target.id === 'settingsShowPlateHints') { setShowPlateHints(target.checked); return; }
   if (target.id === 'settingsRestCompound' || target.id === 'settingsRestAccessory' || target.id === 'settingsRestIsolation') { saveRestPeriods(); return; }
   if (target.id === 'settingsRestEnabled') { setRestTimerEnabledSetting(target.checked); return; }
+  if (target.id === 'settingsAutoWarmup') { setAutoWarmupRamp(target.checked); return; }
   if (target.id === 'settingsNotifications') {
     if (target.checked) {
       requestNotificationPermission().then(({ granted }) => {

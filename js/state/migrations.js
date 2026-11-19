@@ -348,9 +348,17 @@ const MIGRATIONS = [
     if (!('targetWeight' in state.settings)) state.settings.targetWeight = null;
     if (!('rateGoal' in state.settings)) state.settings.rateGoal = null;
   },
+  // v8 → v9: the warm-up ramp is opt-in. Existing sessions must not suddenly
+  // gain warm-up rows when the app updates.
+  (state) => {
+    if (!state.settings || typeof state.settings !== 'object' || Array.isArray(state.settings)) {
+      state.settings = {};
+    }
+    if (state.settings.autoWarmupRamp == null) state.settings.autoWarmupRamp = false;
+  },
 ];
 
-export const CURRENT_SCHEMA_VERSION = MIGRATIONS.length; // 8
+export const CURRENT_SCHEMA_VERSION = MIGRATIONS.length; // 9
 
 /** Error raised when a state upgrade cannot safely commit. */
 export class StateMigrationError extends Error {

@@ -14,7 +14,7 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
 - `npm run typecheck` — tsc over jsconfig
 - `npm run smoke` — scripts/smoke.mjs (jsdom import + home render)
 - `npm run icons:gen` — regenerate PWA/Android icons from `assets/brand/icon.svg`
-- `npm run browser:verify` — 35 real-Chromium product checks through a parallel
+- `npm run browser:verify` — 37 real-Chromium product checks through a parallel
   worker pool (3 workers by default; `-- --serial` for one-at-a-time debugging,
   `-- --concurrency=N` to pin workers, `-- --timeout=N` for the 180 s per-check
   kill, `-- --retries=N` for the default single retry after a timeout)
@@ -57,6 +57,13 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   The view lives in `js/analytics/views/view-bodyweight.js`, the SVG chart in
   `js/analytics/charts.js`, and the prefilled weigh-in sheet (steppers, date,
   recent edit/delete) in `js/bodyweight-sheet.js`.
+- Warm-up ramp: `js/workout/warmup-ramp.js` builds editable 40/60/80% warm-up
+  rows above the bar, rounded to the active profile's plates and pair counts.
+  `settings.autoWarmupRamp` is opt-in (v8→v9 seeds false); the first working
+  weight triggers it once and `liftMeta[day][lift].autoRamp` prevents resurrection.
+- Muscle load: `js/analytics/muscle-load.js` reuses the Volume Guide's per-muscle
+  weekly credits and adds last-trained recovery labels; the view is
+  `js/analytics/views/view-muscle-load.js`, reached from Progress.
 - Progression styles: `js/programs/progression-style.js` defines `double`
   (default), `linear` and `rep-first`. Custom programs store `progressionStyle`;
   `computeDiagnosticForLift(..., { progressionStyle })` forwards it to

@@ -97,9 +97,16 @@ test('v7 seeds optional equipment inventory without changing the active kit', ()
 test('v8 seeds the optional bodyweight goal and rate corridor', () => {
   const state = { schemaVersion: 7, settings: {} };
   migrateState(state);
-  assert.equal(state.schemaVersion, 8);
+  assert.equal(state.schemaVersion, CURRENT_SCHEMA_VERSION);
   assert.equal(state.settings.targetWeight, null);
   assert.equal(state.settings.rateGoal, null);
+});
+
+test('v9 seeds the opt-in warm-up ramp setting off', () => {
+  const state = { schemaVersion: 8, settings: {} };
+  migrateState(state);
+  assert.equal(state.schemaVersion, CURRENT_SCHEMA_VERSION);
+  assert.equal(state.settings.autoWarmupRamp, false);
 });
 
 test('migrateState is idempotent — already-current state is untouched', () => {

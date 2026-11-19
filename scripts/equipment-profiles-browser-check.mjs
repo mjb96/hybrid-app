@@ -91,6 +91,7 @@ try {
   const plateBar = page.locator('#settingsPlateBar');
   const platesInput = page.locator('#settingsPlates');
   const plateHints = page.locator('#settingsShowPlateHints');
+  const autoWarmup = page.locator('#settingsAutoWarmup');
 
   ok((await select.locator('option').allTextContents()).join('|') === 'Commercial gym|Home', 'both profiles are listed');
   ok((await select.inputValue()) === 'eqp_gym', 'the stored active profile is selected');
@@ -100,6 +101,7 @@ try {
   ok((await plateBar.inputValue()) === '20', 'the gym bar weight is shown');
   ok((await platesInput.inputValue()) === '25, 20, 15, 10, 5, 2.5, 1.25', 'the gym plate set is shown');
   ok(!(await plateHints.isChecked()), 'plate hints are off by default');
+  ok(!(await autoWarmup.isChecked()), 'auto warm-up ramp is off by default');
 
   await select.selectOption('eqp_home');
   await page.waitForFunction(() => document.getElementById('settingsEquipmentProfileName')?.value === 'Home');
@@ -165,6 +167,9 @@ try {
   await hintRow.locator('.settings-switch').click();
   await page.waitForFunction((key) => JSON.parse(localStorage.getItem(key) || '{}')?.settings?.showPlateHints === true, STORAGE_KEY);
   ok(await plateHints.isChecked(), 'plate hints can be enabled');
+  await autoWarmup.click();
+  await page.waitForFunction((key) => JSON.parse(localStorage.getItem(key) || '{}')?.settings?.autoWarmupRamp === true, STORAGE_KEY);
+  ok(await autoWarmup.isChecked(), 'auto warm-up ramp can be enabled');
 
   await nameInput.fill('Garage');
   await nameInput.press('Tab');

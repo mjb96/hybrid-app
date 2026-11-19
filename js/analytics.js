@@ -9,6 +9,7 @@ import { renderStrengthAnalytics, setStrengthTab } from './analytics/views/view-
 import { renderRunningAnalytics, setRunningTab } from './analytics/views/view-running.js';
 import { renderRecoveryLoad, setRecoveryTab } from './analytics/views/view-recovery.js';
 import { renderBodyWeightAnalytics, setBodyweightRange } from './analytics/views/view-bodyweight.js';
+import { renderMuscleLoad } from './analytics/views/view-muscle-load.js';
 import { renderActivityCalendar } from './home.js';
 import { initWeekNav, updateWeekNavDisplay, resetWeekNav, getSelectedWeekStart } from './analytics/week-nav.js';
 import { renderFastingAnalytics } from './analytics/views/view-fasting.js';
@@ -522,6 +523,10 @@ export function renderAnalytics() {
     case 'bodyweight':
       document.getElementById('analytics-bodyweight').classList.add('active');
       renderBodyWeightAnalytics(data, _getState);
+      break;
+    case 'muscle-load':
+      document.getElementById('analytics-muscle-load').classList.add('active');
+      renderMuscleLoad(_getState());
       break;
     // V2 (S2): progress, streak and goal-progress are folded into the Review
     // screen's Stats tab — redirect so deep links still resolve.

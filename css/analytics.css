@@ -1968,3 +1968,35 @@ html[data-theme="light"] .ph-card__say { color: var(--text-secondary, #334155); 
 .bw-week-row:last-child { border-bottom: none; }
 .bw-week-row strong { color: var(--text-primary); font-variant-numeric: tabular-nums; }
 .bw-week-row small { color: var(--text-muted); font-size: .66rem; }
+
+/* Muscle load — a compact, actionable per-muscle list. */
+.muscle-load-summary {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;
+  margin-bottom: 10px;
+}
+.muscle-load-summary > div {
+  padding: 10px; min-width: 0; border: 1px solid var(--border-light); border-radius: 12px;
+  background: var(--bg-card); display: flex; flex-direction: column; gap: 2px;
+}
+.muscle-load-summary strong { color: var(--text-primary); font-size: 1.05rem; }
+.muscle-load-summary span { color: var(--text-muted); font-size: .66rem; line-height: 1.35; }
+.muscle-load-row {
+  padding: 10px 2px; border-bottom: 1px solid var(--border-subtle);
+}
+.muscle-load-section-title {
+  margin: 14px 0 2px; color: var(--text-muted); font-size: .68rem;
+  font-weight: 800; letter-spacing: .05em; text-transform: uppercase;
+}
+.muscle-load-row:last-child { border-bottom: none; }
+.muscle-load-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.muscle-load-head strong { color: var(--text-primary); font-size: .86rem; }
+.muscle-load-recovery { font-size: .66rem; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+.recovery-recovering { color: var(--color-amber); }
+.recovery-ready { color: var(--color-green); }
+.recovery-fresh { color: var(--color-cyan); }
+.recovery-untrained { color: var(--text-muted); }
+.muscle-load-detail { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 10px; margin-top: 3px; color: var(--text-secondary); font-size: .74rem; }
+.muscle-load-status { color: var(--text-muted); text-align: right; margin-left: auto; }
+.muscle-load-row.tone-low .muscle-load-status { color: var(--color-amber); }
+.muscle-load-row.tone-high .muscle-load-status { color: var(--color-cyan); }
+.muscle-load-meta { margin-top: 3px; color: var(--text-muted); font-size: .68rem; }

@@ -3,6 +3,7 @@
 // including archived activation weeks, and every value is RFC 4180 escaped.
 
 import { runSessionsForDay } from '../state/run-sessions.js';
+import { normalizeWeighIns } from '../metrics/bodyweight.js';
 
 export function csvCell(value) {
   const text = value == null ? '' : String(value);
@@ -35,6 +36,15 @@ function runValues(run) {
     run?.sessionId, run?.dist, run?.time, run?.rpe, run?.avgHR, run?.maxHR,
     run?.elev, run?.cals,
   ];
+}
+
+/** @param {any} state */
+export function buildBodyweightCsv(state) {
+  let csv = row(['Date', 'Weight']);
+  for (const entry of normalizeWeighIns(state?.bodyWeightLog)) {
+    csv += row([entry.date, entry.weight]);
+  }
+  return csv;
 }
 
 /** @param {any} state @param {string[]} days */

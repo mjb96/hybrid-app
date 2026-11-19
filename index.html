@@ -1035,6 +1035,12 @@
         <div id="bwWeeklyStats"></div>
       </div>
 
+      <div id="analytics-muscle-load" class="analytics-section">
+        <h2 class="section-header">Muscle Load</h2>
+        <div id="muscleLoadSummary"></div>
+        <div id="muscleLoadList"></div>
+      </div>
+
       <div id="analytics-activity" class="analytics-section">
         <h2 class="section-header">Activity History</h2>
         <div class="cal-legend mb-3">
@@ -1525,6 +1531,8 @@
           </div>
           <div class="settings-row" style="display:block;">
             <label class="hc-data-toggle"><input type="checkbox" id="settingsRestEnabled" checked><span>Auto rest timer between sets</span></label>
+            <label class="hc-data-toggle"><input type="checkbox" id="settingsAutoWarmup"><span>Auto warm-up ramp</span></label>
+            <div class="settings-hint">After you enter the first working weight, add editable 40/60/80% warm-up sets. Only for barbell lifts; never added twice.</div>
             <!-- V2 (S5): per-tier rest tuning / presets / remembered-rest reset retired
                  as power-user knobs. Elements kept hidden so settings.js reads stay safe;
                  rest still auto-suggests by exercise type using sensible defaults. -->
@@ -1783,6 +1791,7 @@
           <p class="settings-hint">Android automatic backups are complete portable JSON files, including GPS routes. They are stored unencrypted in the folder you choose. Pick a private device folder for offline-only storage; a cloud-backed folder may be synced by its provider.</p>
           <button class="settings-action-btn" data-action="export-data">Export Training Data (JSON)</button>
           <button class="settings-action-btn" data-action="export-csv">Export Spreadsheet (CSV)</button>
+          <button class="settings-action-btn" data-action="export-bodyweight-csv">Export Bodyweight (CSV)</button>
           <button class="settings-action-btn" data-action="import-data">Import Backup File</button>
           <input type="file" id="settingsImportFile" aria-label="Choose backup file to import" accept=".json" class="hidden-input">
           <button class="settings-action-btn" data-action="import-external-csv">Import from Another App (CSV)</button>

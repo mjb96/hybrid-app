@@ -362,6 +362,7 @@ export function secondaryDestinations(state) {
     items.push({ id: 'fasting', title: 'Fasting', desc: 'Your fast, protocols and metabolic stages' });
   }
   items.push({ id: 'bodyweight', title: 'Body Weight', desc: 'Weight trend and log' });
+  items.push({ id: 'muscle-load', title: 'Muscle Load', desc: 'Weekly volume, recovery and untrained muscles' });
   if (moduleEnabled(state, 'running')) items.push({ id: 'projections', title: 'Projections', desc: 'Predicted race times and milestone ETAs' });
   return items;
 }

@@ -24,6 +24,7 @@ import { escapeHtml } from './util.js';
 import { buildEmptyWorkoutCard, buildSetRow, buildExerciseCard } from './templates.js';
 import { buildSessionOutline, outlineSummaryLine } from './workout/session-outline.js';
 import { plannedSetsForLift } from './workout/set-plan.js';
+import { addWarmupRamp } from './workout/warmup-ramp.js';
 import { buildSessionReview } from './workout/session-review.js';
 import { activeSessionLiftNames, applyExerciseSwap, neighborDay, pickInheritedSet } from './workout-order.js';
 import { getSubstitutions } from './workout/substitutions.js';
@@ -1024,6 +1025,23 @@ export function updateInputState(inputNode) {
   if (inputNode.classList.contains('input-weight-node')) {
     setObj.w = inputNode.value;
     if (ph != null && setObj.tw == null) setObj.tw = ph;
+    // Opt-in auto ramp: after the first working weight is entered, add an
+    // editable ladder above it once. The liftMeta stamp means deleting a
+    // warm-up does not bring it back on the next edit.
+    if (appState.settings?.autoWarmupRamp === true
+      && resolveExercise(liftName)?.equipment?.includes('barbell')) {
+      const sets = appState.weeks[wk].lifts[selectedDay][liftName];
+      const firstWorking = sets.findIndex((set) => !isWarmupSet(set));
+      if (sIdx === firstWorking) {
+        const unit = appState.settings?.weightUnit || 'kg';
+        const setup = getActivePlateSetup(appState, unit);
+        if (addWarmupRamp(appState.weeks[wk], selectedDay, liftName, inputNode.value, { ...setup, unit })) {
+          _saveState(true);
+          renderWorkout();
+          return;
+        }
+      }
+    }
   } else {
     setObj.r = inputNode.value;
     if (ph != null && setObj.tr == null) setObj.tr = ph;
