@@ -28,6 +28,10 @@ const PATHS = Object.freeze({
   plus:      '<path d="M12 5v14M5 12h14"/>',
   user:      '<circle cx="12" cy="8" r="3.5"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0"/>',
   sliders:   '<path d="M4 7h8M18 7h2M4 17h2M10 17h10"/><circle cx="15" cy="7" r="2.2"/><circle cx="7" cy="17" r="2.2"/>',
+  search:    '<circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 4.5 4.5"/>',
+  bookmark:  '<path d="M6 4h12v17l-6-4-6 4z"/>',
+  download:  '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
+  trophy:    '<path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 5H5v2a3 3 0 0 0 3 3M16 5h3v2a3 3 0 0 1-3 3M12 13v4M9 21h6"/>',
   // Program-modality marks (used on cover art).
   bolt:      '<path d="M13 3 5 13h5l-2 8 9-11h-5l1-7z"/>',
   flame:     '<path d="M12 22a6 6 0 0 0 6-6c0-4-3-6.5-4.5-9.5C13 8 11.5 9 11 11c-1-.5-1.5-1.5-1.5-3C7.5 10 6 13 6 16a6 6 0 0 0 6 6z"/>',
@@ -44,6 +48,25 @@ export function icon(name, { size = 24, cls = '' } = {}) {
   const body = PATHS[name];
   if (!body) return '';
   return `<svg class="ic${cls ? ' ' + cls : ''}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
+}
+
+/** The same glyph as a DOM node, for surfaces built with textContent (no HTML sinks). */
+export function iconNode(name, { size = 24, cls = '' } = {}) {
+  const body = PATHS[name];
+  if (!body || typeof document === 'undefined') return null;
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', `ic${cls ? ` ${cls}` : ''}`);
+  svg.setAttribute('width', String(size));
+  svg.setAttribute('height', String(size));
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', 'currentColor');
+  svg.setAttribute('stroke-width', '2');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.innerHTML = body; // static glyph path from the allowlisted PATHS map
+  return svg;
 }
 
 // Fill every [data-icon] span under `root` with its glyph. Idempotent — safe to

@@ -143,13 +143,13 @@ try {
     // A profile with nothing set must not produce a "Based on your…" row.
     const { context, page } = await discover({ fitnessGoal: null, fitnessLevel: null, equipmentTier: null, equipment: {} });
     const state = await page.evaluate(readRow);
-    const browseAll = await page.evaluate(() =>
-      [...document.querySelectorAll('.collection-title')].some(t => /Browse all categories/i.test(t.textContent || '')));
-    console.log('blank profile:', JSON.stringify({ row: state.present, browseAll }));
+    const allPrograms = await page.evaluate(() =>
+      [...document.querySelectorAll('.filtered-grid-title')].some(t => /All programs/i.test(t.textContent || '')));
+    console.log('blank profile:', JSON.stringify({ row: state.present, allPrograms }));
     if (state.present && state.cards.some(c => !c.reason)) {
       failures.push('a blank profile produced recommendations with no reasons');
     }
-    if (!browseAll) failures.push('Browse all must stay reachable whatever the profile');
+    if (!allPrograms) failures.push('All programs must stay reachable whatever the profile');
     await context.close();
   }
 
@@ -217,12 +217,14 @@ try {
       const top = (el) => (el ? Math.round(el.getBoundingClientRect().top + window.scrollY) : null);
       const rowTop = (re) => top([...document.querySelectorAll('.collection-row')]
         .find((r) => re.test(r.querySelector('.collection-title')?.textContent || '')));
+      const allProgramsTitle = [...document.querySelectorAll('.filtered-grid-title')]
+        .find((el) => /All programs/i.test(el.textContent || ''));
       return {
         categoryChips: document.querySelectorAll('#progFilterChips .filter-chip').length,
         difficultyChips: document.querySelectorAll('#progDifficultyChips .filter-chip').length,
         browseGridChips: document.querySelectorAll('.prog-browse-grid .filter-chip').length,
         recommendationsTop: rowTop(/Recommended For You/i),
-        browseAllTop: rowTop(/Browse all categories/i),
+        allProgramsTop: top(allProgramsTitle),
         heroTop: top(document.querySelector('.hero-banner')),
         viewport: window.innerHeight,
         grid: document.querySelectorAll('#progLibraryContent .program-grid .prog-card').length,
@@ -230,42 +232,25 @@ try {
     };
     const before = await page.evaluate(layout);
     console.log('default Discover:', JSON.stringify(before));
-    if (before.categoryChips || before.difficultyChips) {
-      failures.push(`filters must be disclosed, not default: ${before.categoryChips} category + ${before.difficultyChips} level chips on the landing`);
+    if (before.categoryChips || before.difficultyChips || before.browseGridChips) {
+      failures.push('the simplified Discover must not render chip walls');
     }
-    if (before.browseGridChips < 15) failures.push(`Browse-all must still reach every category, got ${before.browseGridChips}`);
+    if (before.allProgramsTop == null) failures.push('All programs must be reachable');
     if (before.recommendationsTop == null) failures.push('no recommendations row on the default surface');
-    else if (before.recommendationsTop > before.viewport) {
-      failures.push(`recommendations start at ${before.recommendationsTop}px, below the first viewport`);
+    else if (before.allProgramsTop != null && before.recommendationsTop > before.allProgramsTop) {
+      failures.push('personal recommendations must lead the All programs list');
     }
+    if (!before.grid) failures.push('All programs must render programme cards');
     if (before.heroTop != null && before.recommendationsTop != null && before.heroTop < before.recommendationsTop) {
       failures.push('the editorial featured carousel is above the personal recommendations');
     }
 
-    // Entering browse mode reveals the filters and the grid...
-    await page.evaluate(() => {
-      const chip = [...document.querySelectorAll('.prog-browse-grid .filter-chip')]
-        .find((c) => /Strength/i.test(c.textContent || ''));
-      if (chip) /** @type {any} */ (chip).click();
-    });
-    await page.waitForTimeout(500);
-    const browsing = await page.evaluate(layout);
-    console.log('browsing a category:', JSON.stringify(browsing));
-    if (!browsing.categoryChips) failures.push('browsing must expose the category filters');
-    if (!browsing.difficultyChips) failures.push('browsing must expose the level filters');
-    if (!browsing.grid) failures.push('browsing a category must render its programmes');
-
-    // ...and "All" returns to the recommended surface, filters away again.
-    await page.evaluate(() => {
-      const all = [...document.querySelectorAll('#progFilterChips .filter-chip')]
-        .find((c) => (c.textContent || '').trim() === 'All');
-      if (all) /** @type {any} */ (all).click();
-    });
-    await page.waitForTimeout(500);
-    const back = await page.evaluate(layout);
-    console.log('back to recommended:', JSON.stringify(back));
-    if (back.categoryChips || back.difficultyChips) failures.push('leaving browse must put the filters away again');
-    if (back.recommendationsTop == null) failures.push('leaving browse must restore the recommendations');
+    // Show all expands the one simple grid rather than a second browse surface.
+    await page.click('[data-action="prog-show-all"]');
+    await page.waitForTimeout(300);
+    const expanded = await page.evaluate(layout);
+    console.log('show all:', JSON.stringify(expanded));
+    if (expanded.grid <= before.grid) failures.push('Show all must reveal more programmes');
     if (errors.length) failures.push(`hierarchy: browser errors: ${errors.join(' | ')}`);
     await context.close();
   }

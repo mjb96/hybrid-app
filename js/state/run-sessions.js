@@ -9,6 +9,8 @@
 // overwrite each other and a GPS route can point at the exact session.
 // =============================================================================
 
+import { secureRandomSuffix } from '../util/secure-id.js';
+
 const RUN_VALUE_KEYS = [
   'dist', 'time', 'rpe', 'pace', 'avgHR', 'maxHR', 'elev', 'descent', 'cals',
   // `anaerobicTE` is the correct name (R27); `aerobicTE` is kept so sessions
@@ -33,8 +35,7 @@ export function newRunSessionId() {
       return `run_${crypto.randomUUID()}`;
     }
   } catch (_) { /* fall through */ }
-  const rand = Math.random().toString(36).slice(2, 10);
-  return `run_${Date.now().toString(36)}_${rand}`;
+  return `run_${Date.now().toString(36)}_${secureRandomSuffix(8)}`;
 }
 
 /** Deterministic identity used when adopting one legacy week/day run object. */

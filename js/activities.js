@@ -10,6 +10,7 @@ import {
   restoreRunActivity, restoreStrengthActivity,
 } from './activities/mutations.js';
 import { buildSessionRecap, renderSessionRecapHTML } from './session-recap.js';
+import { openSavedWorkoutEditor, closeSavedWorkoutEditor, saveSavedWorkoutEditor } from './workout/edit-saved.js';
 import { deleteMapFromDB } from './db.js';
 import { renderRunMap } from './workout-map.js';
 import { confirmModal } from './ui/confirm-modal.js';
@@ -167,6 +168,7 @@ function paintDetail() {
   );
   content.innerHTML = `
     <div class="activity-action-menu" id="activityActionMenu" hidden>
+      <button data-action="edit-activity">Edit ${_selected.kind === 'run' ? 'run' : 'strength workout'}</button>
       <button data-action="delete-activity" class="activity-action-delete">Delete ${_selected.kind === 'run' ? _selected.title.toLowerCase() : 'strength workout'}</button>
     </div>
     <div class="activity-detail-shell">${renderSessionRecapHTML(recap, [], state.thresholdPaceSeconds || null, _detailTab)}</div>`;
@@ -291,6 +293,39 @@ export function handleActivityAction(action, element) {
       menu.hidden = !menu.hidden;
       element.setAttribute('aria-expanded', String(!menu.hidden));
     }
+    return true;
+  }
+  if (action === 'edit-activity') {
+    const activity = _selected;
+    const state = _getState?.();
+    if (activity && state) {
+      const menu = document.getElementById('activityActionMenu');
+      if (menu) menu.hidden = true;
+      openSavedWorkoutEditor({
+        state,
+        weekKey: activity.week,
+        day: activity.day,
+        kind: activity.kind === 'run' ? 'run' : 'strength',
+        sessionId: activity.sessionId,
+        save: _saveState,
+        onSaved: () => {
+          _selected = activity;
+          paintDetail();
+          document.dispatchEvent(new Event('app:storage-loaded'));
+        },
+      });
+    }
+    return true;
+  }
+  if (action === 'close-edit-saved') {
+    closeSavedWorkoutEditor();
+    return true;
+  }
+  if (action === 'save-edit-saved') {
+    saveSavedWorkoutEditor().catch((error) => {
+      console.warn('Saved activity edit failed:', error);
+      showToast('Changes could not be saved', true);
+    });
     return true;
   }
   if (action === 'delete-activity') {

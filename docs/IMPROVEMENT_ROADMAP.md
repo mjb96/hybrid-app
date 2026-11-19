@@ -1626,6 +1626,17 @@ testable on its own.
 
 ## 12. Session log
 
+- **2026-11-20 — Settings sub-pages, saved-workout edits, simpler Plans and JSON plans.**
+  - Settings is split into Profile / Training / Health / Appearance / Data with a
+    global search and no-results state.
+  - History now edits a finished strength session or run in place (weights, reps,
+    distance, time, HR, notes) without changing its identity, date or route.
+  - Plans is two surfaces: one searchable Discover list and My Plans (saved,
+    completed, custom and imported). The category/difficulty chip walls and the
+    multi-rail discovery stack are gone.
+  - Plans export/import as portable `openhybrid-plan` JSON. Import always creates
+    a fresh custom program; nothing shared is overwritten.
+  - Plans chrome uses the shared icon set instead of emoji bookmarks/filter chips.
 - **2026-11-20 — Home/Progress customization and Hybrid Score removal.**
   - `settings.ui` now stores hidden optional cards for Home and Progress. A
     shared Customize sheet on both surfaces persists changes, applies them live

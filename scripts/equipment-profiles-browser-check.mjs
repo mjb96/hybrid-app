@@ -84,6 +84,7 @@ try {
   await page.waitForSelector('#view-profile.active');
   await page.click('#view-profile [data-action="open-settings"]');
   await page.waitForSelector('#settingsOverlay.active');
+  await page.click('#settingsTabs [data-settings-tab="training"]');
 
   const select = page.locator('#settingsEquipmentProfile');
   const nameInput = page.locator('#settingsEquipmentProfileName');
@@ -101,12 +102,15 @@ try {
   ok(!(await bands.isChecked()), 'commercial gym has bands unchecked');
   ok((await plateBar.inputValue()) === '20', 'the gym bar weight is shown');
   ok((await platesInput.inputValue()) === '25, 20, 15, 10, 5, 2.5, 1.25', 'the gym plate set is shown');
-  ok(!(await plateHints.isChecked()), 'plate hints are off by default');  ok((await page.evaluate(() => document.documentElement.dataset.palette)) === 'midnight', 'Midnight is the default palette');
+  ok(!(await plateHints.isChecked()), 'plate hints are off by default');
+  await page.click('#settingsTabs [data-settings-tab="appearance"]');
+  ok((await page.evaluate(() => document.documentElement.dataset.palette)) === 'midnight', 'Midnight is the default palette');
   await page.click('[data-action="set-palette"][data-palette="forest"]');
   await page.waitForFunction((key) => JSON.parse(localStorage.getItem(key) || '{}')?.settings?.palette === 'forest', STORAGE_KEY);
   ok((await page.evaluate(() => document.documentElement.dataset.palette)) === 'forest', 'palette changes apply live');
   await page.click('[data-action="set-palette"][data-palette="midnight"]');
   ok((await page.evaluate(() => document.documentElement.dataset.palette)) === 'midnight', 'palette can be changed back');
+  await page.click('#settingsTabs [data-settings-tab="training"]');
 
   ok(!(await autoWarmup.isChecked()), 'auto warm-up ramp is off by default');
 

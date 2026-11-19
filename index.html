@@ -1051,7 +1051,14 @@
         <!-- Active Program Banner -->
         <div id="activeProgBanner" class="mb-4" style="display:none;"></div>
 
-        <!-- Library Tabs: Discover / Saved / Completed -->
+        <!-- Plan actions: create, or bring a portable plan file in. -->
+        <div class="plans-actions">
+          <button type="button" class="plans-action-btn" data-action="open-create-program">+ New plan</button>
+          <button type="button" class="plans-action-btn" data-action="import-plan-json">Import plan (.json)</button>
+          <input type="file" id="planImportFile" accept=".json,application/json" class="hidden-input" aria-label="Choose an openHybrid plan JSON file">
+        </div>
+
+        <!-- Library Tabs: Discover / My Plans -->
         <div id="progLibraryTabs"></div>
 
         <!-- Search Bar -->
@@ -1445,7 +1452,15 @@
         </div>
         <button class="settings-close-btn" data-action="close-settings" aria-label="Close settings">✕</button>
       </div>
-      <input type="file" id="avatarFilePicker" accept="image/*" style="display:none" aria-hidden="true">
+      <input type="file" id="avatarFilePicker" accept="image/*" style="display:none;" aria-hidden="true">
+
+      <div class="settings-tools">
+        <label class="settings-search">
+          <span class="settings-search__icon" data-icon="search" aria-hidden="true"></span>
+          <input type="search" id="settingsSearch" placeholder="Search settings" aria-label="Search settings" autocomplete="off">
+        </label>
+        <nav class="settings-tabs" id="settingsTabs" aria-label="Settings sections"></nav>
+      </div>
 
       <div class="settings-body">
 
@@ -2218,6 +2233,21 @@
     <div id="customizeList" class="customize-list"></div>
     <button class="settings-action-btn" data-action="reset-customize">Reset to default</button>
     <div style="height: 16px;"></div>
+  </div>
+
+  <!-- Edit a saved activity — strength sets or run basics. -->
+  <div id="editSavedBackdrop" class="sheet-backdrop" data-action="close-edit-saved"></div>
+  <div id="editSavedSheet" class="bottom-sheet edit-saved-sheet" role="dialog" aria-labelledby="editSavedTitle" data-modal-root data-modal-close-action="close-edit-saved" data-modal-companion="#editSavedBackdrop" inert aria-hidden="true">
+    <div class="bottom-sheet-handle"></div>
+    <div class="bottom-sheet-header">
+      <h3 id="editSavedTitle" class="bottom-sheet-title">Edit workout</h3>
+      <button class="sheet-close-btn" data-action="close-edit-saved" aria-label="Close">✕</button>
+    </div>
+    <div id="editSavedBody" class="edit-saved-body"></div>
+    <div class="edit-saved-actions">
+      <button class="btn-action-block btn-green" data-action="save-edit-saved">Save changes</button>
+      <button class="btn-action-block btn-ghost" data-action="close-edit-saved">Cancel</button>
+    </div>
   </div>
 
   <!-- Workout Preview Modal (day detail bottom-sheet) -->

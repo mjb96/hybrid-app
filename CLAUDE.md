@@ -7,14 +7,14 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
 - **AGPL-3.0-only** (`LICENSE`), copyright the openHybrid contributors. Third-party notices
   are in `NOTICE.md`; update them before adding vendored code, fonts or media.
 - Contributions are accepted under the same licence. The hosted PWA and Android
-  app keep a source link under Settings → App → Source code.
+  app keep a source link under Settings → Data → App → Source code.
 
 ## Commands (keep all green before every commit)
 - `npm test` — node --test suite
 - `npm run typecheck` — tsc over jsconfig
 - `npm run smoke` — scripts/smoke.mjs (jsdom import + home render)
 - `npm run icons:gen` — regenerate PWA/Android icons from `assets/brand/icon.svg`
-- `npm run browser:verify` — 38 real-Chromium product checks through a parallel
+- `npm run browser:verify` — 41 real-Chromium product checks through a parallel
   worker pool (3 workers by default; `-- --serial` for one-at-a-time debugging,
   `-- --concurrency=N` to pin workers, `-- --timeout=N` for the 180 s per-check
   kill, `-- --retries=N` for the default single retry after a timeout)
@@ -56,6 +56,17 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   filter through `moduleEnabled`; analytics sections carry `data-module` hooks so a
   deep link cannot reopen a hidden module. Settings must reflect the switches. Data is
   never deleted, and stored history remains readable.
+- Settings navigation: `js/settings.js` groups the former long scroll into
+  Profile / Training / Health / Appearance / Data tabs, with a global search and
+  an explicit no-results state. Existing checks select the Training tab before
+  touching equipment/modules.
+- Saved activity editing: `js/workout/edit-saved.js` edits a finished strength
+  workout's stored weights/reps/notes or a run's distance/time/HR/notes. It keeps
+  the session id, date and route; exercise add/remove is deliberately out of scope.
+- Plans library: Discover is one searchable all-programs list (12 initial, Show
+  all expands); saved, completed, custom and imported plans share My Plans.
+  `js/programs/program-json.js` exports/imports `openhybrid-plan` JSON; imported
+  plans become fresh custom programs and never overwrite a catalog plan.
 - Surface customization: `js/ui/customize.js` normalizes `settings.ui.home` /
   `settings.ui.progress`; hidden ids never hide pinned safety/Today/navigation
   surfaces and never block a deep link. v11→v12 seeds the empty preference.

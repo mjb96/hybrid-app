@@ -3,6 +3,7 @@
 // records. This lets the existing logger/history/export paths reuse one durable
 // shape without ever completing or overwriting a programmed day.
 import { dateKey } from '../dates.js';
+import { secureRandomSuffix } from '../util/secure-id.js';
 
 const PREFIX = 'session:';
 const DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
@@ -12,7 +13,7 @@ function clone(value) {
 }
 
 export function newStrengthSessionId() {
-  return `str_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+  return `str_${Date.now().toString(36)}_${secureRandomSuffix(6)}`;
 }
 
 export function isOneOffWeek(week) {

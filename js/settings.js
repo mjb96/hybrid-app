@@ -68,6 +68,29 @@ import {
 
 let _getState;
 let _autoBackupUiRequest = 0;
+let _settingsGroup = 'profile';
+
+const SETTINGS_TABS = Object.freeze([
+  { id: 'profile', label: 'Profile' },
+  { id: 'training', label: 'Training' },
+  { id: 'health', label: 'Health' },
+  { id: 'appearance', label: 'Appearance' },
+  { id: 'data', label: 'Data' },
+]);
+
+const SETTINGS_GROUP_BY_LABEL = Object.freeze({
+  Profile: 'profile',
+  Training: 'training',
+  Modules: 'training',
+  'Program Week': 'training',
+  Equipment: 'training',
+  Fasting: 'health',
+  Notifications: 'health',
+  Appearance: 'appearance',
+  'Data & Backups': 'data',
+  'Health Connect': 'health',
+  App: 'data',
+});
 
 export function initSettings(getStateFn) {
   _getState = getStateFn;
@@ -75,6 +98,63 @@ export function initSettings(getStateFn) {
   // + Android versionName). No hardcoded string to drift out of date.
   const vEl = document.getElementById('settingsAppVersion');
   if (vEl) vEl.textContent = `openHybrid v${APP_VERSION}`;
+  _setupSettingsNavigation();
+}
+
+function _settingsSections() {
+  return [...document.querySelectorAll('#settingsPanel .settings-section')];
+}
+
+function _setupSettingsNavigation() {
+  const tabs = document.getElementById('settingsTabs');
+  const search = document.getElementById('settingsSearch');
+  if (!tabs) return;
+  const sections = _settingsSections();
+  sections.forEach((section) => {
+    const label = section.querySelector('.settings-section-label:not(.settings-section-label--sub)')?.textContent?.trim() || '';
+    section.dataset.settingsGroup = SETTINGS_GROUP_BY_LABEL[label] || 'training';
+  });
+  if (!tabs.childElementCount) {
+    tabs.innerHTML = SETTINGS_TABS.map((tab) => `<button type="button" class="settings-tab" role="tab" data-settings-tab="${tab.id}" aria-selected="false">${tab.label}</button>`).join('');
+    tabs.addEventListener('click', (event) => {
+      const button = /** @type {HTMLElement|null} */ (event.target instanceof Element ? event.target.closest('[data-settings-tab]') : null);
+      if (!button) return;
+      _settingsGroup = button.getAttribute('data-settings-tab') || 'profile';
+      const input = document.getElementById('settingsSearch');
+      if (input) input.value = '';
+      const body = document.querySelector('#settingsPanel .settings-body');
+      if (body) body.scrollTop = 0;
+      _applySettingsFilter();
+    });
+    search?.addEventListener('input', _applySettingsFilter);
+  }
+  if (!document.getElementById('settingsNoResults')) {
+    const empty = document.createElement('p');
+    empty.id = 'settingsNoResults';
+    empty.className = 'settings-empty';
+    empty.textContent = 'No settings match that search.';
+    empty.hidden = true;
+    document.querySelector('#settingsPanel .settings-body')?.appendChild(empty);
+  }
+  _applySettingsFilter();
+}
+
+function _applySettingsFilter() {
+  const query = (document.getElementById('settingsSearch')?.value || '').trim().toLowerCase();
+  let shown = 0;
+  _settingsSections().forEach((section) => {
+    const inGroup = !!query || section.dataset.settingsGroup === _settingsGroup;
+    const matches = !query || section.textContent.toLowerCase().includes(query);
+    section.hidden = !(inGroup && matches);
+    if (!section.hidden) shown++;
+  });
+  document.querySelectorAll('#settingsTabs [data-settings-tab]').forEach((button) => {
+    const active = !query && button.getAttribute('data-settings-tab') === _settingsGroup;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-selected', active ? 'true' : 'false');
+  });
+  const empty = document.getElementById('settingsNoResults');
+  if (empty) empty.hidden = shown > 0;
 }
 
 // ==========================================
@@ -85,6 +165,7 @@ export function openSettings() {
   const panel   = document.getElementById('settingsPanel');
   if (!overlay || !panel) return;
   _syncSettingsUI();
+  _setupSettingsNavigation();
   overlay.classList.add('active');
   panel.classList.add('active');
   overlay.removeAttribute('aria-hidden');

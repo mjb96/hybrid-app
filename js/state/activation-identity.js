@@ -29,14 +29,14 @@
 // =============================================================================
 import { runDaySummary } from './run-sessions.js';
 import { startOfProgramWeek } from '../dates.js';
+import { secureRandomSuffix } from '../util/secure-id.js';
 
 const DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 const ARCHIVE_PREFIX = 'arch:';
 
 /** A short, collision-resistant id for one program run. */
 export function newActivationId() {
-  const rand = Math.random().toString(36).slice(2, 8);
-  return `act_${Date.now().toString(36)}_${rand}`;
+  return `act_${Date.now().toString(36)}_${secureRandomSuffix(6)}`;
 }
 
 /** True for a namespaced archived-week key (a previous activation's stored week). */
