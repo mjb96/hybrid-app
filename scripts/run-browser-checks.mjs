@@ -36,6 +36,7 @@ const checks = [
   'scripts/active-program-edit-browser-check.mjs',
   'scripts/plan-recommendations-browser-check.mjs',
   'scripts/plans-json-browser-check.mjs',
+  'scripts/opengym-plan-browser-check.mjs',
   'scripts/plans-active-banner-browser-check.mjs',
   'scripts/program-preview-consistency-browser-check.mjs',
   'scripts/jt-shed-simplified-browser-check.mjs',
@@ -68,7 +69,7 @@ const checks = [
 // Checks are independent (each binds port 0 and launches its own Playwright
 // context), so they run through a small worker pool instead of one blocking
 // spawnSync at a time. Output is buffered per check and printed as one block
-// when it finishes: the suite is 41 checks and ~7 minutes serially, mostly
+// when it finishes: the suite is 42 checks and ~7 minutes serially, mostly
 // browser startup, so overlapping them is the difference between a coffee and
 // a glance. `--serial` restores the sequential loop when debugging.
 const args = process.argv.slice(2);

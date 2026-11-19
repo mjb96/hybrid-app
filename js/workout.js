@@ -377,7 +377,7 @@ function _buildExerciseCardEl(liftName, loggedLiftsData, weekData, wk, selectedD
   // performed panel until the athlete deliberately chooses Use previous values.
   const suggestedGhost = (diagnostic.progression && diagnostic.progression.weight)
     ? { w: diagnostic.progression.weight, r: diagnostic.progression.reps }
-    : null;
+    : (target.weight > 0 ? { w: target.weight, r: target.reps } : null);
   // The day's top-set (T1 rep-max) actual weight drives the Block-2 (weeks 7–11)
   // back-off suggestion. Read it from the STORED rep-max row so it survives edits
   // and reload; recomputed here at render, and live on input (see recalcJtBackoff).
@@ -902,7 +902,8 @@ export function executeOneTapQuickLog(labelNode, liftName, sIdx) {
     const gymRpeEl = document.getElementById('sessionGymRpeCockpit');
     const setRpe = gymRpeEl && gymRpeEl.value ? parseFloat(gymRpeEl.value) : null;
     const setType = appState.weeks[wk].lifts?.[selectedDay]?.[liftName]?.[sIdx]?.type || '';
-    triggerRestTimerEngine(liftName, setRpe, setType);
+    const planRest = getProgramById(appState.activeProgramId)?.prescriptions?.[selectedDay]?.[liftName]?.restSec;
+    triggerRestTimerEngine(liftName, setRpe, setType, planRest);
   } catch(e) { console.warn(e); }
 
   _saveState(true);
@@ -1202,7 +1203,8 @@ export function toggleGymCheckLoggingState(checkboxNode) {
       const _wk = activeWorkoutWeekKey(_appState);
       const _sIdx = exCard ? Array.from(exCard.querySelectorAll('.cockpit-set-row')).indexOf(parentRow) : -1;
       const setType = _appState.weeks[_wk].lifts?.[_selDay]?.[liftName]?.[_sIdx]?.type || '';
-      triggerRestTimerEngine(liftName, setRpe, setType);
+      const planRest = getProgramById(_appState.activeProgramId)?.prescriptions?.[_selDay]?.[liftName]?.restSec;
+      triggerRestTimerEngine(liftName, setRpe, setType, planRest);
       // Stamp workout date on first set completion for this day
       if (!_appState.weeks[_wk].dates) _appState.weeks[_wk].dates = {};
       if (!_appState.weeks[_wk].dates[_selDay]) {

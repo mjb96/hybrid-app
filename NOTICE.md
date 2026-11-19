@@ -126,15 +126,43 @@ Licensed under the SIL Open Font License, Version 1.1:
 
 The core catalogue (the first 157 entries) is original openHybrid text. The
 extended catalogue in `js/exercises/opengym-catalogue.js` is derived from the
-[openGym exercise catalogue](https://github.com/DuarteSantos8/openGym), Copyright
-(C) 2026 Duarte Santos and openGym contributors, licensed **AGPL-3.0** (the same
-licence as openHybrid).
+[openGym exercise catalogue](https://github.com/DuarteSantos8/openGym):
 
-Only entries marked `textSource: "opengym"` with written instructions are
-imported. Entries openGym received from other datasets (for example
-`textSource: "exercisedb"`) are excluded. No exercise media — stills, GIFs or
-animations — is copied, because openGym's media is separately licensed to Gym
-visual and is not AGPL.
+- **openGym-authored text** (newer exercises, descriptions, muscle-map
+  corrections and translations) is Copyright (C) 2026 Duarte Santos and openGym
+  contributors, licensed **AGPL-3.0** (the same licence as openHybrid).
+- Entries marked `textSource: "exercisedb"` (the 1,324 exercises openGym shipped
+  before v1.4.0) keep names, muscles and instructions that originate from
+  [ExerciseDB v1](https://exercisedb.dev/) by AscendAPI and reached openGym
+  through [hasaneyldrm/exercises-dataset](https://github.com/hasaneyldrm/exercises-dataset),
+  under the MIT licence reproduced below.
+
+No exercise media — stills, GIFs or animations — is copied, because openGym's
+media is separately licensed to Gym visual and is not AGPL.
+
+```
+MIT License
+
+Copyright (c) 2026 Hasan Emir Yıldırım
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation and data files (the "Software"),
+to deal in the Software without restriction, including without limitation the
+rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+sell copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
 
 Regenerate with `scripts/import-opengym-catalogue.mjs`; see
 [`docs/EXERCISE_LIBRARY.md`](docs/EXERCISE_LIBRARY.md).

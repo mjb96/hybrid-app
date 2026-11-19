@@ -12,6 +12,10 @@ updates:
     commit-message:
       prefix: deps
     groups:
+      github-actions:
+        patterns:
+          - "*"
+    groups:
       npm-minor-patch:
         update-types:
           - minor
@@ -33,3 +37,7 @@ updates:
       - dependencies
     commit-message:
       prefix: deps
+    groups:
+      github-actions:
+        patterns:
+          - "*"

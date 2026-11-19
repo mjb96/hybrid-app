@@ -14,10 +14,12 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
 - `npm run typecheck` — tsc over jsconfig
 - `npm run smoke` — scripts/smoke.mjs (jsdom import + home render)
 - `npm run icons:gen` — regenerate PWA/Android icons from `assets/brand/icon.svg`
-- `npm run browser:verify` — 41 real-Chromium product checks through a parallel
+- `npm run browser:verify` — 42 real-Chromium product checks through a parallel
   worker pool (3 workers by default; `-- --serial` for one-at-a-time debugging,
   `-- --concurrency=N` to pin workers, `-- --timeout=N` for the 180 s per-check
   kill, `-- --retries=N` for the default single retry after a timeout)
+- `npm run preflight` — `verify` + the full browser suite. Run this before opening
+  or updating a PR that touches shared UI; never merge on pending checks.
 
 ## Architecture facts (verify before relying on them)
 - State: one big `appState` object → localStorage (source of truth) in the browser;
@@ -67,6 +69,11 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   all expands); saved, completed, custom and imported plans share My Plans.
   `js/programs/program-json.js` exports/imports `openhybrid-plan` JSON; imported
   plans become fresh custom programs and never overwrite a catalog plan.
+  `js/programs/opengym-plan.js` imports openGym plan files: weekdays map to days,
+  exercise ids resolve through `OPENGYM_ID_NAMES`, and per-exercise sets/reps/
+  starting load/rest live in the program's `prescriptions` sidecar. `liftTarget`
+  reads that sidecar, the cockpit ghosts the starting weight and the rest timer
+  honours the prescribed rest; `day.lifts` stays bare strings.
 - Surface customization: `js/ui/customize.js` normalizes `settings.ui.home` /
   `settings.ui.progress`; hidden ids never hide pinned safety/Today/navigation
   surfaces and never block a deep link. v11→v12 seeds the empty preference.
@@ -95,9 +102,9 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   Slate/Forest/Ember alternatives. Light keeps its own variable block. The
   Settings palette buttons persist `settings.palette`.
 - Exercise catalogue: the original 157 are `CORE_EXERCISES`; `js/exercises/opengym-catalogue.js`
-  adds ~4,280 openGym-authored text entries (AGPL-3.0, no media) imported by
-  `scripts/import-opengym-catalogue.mjs`. Exclude openGym's `textSource: exercisedb`
-  rows and all Gym-visual media; see NOTICE.md and docs/EXERCISE_LIBRARY.md.
+  adds ~5,555 openGym catalogue text entries (openGym AGPL-3.0 + ExerciseDB v1 MIT, no media) imported by
+  `scripts/import-opengym-catalogue.mjs`. `OPENGYM_ID_NAMES` resolves plan-file ids.
+  Never include Gym-visual media; see NOTICE.md and docs/EXERCISE_LIBRARY.md.
 - Equipment profiles: `js/equipment-profiles.js` owns
   `settings.equipmentProfiles` (array of
   `{ id, name, equipment, bandWeights, plateSetup }`) plus

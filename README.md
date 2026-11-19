@@ -26,7 +26,7 @@ the same training picture.
   one coach insight and quick actions. Deep charts stay in Progress; the old
   In Focus cards are gone.
 - **Strength logging** — routines, set types, RPE/RIR, rest timers, supersets,
-  exercise swaps, plate math, estimated 1RM and PRs. A 4,400+ exercise catalogue
+  exercise swaps, plate math, estimated 1RM and PRs. A 5,700+ exercise catalogue
   (openGym text, AGPL, no media) backs search and imports. An optional warm-up
   ramp adds editable 40/60/80% sets once you enter the first working weight.
 - **Running** — manual entries, native GPS tracking with a route map, splits,
@@ -62,8 +62,11 @@ the same training picture.
   activities into Settings. FIT runs keep date, distance, pace, HR and GPS;
   strength FIT files import time/HR only because the format has no exercise names.
 - **Plans that move** — export any plan as a portable `.json` file and import it
-  on another device. Discover is now one searchable list, while saved, completed
-  and custom/imported plans live together under My Plans.
+  on another device, or import an openGym plan file. openGym routines map to
+  training days, exercise ids resolve through the full catalogue, and each
+  exercise keeps its original sets, reps, starting load and rest. Discover is
+  now one searchable list, while saved, completed and custom/imported plans live
+  together under My Plans.
 - **Correct saved workouts** — History lets you reopen a finished strength
   session or run and fix weights, reps, distance, HR or notes in place without
   changing its date or identity.
@@ -155,7 +158,7 @@ format, not branding.
 | --- | --- |
 | `npm test` | Node unit tests |
 | `npm run verify` | Type check, precache check, workflow gates, unit tests, smoke render |
-| `npm run browser:verify` | 41 Playwright product checks (parallel, 180 s per-check kill with one timeout retry; `-- --serial` to debug) |
+| `npm run browser:verify` | 42 Playwright product checks (parallel, 180 s per-check kill with one timeout retry; `-- --serial` to debug) |
 | `npm run perf:baseline` | Boot performance and bounded-DOM baseline |
 | `npm run precache:gen` | Regenerate the service-worker precache manifest |
 
