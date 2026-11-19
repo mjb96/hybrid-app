@@ -81,7 +81,8 @@ import {
   hcToggleConnect, hcSyncNow, saveStepGoal, hcToggleSyncField,
   setFitnessGoal, setWeightGoal, setFitnessLevel, setWeekStartDay, setFastingDefault,
   saveReminderTime, setNotifToggle, saveStreakAlertTime, toggleEquipment, saveBandWeights,
-  savePlateSetup, resetPlateSetup, setShowPlateHints,
+  savePlateSetup, savePlateCounts, resetPlateSetup, setShowPlateHints,
+  saveDumbbells, saveMachineStack, removeMachineStack,
   saveRestPeriods, applyRestPreset, setRestTimerEnabledSetting, resetRestOverrides,
   openAvatarPicker, handleAvatarFile,
   selectAutomaticBackupFolder, backupNow, turnOffAutomaticBackup,
@@ -1209,6 +1210,8 @@ document.addEventListener('click', (e) => {
   else if (action === 'equipment-profile-add') addEquipmentProfileFromUI();
   else if (action === 'equipment-profile-delete') deleteActiveEquipmentProfile();
   else if (action === 'equipment-plates-reset') resetPlateSetup();
+  else if (action === 'save-machine-stack') saveMachineStack();
+  else if (action === 'remove-machine-stack') removeMachineStack(target.getAttribute('data-exercise') || '');
   else if (action === 'auto-backup-folder') selectAutomaticBackupFolder();
   else if (action === 'auto-backup-now') backupNow();
   else if (action === 'auto-backup-disable') turnOffAutomaticBackup();
@@ -1377,6 +1380,8 @@ document.addEventListener('change', (e) => {
   if (eqKey) { toggleEquipment(eqKey, target.checked); return; }
   if (target.id === 'settingsBandLight' || target.id === 'settingsBandMed' || target.id === 'settingsBandHeavy') { saveBandWeights(); return; }
   if (target.id === 'settingsPlateBar' || target.id === 'settingsPlates') { savePlateSetup(); return; }
+  if (target.getAttribute?.('data-plate-count')) { savePlateCounts(); return; }
+  if (target.id === 'settingsDumbbells') { saveDumbbells(); return; }
   if (target.id === 'settingsShowPlateHints') { setShowPlateHints(target.checked); return; }
   if (target.id === 'settingsRestCompound' || target.id === 'settingsRestAccessory' || target.id === 'settingsRestIsolation') { saveRestPeriods(); return; }
   if (target.id === 'settingsRestEnabled') { setRestTimerEnabledSetting(target.checked); return; }

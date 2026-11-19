@@ -41,9 +41,11 @@ the same training picture.
 - **Modules** — hide Running & GPS, Fasting, Health Connect or Recovery & Load
   from Settings → Modules. Hiding a module never deletes its data.
 - **Equipment profiles** — keep separate kits for home and the commercial gym.
-  Each profile stores its own bar weight and plate denominations; the active
-  profile drives program fit, exercise swaps and optional per-side plate hints
-  in the workout logger. Switching takes one tap in Settings.
+  Each profile stores its own bar weight, plate denominations and optional pairs
+  owned, dumbbell ladder and machine stacks; the active profile drives program
+  fit, exercise swaps and optional per-side plate hints. Hints say when a target
+  cannot be built, and suggested loads snap to the weights you record. Switching
+  takes one tap in Settings.
 - **Progression styles** — custom programs can choose Double, Linear or Rep-first
   coaching. The suggested next load follows that program's style while keeping
   RPE, fatigue, cutting and stall safeguards.

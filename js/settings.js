@@ -13,7 +13,7 @@ import { parseWorkoutCsv, applyWorkoutCsvImport, CSV_IMPORT_LIMITS } from './por
 import { moduleEnabled, setModuleEnabled, applyModuleVisibility } from './modules.js';
 import * as equipmentProfiles from './equipment-profiles.js';
 import { looksLikeBodyCsv, parseBodyCsv, applyBodyweightCsvImport } from './portability/import-body-csv.js';
-import { resolveExercise } from './exercises/catalog.js';
+import { resolveExercise, EXERCISES } from './exercises/catalog.js';
 import { exportResultMessage, saveTextExport } from './portability/export-service.js';
 import {
   automaticBackupSupported,
@@ -23,6 +23,10 @@ import {
   buildCompleteBackup,
   runAutomaticBackup,
 } from './portability/auto-backup.js';
+
+const _esc = (value) => String(value == null ? '' : value)
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
 // Rest tier <-> "m:ss" helpers. Inputs accept "2:30", "150", or "2".
 const _fmtRest = (sec) => {
@@ -97,6 +101,46 @@ function _plateUnit(appState) {
   return appState.settings?.weightUnit === 'lbs' ? 'lb' : 'kg';
 }
 
+function _renderPlateCounts(setup, unit) {
+  const host = document.getElementById('settingsPlateCounts');
+  if (!host) return;
+  host.innerHTML = setup.plates.map((plate) => {
+    const count = setup.counts?.[String(plate)];
+    return `<label class="settings-plate-count"><span>${plate}</span><input type="number" min="0" step="1" inputmode="numeric" data-plate-count="${plate}" value="${count == null ? '' : count}" placeholder="∞" aria-label="${plate} ${unit} plates, pairs owned"></label>`;
+  }).join('');
+}
+
+let _stackExercises = null;
+function _machineExercises() {
+  if (_stackExercises) return _stackExercises;
+  _stackExercises = EXERCISES
+    .filter((exercise) => (exercise.equipment || []).some((key) => key === 'machine' || key === 'cables'))
+    .map((exercise) => ({ id: exercise.id, name: exercise.name }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  return _stackExercises;
+}
+
+function _renderMachineStacks(appState, unit) {
+  const select = document.getElementById('settingsStackExercise');
+  if (select && select.options.length === 0) {
+    select.innerHTML = _machineExercises()
+      .map((exercise) => `<option value="${_esc(exercise.id)}">${_esc(exercise.name)}</option>`)
+      .join('');
+  }
+  const host = document.getElementById('settingsStackList');
+  if (!host) return;
+  const profile = equipmentProfiles.getActiveEquipmentProfile(appState);
+  const key = unit === 'lb' ? 'lb' : 'kg';
+  const stacks = equipmentProfiles.normalizeMachineStacks(profile.machineStacks);
+  const entries = Object.entries(stacks).filter(([, stack]) => stack.unit === key);
+  host.innerHTML = entries.length
+    ? entries.map(([id, stack]) => {
+      const name = resolveExercise(id)?.name || id;
+      return `<div class="settings-stack-row"><span><strong>${_esc(name)}</strong> · ${stack.weights.join(', ')} ${key}</span><button type="button" class="settings-text-btn" data-action="remove-machine-stack" data-exercise="${_esc(id)}">Remove</button></div>`;
+    }).join('')
+    : `<div class="settings-hint">No ${key} stacks saved yet.</div>`;
+}
+
 function _syncPlateSetupUI(appState) {
   const unit = _plateUnit(appState);
   const setup = equipmentProfiles.getActivePlateSetup(appState, unit);
@@ -108,6 +152,15 @@ function _syncPlateSetupUI(appState) {
   if (unitLabel) unitLabel.textContent = unit;
   const barUnit = document.getElementById('settingsPlateBarUnit');
   if (barUnit) barUnit.textContent = unit;
+  _renderPlateCounts(setup, unit);
+
+  const dumbbells = equipmentProfiles.getActiveDumbbells(appState, unit);
+  const dumbbellInput = document.getElementById('settingsDumbbells');
+  if (dumbbellInput && document.activeElement !== dumbbellInput) dumbbellInput.value = dumbbells.join(', ');
+  const dumbbellUnit = document.getElementById('settingsDumbbellUnit');
+  if (dumbbellUnit) dumbbellUnit.textContent = unit;
+  _renderMachineStacks(appState, unit);
+
   const showHints = document.getElementById('settingsShowPlateHints');
   if (showHints) showHints.checked = appState.settings?.showPlateHints === true;
 }
@@ -693,6 +746,61 @@ export function saveBandWeights() {
   saveStateToLocalStorage(true);
 }
 
+function _readPlateCounts() {
+  /** @type {Record<string, number>} */
+  const counts = {};
+  document.querySelectorAll('[data-plate-count]').forEach((input) => {
+    const size = input.getAttribute('data-plate-count');
+    const raw = String(input.value ?? '').trim();
+    if (!size || raw === '') return;
+    const n = Number(raw);
+    if (Number.isInteger(n) && n >= 0) counts[size] = n;
+  });
+  return counts;
+}
+
+export function savePlateCounts() {
+  const appState = _ensureSettings();
+  const unit = _plateUnit(appState);
+  equipmentProfiles.setActivePlateSetup(appState, unit, { counts: _readPlateCounts() });
+  saveStateToLocalStorage(true);
+  _syncPlateSetupUI(appState);
+}
+
+export function saveDumbbells() {
+  const appState = _ensureSettings();
+  const unit = _plateUnit(appState);
+  const input = document.getElementById('settingsDumbbells');
+  equipmentProfiles.setActiveDumbbells(appState, unit, input?.value || '');
+  saveStateToLocalStorage(true);
+  _syncPlateSetupUI(appState);
+}
+
+export function saveMachineStack() {
+  const appState = _ensureSettings();
+  const unit = _plateUnit(appState);
+  const id = document.getElementById('settingsStackExercise')?.value || '';
+  const raw = document.getElementById('settingsStackWeights')?.value || '';
+  if (!id || !equipmentProfiles.normalizeWeightList(raw).length) {
+    showToast('Pick an exercise and enter its weights');
+    return;
+  }
+  equipmentProfiles.setActiveMachineStack(appState, id, unit, raw);
+  saveStateToLocalStorage(true);
+  _syncPlateSetupUI(appState);
+  const input = document.getElementById('settingsStackWeights');
+  if (input) input.value = '';
+  showToast('Machine stack saved');
+}
+
+export function removeMachineStack(id) {
+  const appState = _ensureSettings();
+  if (!equipmentProfiles.removeActiveMachineStack(appState, id)) return;
+  saveStateToLocalStorage(true);
+  _syncPlateSetupUI(appState);
+  showToast('Machine stack removed');
+}
+
 // Persist the active profile's bar/plates for the current weight unit. Invalid
 // input is rejected and the stored setup is shown again rather than saved as a
 // silently empty plate list.
@@ -707,7 +815,10 @@ export function savePlateSetup() {
     _syncPlateSetupUI(appState);
     return;
   }
-  equipmentProfiles.setActivePlateSetup(appState, unit, { bar, plates });
+  const counts = document.querySelector('[data-plate-count]')
+    ? _readPlateCounts()
+    : equipmentProfiles.getActivePlateSetup(appState, unit).counts;
+  equipmentProfiles.setActivePlateSetup(appState, unit, { bar, plates, counts });
   saveStateToLocalStorage(true);
   _syncPlateSetupUI(appState);
   showToast(`Plate setup saved (${unit})`);

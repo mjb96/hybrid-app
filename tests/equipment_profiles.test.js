@@ -21,6 +21,11 @@ import {
   getActivePlateSetup,
   setActivePlateSetup,
   resetActivePlateSetup,
+  getActiveDumbbells,
+  setActiveDumbbells,
+  getActiveMachineStack,
+  setActiveMachineStack,
+  removeActiveMachineStack,
 } from '../js/equipment-profiles.js';
 import { migrateState, CURRENT_SCHEMA_VERSION } from '../js/state/migrations.js';
 
@@ -40,8 +45,8 @@ test('ensure seeds one profile from the legacy kit', () => {
   assert.equal(profiles[0].equipment.bands, false);
   assert.deepEqual(profiles[0].bandWeights, { L: 10, M: 20, H: 30 });
   assert.deepEqual(profiles[0].plateSetup, {
-    kg: { bar: STANDARD_PLATE_SETUP.kg.bar, plates: [...STANDARD_PLATE_SETUP.kg.plates] },
-    lb: { bar: STANDARD_PLATE_SETUP.lb.bar, plates: [...STANDARD_PLATE_SETUP.lb.plates] },
+    kg: { bar: STANDARD_PLATE_SETUP.kg.bar, plates: [...STANDARD_PLATE_SETUP.kg.plates], counts: {} },
+    lb: { bar: STANDARD_PLATE_SETUP.lb.bar, plates: [...STANDARD_PLATE_SETUP.lb.plates], counts: {} },
   });
 });
 
@@ -98,7 +103,7 @@ test('adding a profile copies the active kit, becomes active and uses a unique i
   assert.equal(state.settings.activeEquipmentProfileId, second.id);
   assert.equal(second.equipment.bands, true);
   assert.equal(second.bandWeights.L, 10);
-  assert.deepEqual(second.plateSetup.kg, { bar: 15, plates: [20, 10, 5, 2.5] });
+  assert.deepEqual(second.plateSetup.kg, { bar: 15, plates: [20, 10, 5, 2.5], counts: {} });
 });
 
 test('renaming rejects blank names and trims real ones', () => {
@@ -135,22 +140,23 @@ test('plate setup is per profile and per unit', () => {
   const state = baseState();
   ensureEquipmentProfiles(state);
   setActivePlateSetup(state, 'kg', { bar: 15, plates: '25, 20, 20, 10, 5' });
-  assert.deepEqual(getActivePlateSetup(state, 'kg'), { bar: 15, plates: [25, 20, 10, 5] });
+  assert.deepEqual(getActivePlateSetup(state, 'kg'), { bar: 15, plates: [25, 20, 10, 5], counts: {} });
   assert.deepEqual(getActivePlateSetup(state, 'lb'), {
     bar: STANDARD_PLATE_SETUP.lb.bar,
     plates: [...STANDARD_PLATE_SETUP.lb.plates],
+    counts: {},
   });
 
   setActivePlateSetup(state, 'lb', { bar: 35, plates: [45, 25, 10] });
-  assert.deepEqual(getActivePlateSetup(state, 'kg'), { bar: 15, plates: [25, 20, 10, 5] });
-  assert.deepEqual(getActivePlateSetup(state, 'lb'), { bar: 35, plates: [45, 25, 10] });
+  assert.deepEqual(getActivePlateSetup(state, 'kg'), { bar: 15, plates: [25, 20, 10, 5], counts: {} });
+  assert.deepEqual(getActivePlateSetup(state, 'lb'), { bar: 35, plates: [45, 25, 10], counts: {} });
   // Settings stores 'lbs'; both spellings resolve to the lb setup.
-  assert.deepEqual(getActivePlateSetup(state, 'lbs'), { bar: 35, plates: [45, 25, 10] });
+  assert.deepEqual(getActivePlateSetup(state, 'lbs'), { bar: 35, plates: [45, 25, 10], counts: {} });
 
   addEquipmentProfile(state, 'Home');
   setActivePlateSetup(state, 'kg', { bar: 10, plates: [10, 5, 2.5] });
   switchEquipmentProfile(state, DEFAULT_PROFILE_ID);
-  assert.deepEqual(getActivePlateSetup(state, 'kg'), { bar: 15, plates: [25, 20, 10, 5] });
+  assert.deepEqual(getActivePlateSetup(state, 'kg'), { bar: 15, plates: [25, 20, 10, 5], counts: {} });
 });
 
 test('plate setup validates and resets without inventing a plate', () => {
@@ -161,6 +167,7 @@ test('plate setup validates and resets without inventing a plate', () => {
   assert.deepEqual(normalizePlateSetup({ kg: { bar: -1, plates: [] } }).kg, {
     bar: STANDARD_PLATE_SETUP.kg.bar,
     plates: [...STANDARD_PLATE_SETUP.kg.plates],
+    counts: {},
   });
 
   setActivePlateSetup(state, 'kg', { bar: 15, plates: [20, 10] });
@@ -168,7 +175,54 @@ test('plate setup validates and resets without inventing a plate', () => {
   assert.deepEqual(getActivePlateSetup(state, 'kg'), {
     bar: STANDARD_PLATE_SETUP.kg.bar,
     plates: [...STANDARD_PLATE_SETUP.kg.plates],
+    counts: {},
   });
+});
+
+test('plate counts persist per size and reset with the standard set', () => {
+  const state = baseState();
+  ensureEquipmentProfiles(state);
+  setActivePlateSetup(state, 'kg', { bar: 20, plates: [25, 20, 10, 5], counts: { 25: 2, 20: 0, 5: 3 } });
+  assert.deepEqual(getActivePlateSetup(state, 'kg').counts, { 25: 2, 20: 0, 5: 3 });
+
+  // Saving the bar/plates without counts keeps the inventory.
+  setActivePlateSetup(state, 'kg', { bar: 15 });
+  assert.deepEqual(getActivePlateSetup(state, 'kg'), {
+    bar: 15, plates: [25, 20, 10, 5], counts: { 25: 2, 20: 0, 5: 3 },
+  });
+
+  resetActivePlateSetup(state, 'kg');
+  assert.deepEqual(getActivePlateSetup(state, 'kg').counts, {});
+});
+
+test('dumbbell ladders are per profile and per unit', () => {
+  const state = baseState();
+  ensureEquipmentProfiles(state);
+  setActiveDumbbells(state, 'kg', '5, 7.5, 10, 10, 12.5');
+  assert.deepEqual(getActiveDumbbells(state, 'kg'), [5, 7.5, 10, 12.5]);
+  assert.deepEqual(getActiveDumbbells(state, 'lb'), []);
+  setActiveDumbbells(state, 'lbs', [10, 15, 20]);
+  assert.deepEqual(getActiveDumbbells(state, 'lb'), [10, 15, 20]);
+
+  addEquipmentProfile(state, 'Home');
+  assert.deepEqual(getActiveDumbbells(state, 'kg'), [5, 7.5, 10, 12.5]);
+  setActiveDumbbells(state, 'kg', [2.5, 5]);
+  switchEquipmentProfile(state, DEFAULT_PROFILE_ID);
+  assert.deepEqual(getActiveDumbbells(state, 'kg'), [5, 7.5, 10, 12.5]);
+});
+
+test('machine stacks are keyed by exercise and unit', () => {
+  const state = baseState();
+  ensureEquipmentProfiles(state);
+  setActiveMachineStack(state, 'leg_press', 'kg', '10, 20, 30, 35');
+  assert.deepEqual(getActiveMachineStack(state, 'leg_press', 'kg'), [10, 20, 30, 35]);
+  assert.deepEqual(getActiveMachineStack(state, 'leg_press', 'lb'), []);
+  setActiveMachineStack(state, 'leg_press', 'lb', [25, 50]);
+  assert.deepEqual(getActiveMachineStack(state, 'leg_press', 'lbs'), [25, 50]);
+  setActiveMachineStack(state, 'leg_press', 'kg', []);
+  assert.deepEqual(getActiveMachineStack(state, 'leg_press', 'kg'), []);
+  removeActiveMachineStack(state, 'leg_press');
+  assert.deepEqual(getActiveMachineStack(state, 'leg_press', 'lb'), []);
 });
 
 test('an imported profile projection is repaired on demand', () => {

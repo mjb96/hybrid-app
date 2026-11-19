@@ -12,6 +12,7 @@
     "smoke": "node scripts/smoke.mjs",
     "typecheck": "tsc -p jsconfig.json",
     "precache:gen": "node scripts/gen-precache.mjs",
+    "icons:gen": "node scripts/generate-icons.mjs",
     "precache:check": "node scripts/gen-precache.mjs --check",
     "browser:verify": "node scripts/run-browser-checks.mjs",
     "perf:baseline": "node scripts/performance-baseline.mjs",

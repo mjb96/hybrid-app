@@ -5,7 +5,8 @@
 import { CONFIG } from './constants.js';
 import { devWarn } from './debug.js';
 import { isCompletedSet, isWarmupSet } from './set-utils.js';
-import { canonicalExerciseId, exerciseStatForName } from './exercises/catalog.js';
+import { canonicalExerciseId, exerciseStatForName, resolveExercise } from './exercises/catalog.js';
+import { getActiveDumbbells, getActiveMachineStack } from './equipment-profiles.js';
 import {
   EXERCISE_HISTORY_SCOPE,
   exercisePerformanceHistory,
@@ -275,7 +276,7 @@ export function computeDiagnosticForLift(currentWeekString, dayKey, liftName, re
   // (the ghost the cockpit shows, and what one-tap quick-log commits).
   const increment = appState.settings?.progressionIncrement || CONFIG.weightIncrement || 2.5;
   const canRecommendLoad = repTarget > 0 && isE1rmExercise(liftName, lastSessionSets?.[0]);
-  const prog = suggestProgression(canRecommendLoad ? (lastSessionSets || []) : [], repTarget, {
+  let prog = suggestProgression(canRecommendLoad ? (lastSessionSets || []) : [], repTarget, {
     increment,
     weightGoal: appState.settings?.weightGoal,
     stalled: result.isStalled,
@@ -284,6 +285,35 @@ export function computeDiagnosticForLift(currentWeekString, dayKey, liftName, re
     style: opts.progressionStyle,
   });
   if (prog.action !== 'baseline') {
+    // Snap the suggested load to equipment the active profile actually owns.
+    // With no ladder configured this is a no-op, preserving every pre-inventory
+    // profile. A load-up never drops below the current weight; if the ladder has
+    // no rung above it, hold where the lifter is instead of inventing one.
+    const unit = appState.settings?.weightUnit === 'lbs' ? 'lb' : 'kg';
+    const exercise = resolveExercise(liftName);
+    const equipment = exercise?.equipment || [];
+    const ladder = equipment.includes('dumbbells')
+      ? getActiveDumbbells(appState, unit)
+      : getActiveMachineStack(appState, exercise?.id || canonicalExerciseId(liftName) || '', unit);
+    if (ladder.length && Number.isFinite(Number(prog.weight))) {
+      const current = Number(prog.weight);
+      const above = ladder.filter((weight) => weight > current);
+      const snapped = ladder.includes(current)
+        ? current
+        : (prog.action === 'load-up' && above.length)
+          ? above[0]
+          : (prog.action === 'load-up' ? current : ladder.reduce(
+            (best, weight) => Math.abs(weight - current) < Math.abs(best - current) ? weight : best,
+            ladder[0],
+          ));
+      if (snapped !== current) {
+        prog = {
+          ...prog,
+          weight: snapped,
+          rationale: `${prog.rationale} Nearest available ${unit === 'lb' ? 'lb' : 'kg'} ${equipment.includes('dumbbells') ? 'dumbbell' : 'stack'} weight.`,
+        };
+      }
+    }
     result.progression = prog;
     result.suggestedWeight = prog.weight;
     result.suggestedReps = prog.reps;

@@ -307,9 +307,40 @@ const MIGRATIONS = [
       settings.activeEquipmentProfileId = profiles[0]?.id || 'eqp_default';
     }
   },
+
+  // v6 → v7: equipment inventory shape. Plate counts are optional (absent =
+  // unlimited), so existing profiles keep their current plate math exactly;
+  // dumbbell ladders and machine stacks start empty (current increment-based
+  // behaviour). The gain is a stable place to persist the inventory the next
+  // Settings edits write.
+  (state) => {
+    if (!state.settings || typeof state.settings !== 'object' || Array.isArray(state.settings)) {
+      state.settings = {};
+    }
+    const profiles = Array.isArray(state.settings.equipmentProfiles)
+      ? state.settings.equipmentProfiles
+      : [];
+    for (const profile of profiles) {
+      if (!profile || typeof profile !== 'object') continue;
+      if (!profile.dumbbells || typeof profile.dumbbells !== 'object' || Array.isArray(profile.dumbbells)) {
+        profile.dumbbells = { kg: [], lb: [] };
+      }
+      if (!profile.machineStacks || typeof profile.machineStacks !== 'object' || Array.isArray(profile.machineStacks)) {
+        profile.machineStacks = {};
+      }
+      if (profile.plateSetup && typeof profile.plateSetup === 'object') {
+        for (const unit of ['kg', 'lb']) {
+          const setup = profile.plateSetup[unit];
+          if (setup && typeof setup === 'object' && (!setup.counts || typeof setup.counts !== 'object' || Array.isArray(setup.counts))) {
+            setup.counts = {};
+          }
+        }
+      }
+    }
+  },
 ];
 
-export const CURRENT_SCHEMA_VERSION = MIGRATIONS.length; // 6
+export const CURRENT_SCHEMA_VERSION = MIGRATIONS.length; // 7
 
 /** Error raised when a state upgrade cannot safely commit. */
 export class StateMigrationError extends Error {

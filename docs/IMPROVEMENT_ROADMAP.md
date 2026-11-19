@@ -1624,6 +1624,23 @@ Work in this order unless user evidence changes it:
 Avoid parallel redesign of every screen. Each step should be usable and
 testable on its own.
 
+## 12. Session log
+
+- **2026-11-19 — Equipment inventory accuracy.**
+  - Optional pairs per plate size (`plateSetup[unit].counts`): a target the rack
+    cannot build now says how much is short instead of implying plates the
+    lifter does not own. Blank counts keep the historical unlimited behaviour.
+  - Per-profile dumbbell ladders and per-exercise machine stacks. Suggested
+    loads snap to the nearest owned rung when a ladder is configured; without
+    one, the existing increment-based suggestion is unchanged.
+  - Schema v7 seeds the optional shape without changing existing plate math,
+    bars or denominations. Settings gains count fields, a dumbbell ladder input
+    and a machine-stack editor.
+  - New openHybrid icon: two lanes forming an H (steel + cyan) joined by a lime
+    running lane. Generated from `assets/brand/icon.svg` by
+    `scripts/generate-icons.mjs` into square PWA 192/512/maskable assets and
+    every Android legacy, round and adaptive-foreground size.
+
 - **2026-11-19 — Renamed Helyx to openHybrid.**
   - Full identity rename: UI, docs, notifications, share/export filenames,
     service-worker cache prefix, Sentry release and release artifacts.

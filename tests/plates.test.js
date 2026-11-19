@@ -54,6 +54,23 @@ test('a profile can use its own bar and plate denominations', () => {
   );
 });
 
+test('owned plate counts limit the breakdown instead of inventing plates', () => {
+  // 110kg on a 20kg bar → 45 per side. One 25 and no 20s leaves 20 short.
+  const bd = computePlateBreakdown(110, 20, [25, 20], { 25: 1, 20: 0 });
+  assert.equal(bd.exact, false);
+  assert.equal(bd.limited, true);
+  assert.equal(bd.leftover, 20);
+  assert.deepEqual(bd.perSide, [{ plate: 25, count: 1 }]);
+  assert.match(plateHint(110, 'kg', { bar: 20, plates: [25, 20], counts: { 25: 1, 20: 0 } }), /20 short/);
+});
+
+test('blank or absent counts keep the historical unlimited behaviour', () => {
+  const unlimited = computePlateBreakdown(100, 20, [25, 15, 10, 5], {});
+  assert.equal(unlimited.exact, true);
+  assert.equal(unlimited.limited, false);
+  assert.equal(computePlateBreakdown(100, 20, [25, 15, 10, 5], null).exact, true);
+});
+
 test('the coach target provides an empty, hidden plate-hint placeholder', () => {
   const html = buildExerciseCard({
     displaySafeName: 'Back Squat', safeLiftName: 'Back Squat', isCompleted: false,
