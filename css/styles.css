@@ -9448,7 +9448,7 @@ html[data-theme="light"] .recap-next__link {
   border: 1px solid var(--border-medium);
   border-radius: 9px;
   text-align: center;
-  min-height: 40px;
+  min-height: 44px;
 }
 .settings-profile-actions .settings-action-btn::after { content: none; }
 .settings-profile-actions .settings-action-btn:disabled {
