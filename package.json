@@ -22,7 +22,7 @@
     "@sentry/browser": "8.55.0",
     "@supabase/supabase-js": "2.45.4",
     "buffer": "^6.0.3",
-    "esbuild": "^0.24.2",
+    "esbuild": "^0.28.1",
     "fake-indexeddb": "^6.2.5",
     "fit-file-parser": "^3.0.2",
     "leaflet": "1.9.4",
