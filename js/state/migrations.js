@@ -19,6 +19,7 @@
 // =============================================================================
 
 import { isInternalLiftId, UNKNOWN_LIFT_NAME } from './lift-id.js';
+import { startOfProgramWeek } from '../dates.js';
 import { reportHandledError } from '../monitoring/report-error.js';
 import { hasRunData, migrateLegacyRunSessions } from './run-sessions.js';
 
@@ -364,9 +365,17 @@ const MIGRATIONS = [
     }
     if (!('palette' in state.settings)) state.settings.palette = 'midnight';
   },
+  // v10 → v11: program slots are Monday-indexed. Older builds stored the
+  // activation day (often Friday) as weekStartedAt, so "Monday 20 Nov" could be
+  // highlighted on Friday 20 Nov. Normalise the anchor to that week's Monday.
+  (state) => {
+    if (!state.weekStartedAt) return;
+    const anchor = startOfProgramWeek(state.weekStartedAt);
+    if (anchor) state.weekStartedAt = anchor;
+  },
 ];
 
-export const CURRENT_SCHEMA_VERSION = MIGRATIONS.length; // 10
+export const CURRENT_SCHEMA_VERSION = MIGRATIONS.length; // 11
 
 /** Error raised when a state upgrade cannot safely commit. */
 export class StateMigrationError extends Error {

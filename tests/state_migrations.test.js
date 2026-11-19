@@ -117,6 +117,17 @@ test('v10 seeds the Midnight palette without changing the theme mode', () => {
   assert.equal(state.settings.theme, 'light');
 });
 
+test('v11 normalises a mid-week anchor to that week\'s Monday', () => {
+  const state = { schemaVersion: 10, weekStartedAt: '2026-11-20', settings: {} };
+  migrateState(state);
+  assert.equal(state.schemaVersion, CURRENT_SCHEMA_VERSION);
+  assert.equal(state.weekStartedAt, '2026-11-16');
+
+  const monday = { schemaVersion: 10, weekStartedAt: '2026-11-16', settings: {} };
+  migrateState(monday);
+  assert.equal(monday.weekStartedAt, '2026-11-16');
+});
+
 test('migrateState is idempotent — already-current state is untouched', () => {
   const state = {
     schemaVersion: CURRENT_SCHEMA_VERSION,
