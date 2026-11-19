@@ -10,6 +10,7 @@ import { APP_VERSION } from './constants.js';
 import { setRestTiers, setRestTimerEnabled, setRestOverrides, initRestPersistence } from './timers.js';
 import { todayKey } from './dates.js';
 import { parseWorkoutCsv, applyWorkoutCsvImport, CSV_IMPORT_LIMITS } from './portability/import-workout-csv.js';
+import { looksLikeBodyCsv, parseBodyCsv, applyBodyweightCsvImport } from './portability/import-body-csv.js';
 import { resolveExercise } from './exercises/catalog.js';
 import { exportResultMessage, saveTextExport } from './portability/export-service.js';
 import {
@@ -670,12 +671,50 @@ export async function handleExternalCsvFile(file) {
     showToast('That CSV is too large to import.', true);
     return;
   }
+  let text;
+  try {
+    text = await file.text();
+  } catch {
+    showToast('That file could not be read.', true);
+    return;
+  }
+  const unit = (_getState()?.settings?.weightUnit === 'lbs') ? 'lbs' : 'kg';
+
+  if (looksLikeBodyCsv(text)) {
+    let body;
+    try {
+      body = parseBodyCsv(text, { unit });
+    } catch (error) {
+      showToast(error?.message || 'That bodyweight CSV could not be read.', true);
+      return;
+    }
+    const existing = new Set((_getState()?.bodyWeightLog || []).map((e) => e.date));
+    const already = body.entries.filter((e) => existing.has(e.date)).length;
+    const ok = await confirmModal({
+      title: 'Import bodyweight history?',
+      message: [
+        `${body.entries.length} weigh-in${body.entries.length === 1 ? '' : 's'} from ${body.entries[0].date} to ${body.entries.at(-1).date}.`,
+        already ? `${already} date${already === 1 ? '' : 's'} already have a measurement and will be left unchanged.` : '',
+        '',
+        'Only missing dates are added. Your existing measurements are never overwritten.',
+      ].filter(Boolean).join('\n'),
+      confirmLabel: 'Import weigh-ins',
+    });
+    if (!ok) return;
+    const result = applyBodyweightCsvImport(_getState(), body);
+    if (!result.added) {
+      showToast('Those weigh-ins are already in your log.');
+      return;
+    }
+    await saveStateToLocalStorage(false);
+    showToast(`Imported ${result.added} weigh-in${result.added === 1 ? '' : 's'}${result.skipped ? ` · ${result.skipped} existing skipped` : ''}`);
+    setTimeout(() => location.reload(), 1000);
+    return;
+  }
+
   let parsed;
   try {
-    const text = await file.text();
-    parsed = parseWorkoutCsv(text, {
-      unit: (_getState()?.settings?.weightUnit === 'lbs') ? 'lbs' : 'kg',
-    });
+    parsed = parseWorkoutCsv(text, { unit });
   } catch (error) {
     showToast(error?.message || 'That CSV could not be read.', true);
     return;
