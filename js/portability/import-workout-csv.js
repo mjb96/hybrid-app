@@ -6,16 +6,56 @@
 // and skipped in this first pass.
 // =============================================================================
 
+import { upsertRunSession } from '../state/run-sessions.js';
+
 export const CSV_IMPORT_LIMITS = {
   maxBytes: 20 * 1024 * 1024,
   maxRows: 50000,
 };
 
+/**
+ * Decode a picked CSV file without assuming UTF-8. Excel on Windows still
+ * writes UTF-16LE with a BOM, and treating those bytes as UTF-8 turns every
+ * header into mojibake, which looks exactly like "the import did nothing".
+ * @param {ArrayBuffer|Uint8Array} buffer
+ */
+export function decodeCsvBytes(buffer) {
+  const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
+  if (bytes[0] === 0xFF && bytes[1] === 0xFE) {
+    return new TextDecoder('utf-16le').decode(bytes.subarray(2));
+  }
+  if (bytes[0] === 0xFE && bytes[1] === 0xFF) {
+    return new TextDecoder('utf-16be').decode(bytes.subarray(2));
+  }
+  if (bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF) {
+    return new TextDecoder('utf-8').decode(bytes.subarray(3));
+  }
+  return new TextDecoder('utf-8').decode(bytes);
+}
+
+/** The delimiter used by the header line, ignoring separators inside quotes. */
+function delimiterFor(input) {
+  const line = input.split(/\r?\n/).find((candidate) => candidate.trim()) || '';
+  const counts = { ',': 0, ';': 0, '\t': 0 };
+  let quoted = false;
+  for (const char of line) {
+    if (char === '"') { quoted = !quoted; continue; }
+    if (!quoted && char in counts) counts[char]++;
+  }
+  const best = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+  return best && best[1] > 0 ? best[0] : ',';
+}
+
 const DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 
-/** RFC 4180 CSV parser: quotes, doubled quotes, CRLF and a UTF-8 BOM. */
-export function parseCsv(text) {
+/**
+ * RFC 4180 CSV parser: quotes, doubled quotes, CRLF, a UTF-8 BOM, and comma,
+ * semicolon or tab delimiters. Semicolon matters because Excel in European
+ * locales rewrites CSV exports that way.
+ */
+export function parseCsv(text, delimiter = null) {
   const input = String(text || '').replace(/^\uFEFF/, '');
+  const separator = delimiter || delimiterFor(input);
   const rows = [];
   let row = [];
   let field = '';
@@ -31,7 +71,7 @@ export function parseCsv(text) {
       continue;
     }
     if (ch === '"') { quoted = true; continue; }
-    if (ch === ',') { row.push(field); field = ''; continue; }
+    if (ch === separator) { row.push(field); field = ''; continue; }
     if (ch === '\n') { row.push(field); rows.push(row); row = []; field = ''; continue; }
     if (ch === '\r') continue;
     field += ch;
@@ -49,23 +89,23 @@ const normalizeHeader = (h) => String(h || '')
   .replace(/^_+|_+$/g, '');
 
 const ALIASES = {
-  date: ['date', 'workout_date', 'day'],
-  start: ['start_time', 'start', 'time', 'workout_datetime'],
+  date: ['date', 'workout_date', 'day', 'start_date'],
+  start: ['start_time', 'start', 'time', 'workout_datetime', 'datetime'],
   end: ['end_time', 'end'],
-  workout: ['workout', 'workout_name', 'title'],
-  note: ['workout_note', 'workout_notes', 'description'],
-  exercise: ['exercise', 'exercise_name', 'exercise_title'],
+  workout: ['workout', 'workout_name', 'title', 'routine'],
+  note: ['workout_note', 'workout_notes', 'description', 'notes'],
+  exercise: ['exercise', 'exercise_name', 'exercise_title', 'name'],
   set: ['set', 'set_index', 'set_order'],
-  setType: ['set_type', 'type'],
-  weightKg: ['weight_kg'],
-  weightLb: ['weight_lb', 'weight_lbs'],
-  weight: ['weight'],
+  setType: ['set_type', 'type', 'phase'],
+  weightKg: ['weight_kg', 'kg'],
+  weightLb: ['weight_lb', 'weight_lbs', 'lb', 'lbs'],
+  weight: ['weight', 'load'],
   unit: ['unit', 'weight_unit'],
-  reps: ['reps', 'repetitions'],
+  reps: ['reps', 'repetitions', 'rep'],
   rpe: ['rpe'],
   rir: ['rir'],
   distance: ['distance_km', 'distance', 'km'],
-  seconds: ['seconds', 'duration_seconds', 'time_seconds'],
+  seconds: ['seconds', 'duration_seconds', 'time_seconds', 'duration_sec', 'duration'],
   side: ['side'],
   setNote: ['note', 'set_note', 'exercise_notes'],
 };
@@ -178,6 +218,7 @@ export function parseWorkoutCsv(text, opts = {}) {
   let skippedCardio = 0;
   let skippedInvalid = 0;
   let totalSets = 0;
+  let cardioRows = 0;
 
   for (const row of rows.slice(1)) {
     const exercise = cell(row, columns.exercise);
@@ -192,13 +233,39 @@ export function parseWorkoutCsv(text, opts = {}) {
     const reps = number(cell(row, columns.reps));
     const distance = number(cell(row, columns.distance));
     const seconds = number(cell(row, columns.seconds));
+    const isCardio = !(reps > 0) && ((distance || 0) > 0 || (seconds || 0) > 0);
+    if (!(reps > 0) && !isCardio) { skippedInvalid++; continue; }
 
-    // Cardio is a different openHybrid record type; count it and keep going.
-    if (!(reps > 0) && ((distance || 0) > 0 || (seconds || 0) > 0)) {
-      skippedCardio++;
+    const key = `${date}|${start || ''}|${workout}`;
+    if (!sessions.has(key)) {
+      sessions.set(key, {
+        key,
+        date,
+        day: weekdayForDate(date),
+        start: start || null,
+        end: end || null,
+        duration: end != null && start != null ? end - start : 0,
+        name: workout,
+        note,
+        entries: new Map(),
+        cardio: [],
+        setCount: 0,
+      });
+    }
+    const session = sessions.get(key);
+
+    // Cardio rows become run records in the archived week. openGym writes
+    // treadmill/rower work as sets with distance_km and seconds and no reps;
+    // skipping them made a history full of cardio look like a failed import.
+    if (isCardio) {
+      session.cardio.push({
+        name: exercise,
+        distanceKm: distance || 0,
+        seconds: seconds || 0,
+      });
+      cardioRows++;
       continue;
     }
-    if (!(reps > 0)) { skippedInvalid++; continue; }
 
     const rawWeight = columns.weightKg >= 0 ? number(cell(row, columns.weightKg))
       : columns.weightLb >= 0 ? number(cell(row, columns.weightLb))
@@ -213,22 +280,6 @@ export function parseWorkoutCsv(text, opts = {}) {
       weight = targetUnit === 'kg' ? weight * 0.45359237 : weight / 0.45359237;
     }
 
-    const key = `${date}|${start || ''}|${workout}`;
-    if (!sessions.has(key)) {
-      sessions.set(key, {
-        key,
-        date,
-        day: weekdayForDate(date),
-        start: start || null,
-        end: end || null,
-        duration: end != null && start != null ? end - start : 0,
-        name: workout,
-        note,
-        entries: new Map(),
-        setCount: 0,
-      });
-    }
-    const session = sessions.get(key);
     if (!session.entries.has(exercise)) session.entries.set(exercise, []);
     const set = {
       w: weight != null && weight > 0 ? String(round2(weight)) : '',
@@ -248,14 +299,14 @@ export function parseWorkoutCsv(text, opts = {}) {
 
   const result = [];
   for (const session of sessions.values()) {
-    if (!session.setCount) continue;
+    if (!session.setCount && !session.cardio.length) continue;
     result.push({
       ...session,
       entries: Object.fromEntries(session.entries),
     });
   }
   result.sort((a, b) => a.date.localeCompare(b.date) || (a.start || 0) - (b.start || 0));
-  return { sessions: result, skippedCardio, skippedInvalid, totalSets };
+  return { sessions: result, skippedCardio, skippedInvalid, totalSets, cardioRows };
 }
 
 
@@ -308,10 +359,19 @@ function hash(value) {
   return (h >>> 0).toString(36);
 }
 
+function paceText(seconds, distanceKm) {
+  if (!(seconds > 0) || !(distanceKm > 0)) return '';
+  const perKm = Math.round(seconds / distanceKm);
+  return `${Math.floor(perKm / 60)}:${String(perKm % 60).padStart(2, '0')}`;
+}
+
 /**
- * Map parsed sessions into archived week records. Pure: it does not mutate the
- * input state. Existing archive keys are skipped, so re-importing the same file
- * is idempotent.
+ * Map parsed sessions into archived week records. It mutates the supplied state
+ * intentionally; the caller persists that same object. Existing archive keys
+ * are skipped, so re-importing the same file is idempotent.
+ *
+ * Strength sets land in `lifts`; cardio rows land in `runSessions` as runs so
+ * openGym treadmill/rower history is not silently dropped.
  *
  * @param {any} state
  * @param {ReturnType<typeof parseWorkoutCsv>} parsed
@@ -326,6 +386,7 @@ export function applyWorkoutCsvImport(state, parsed, opts = {}) {
   const skipped = [];
   const custom = new Set(state.customExercises);
   let sets = 0;
+  let runs = 0;
 
   for (const session of parsed.sessions || []) {
     const sessionId = `og_${hash(session.key)}`;
@@ -345,10 +406,14 @@ export function applyWorkoutCsvImport(state, parsed, opts = {}) {
       // A name the catalogue does not know is a legitimate custom exercise.
       if (resolved == null) custom.add(name);
     }
-    if (!liftOrder.length) continue;
+
+    const cardio = Array.isArray(session.cardio)
+      ? session.cardio.filter((item) => item && ((item.distanceKm || 0) > 0 || (item.seconds || 0) > 0))
+      : [];
+    if (!liftOrder.length && !cardio.length) continue;
 
     const day = session.day;
-    state.weeks[key] = {
+    const week = {
       activationId: 'imported',
       programId: 'imported',
       sessionId,
@@ -362,14 +427,51 @@ export function applyWorkoutCsvImport(state, parsed, opts = {}) {
       notes: { [day]: session.note || '' },
       gymRpe: { [day]: '' },
       bodyWeight: {},
-      gymStats: { [day]: { time: durationText(session.duration), avgHR: '', maxHR: '', cals: '' } },
+      // A cardio-only session must not masquerade as a strength activity.
+      gymStats: { [day]: liftOrder.length ? { time: durationText(session.duration), avgHR: '', maxHR: '', cals: '' } : {} },
       sessionStatus: { [day]: 'finished' },
       runs: {},
       runSessions: {},
     };
+
+    if (cardio.length) {
+      const distanceKm = cardio.reduce((sum, item) => sum + (item.distanceKm || 0), 0);
+      const seconds = cardio.reduce((sum, item) => sum + (item.seconds || 0), 0)
+        || (session.duration > 0 ? session.duration / 1000 : 0);
+      const runName = cardio.length === 1 ? cardio[0].name : (session.name || 'Cardio');
+      const startTs = Number.isFinite(session.start)
+        ? session.start
+        : new Date(`${session.date}T12:00:00`).getTime();
+      upsertRunSession(week, day, {
+        dist: distanceKm > 0 ? distanceKm.toFixed(2) : '',
+        time: durationText(seconds * 1000),
+        pace: paceText(seconds, distanceKm),
+        rpe: '',
+        avgHR: '',
+        maxHR: '',
+        elev: '',
+        descent: '',
+        cals: '',
+        avgCadence: '',
+        trainingEffect: '',
+        anaerobicTE: '',
+        hrZones: null,
+        splits: null,
+        notes: '',
+      }, {
+        sessionId: `run_csv_${hash(session.key)}`,
+        source: 'csv-import',
+        localDate: session.date,
+        startTs,
+      });
+      if (!liftOrder.length) week.sessionTitle = runName || 'Imported Cardio';
+      runs++;
+    }
+
+    state.weeks[key] = week;
     added.push(key);
   }
 
   state.customExercises = [...custom];
-  return { added, skipped, sets };
+  return { added, skipped, sets, runs };
 }

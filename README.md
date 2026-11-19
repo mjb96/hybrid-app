@@ -55,6 +55,10 @@ the same training picture.
   takes one tap in Settings.
 - **Themes** — Midnight is the default icons-derived palette (navy, steel, cyan,
   lime); Slate, Forest and Ember are alternatives. Light keeps its own colours.
+- **Bring your history** — import OpenGym, Strong or Hevy CSV files (strength
+  sets, cardio runs and weigh-ins), or drop a batch of Garmin/Wahoo/Coros FIT
+  activities into Settings. FIT runs keep date, distance, pace, HR and GPS;
+  strength FIT files import time/HR only because the format has no exercise names.
 - **Progression styles** — custom programs can choose Double, Linear or Rep-first
   coaching. The suggested next load follows that program's style while keeping
   RPE, fatigue, cutting and stall safeguards.

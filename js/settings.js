@@ -3,17 +3,20 @@
 // ==========================================
 import { saveStateToLocalStorage, STORAGE_KEY, SAVED_AT_KEY } from './state.js';
 import { writeMirror, clearMirror } from './state/mirror.js';
-import { putRouteRecords, putRoutes, clearRouteDatabase } from './db.js';
+import { putRouteRecords, putRoutes, clearRouteDatabase, saveMapToDB } from './db.js';
 import { parseImport } from './state/route-portability.js';
 import { CURRENT_SCHEMA_VERSION, isStateMigrationError, migrateState } from './state/migrations.js';
 import { APP_VERSION } from './constants.js';
 import { setRestTiers, setRestTimerEnabled, setRestOverrides, initRestPersistence } from './timers.js';
 import { todayKey } from './dates.js';
-import { parseWorkoutCsv, applyWorkoutCsvImport, CSV_IMPORT_LIMITS } from './portability/import-workout-csv.js';
+import { parseWorkoutCsv, applyWorkoutCsvImport, CSV_IMPORT_LIMITS, decodeCsvBytes } from './portability/import-workout-csv.js';
 import { moduleEnabled, setModuleEnabled, applyModuleVisibility } from './modules.js';
 import * as equipmentProfiles from './equipment-profiles.js';
 import { applyPalette, normalizePalette } from './theme.js';
 import { looksLikeBodyCsv, parseBodyCsv, applyBodyweightCsvImport } from './portability/import-body-csv.js';
+import { buildFitCandidate, applyFitImports } from './portability/import-fit.js';
+import { parseFitBuffer } from './garmin.js';
+import { upsertRunSession, findImportedRunSession } from './state/run-sessions.js';
 import { resolveExercise, EXERCISES } from './exercises/catalog.js';
 import { exportResultMessage, saveTextExport } from './portability/export-service.js';
 import {
@@ -948,6 +951,112 @@ export function triggerExternalCsvImport() {
   document.getElementById('settingsExternalCsvFile')?.click();
 }
 
+export function triggerFitImport() {
+  document.getElementById('settingsFitFiles')?.click();
+}
+
+/**
+ * Batch FIT import for Garmin/Wahoo/Coros/Zwift exports. Runs land as dated run
+ * sessions; strength FIT files land as time/HR-only gym activities because FIT
+ * carries no exercise names. Files without a usable timestamp are skipped
+ * rather than dated to today.
+ *
+ * @param {FileList|File[]|null} fileList
+ */
+export async function handleFitFiles(fileList) {
+  const files = [...(fileList || [])];
+  if (!files.length) return;
+  const candidates = [];
+  let unreadable = 0;
+  let undated = 0;
+
+  for (const file of files) {
+    if (!file || file.size > CSV_IMPORT_LIMITS.maxBytes) { unreadable++; continue; }
+    try {
+      const data = await parseFitBuffer(await file.arrayBuffer());
+      const candidate = buildFitCandidate(data);
+      if (candidate) candidates.push(candidate);
+      else undated++;
+    } catch {
+      unreadable++;
+    }
+  }
+
+  if (!candidates.length) {
+    showToast(undated
+      ? 'No dated run or gym activity was found in those FIT files.'
+      : 'Those FIT files could not be read.', true);
+    return;
+  }
+
+  const state = _getState();
+  const runs = candidates.filter((item) => item.kind === 'run').length;
+  const gym = candidates.length - runs;
+  const dates = candidates.map((item) => item.localDate).sort();
+  const duplicates = candidates.filter((item) => (
+    item.kind === 'run'
+      ? findImportedRunSession(state, item.startTs, 'fit')
+      : !!state.weeks?.[item.weekKey]
+  )).length;
+
+  const ok = await confirmModal({
+    title: 'Import FIT activities?',
+    message: [
+      `${runs} run${runs === 1 ? '' : 's'}${gym ? ` · ${gym} strength activit${gym === 1 ? 'y' : 'ies'} (time/HR only)` : ''}`,
+      `${dates[0]} to ${dates[dates.length - 1]}`,
+      duplicates ? `${duplicates} already in your history and will be skipped.` : '',
+      unreadable ? `${unreadable} file${unreadable === 1 ? '' : 's'} could not be read.` : '',
+      undated ? `${undated} file${undated === 1 ? '' : 's'} had no usable date and will be skipped.` : '',
+      '',
+      'They are added as archived activities. Your current program and active workout are left alone.',
+    ].filter(Boolean).join('\n'),
+    confirmLabel: 'Import activities',
+  });
+  if (!ok) return;
+
+  const result = applyFitImports(state, candidates);
+  if (!result.added.length) {
+    showToast('Those activities are already in your history.');
+    return;
+  }
+
+  // GPS routes go to IndexedDB, keyed by the same session id as the run.
+  for (const item of result.added) {
+    if (item.kind !== 'run' || !Array.isArray(item.coordinates) || !item.coordinates.length) continue;
+    try {
+      const routeId = await saveMapToDB(item.weekKey, item.day, item.coordinates, {
+        activationId: 'imported',
+        programId: 'imported',
+        sessionId: item.sessionId,
+        localDate: item.localDate,
+        startTs: item.startTs,
+      });
+      if (!routeId) continue;
+      const week = state.weeks?.[item.weekKey];
+      const current = week?.runs?.[item.day];
+      if (week && current?.sessionId === item.sessionId) {
+        upsertRunSession(week, item.day, { ...current, routeId }, {
+          sessionId: item.sessionId,
+          source: 'fit',
+          localDate: item.localDate,
+          startTs: item.startTs,
+        });
+      }
+    } catch (err) {
+      console.warn('FIT route import failed:', err);
+    }
+  }
+
+  await saveStateToLocalStorage(false);
+  const importedRuns = result.added.filter((item) => item.kind === 'run').length;
+  const importedGym = result.added.length - importedRuns;
+  showToast(`Imported ${[
+    importedRuns ? `${importedRuns} run${importedRuns === 1 ? '' : 's'}` : '',
+    importedGym ? `${importedGym} strength activit${importedGym === 1 ? 'y' : 'ies'}` : '',
+  ].filter(Boolean).join(' · ')}`);
+  setTimeout(() => location.reload(), 1000);
+}
+
 export async function handleExternalCsvFile(file) {
   if (!file) return;
   if (file.size > CSV_IMPORT_LIMITS.maxBytes) {
@@ -956,10 +1065,15 @@ export async function handleExternalCsvFile(file) {
   }
   let text;
   try {
-    text = await file.text();
+    // Read bytes so Excel's UTF-16 export is decoded correctly instead of
+    // arriving as mojibake headers that look like an empty file.
+    text = decodeCsvBytes(await file.arrayBuffer());
   } catch {
-    showToast('That file could not be read.', true);
-    return;
+    try { text = await file.text(); }
+    catch {
+      showToast('That file could not be read.', true);
+      return;
+    }
   }
   const unit = (_getState()?.settings?.weightUnit === 'lbs') ? 'lbs' : 'kg';
 
@@ -1003,17 +1117,16 @@ export async function handleExternalCsvFile(file) {
     return;
   }
   if (!parsed.sessions.length) {
-    showToast(parsed.skippedCardio
-      ? 'No strength sets found — cardio rows are not imported yet.'
-      : 'No importable strength sets found.', true);
+    showToast('No importable workouts found in that CSV.', true);
     return;
   }
 
   const ok = await confirmModal({
     title: 'Import workout history?',
     message: [
-      `${parsed.sessions.length} workout${parsed.sessions.length === 1 ? '' : 's'} · ${parsed.totalSets} sets`,
-      parsed.skippedCardio ? `${parsed.skippedCardio} cardio row${parsed.skippedCardio === 1 ? '' : 's'} will be skipped.` : '',
+      `${parsed.sessions.length} workout${parsed.sessions.length === 1 ? '' : 's'} · ${parsed.totalSets} strength set${parsed.totalSets === 1 ? '' : 's'}`,
+      parsed.cardioRows ? `${parsed.cardioRows} cardio row${parsed.cardioRows === 1 ? '' : 's'} will be imported as run data.` : '',
+      parsed.skippedInvalid ? `${parsed.skippedInvalid} row${parsed.skippedInvalid === 1 ? '' : 's'} had no usable date, exercise or reps and will be skipped.` : '',
       '',
       'They are added as archived history. Your current program and active workout are left alone. Re-importing the same file will not duplicate sessions.',
     ].filter(Boolean).join('\n'),
@@ -1029,7 +1142,12 @@ export async function handleExternalCsvFile(file) {
     return;
   }
   await saveStateToLocalStorage(false);
-  showToast(`Imported ${result.added.length} workout${result.added.length === 1 ? '' : 's'} · ${result.sets} sets`);
+  const parts = [
+    `${result.added.length} workout${result.added.length === 1 ? '' : 's'}`,
+    `${result.sets} set${result.sets === 1 ? '' : 's'}`,
+    result.runs ? `${result.runs} run${result.runs === 1 ? '' : 's'}` : '',
+  ].filter(Boolean);
+  showToast(`Imported ${parts.join(' · ')}`);
   setTimeout(() => location.reload(), 1000);
 }
 

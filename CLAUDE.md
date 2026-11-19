@@ -73,6 +73,12 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   the icon-derived default for dark/system profiles (schema v10 seeds it), with
   Slate/Forest/Ember alternatives. Light keeps its own variable block. The
   Settings palette buttons persist `settings.palette`.
+- Imports: `js/portability/import-workout-csv.js` reads OpenGym/Strong/Hevy
+  exports (comma/semicolon/tab, UTF-8 or Excel UTF-16). Strength rows become
+  archived `lifts`; cardio rows become archived `runSessions` so they are not
+  dropped. `js/portability/import-fit.js` turns parsed FIT documents into dated
+  run or time/HR-only gym activities; `parseFitBuffer` in `js/garmin.js` lazily
+  loads the vendored parser. Both paths are idempotent by activity identity.
 - Exercise catalogue: the original 157 are `CORE_EXERCISES`; `js/exercises/opengym-catalogue.js`
   adds ~4,280 openGym-authored text entries (AGPL-3.0, no media) imported by
   `scripts/import-opengym-catalogue.mjs`. Exclude openGym's `textSource: exercisedb`

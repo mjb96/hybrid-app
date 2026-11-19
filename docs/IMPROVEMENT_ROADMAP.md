@@ -1636,6 +1636,15 @@ testable on its own.
   - Removed the In Focus carousel and its DOM chart module; Home is a decision
     surface, Progress owns deep charts. The Run quick action keeps the old
     `log-run-fab` affordance.
+- **2026-11-20 — Reliable CSV and batch FIT import.**
+  - The OpenGym/Strong/Hevy CSV reader now accepts semicolon and tab exports,
+    UTF-16 Excel files, unit-suffixed headers, and imports cardio rows as
+    archived runs instead of silently skipping them. Strength and cardio sharing
+    one workout stay in one archived week.
+  - Settings gains a multi-file Garmin/Wahoo/Coros FIT importer. Dated runs keep
+    distance, time, pace, HR, splits and GPS; strength FIT files import time and
+    heart rate only rather than guessing exercise names.
+  - Re-importing the same CSV or FIT activity is refused by its stable identity.
 - **2026-11-20 — Extended exercise catalogue text.**
   - Imported 4,282 openGym-authored exercises with instructions
     (`textSource: "opengym"`, AGPL-3.0) into the searchable/picker catalogue.

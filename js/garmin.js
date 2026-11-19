@@ -26,6 +26,29 @@ function loadFitDeps() {
   return _fitDepsPromise;
 }
 
+/**
+ * Parse one FIT buffer into the vendored parser's list shape. The batch
+ * importer in Settings reuses this so every file shares the same options and
+ * lazy 290 KB parser load as the single-file cockpit import.
+ * @param {ArrayBuffer} arrayBuffer
+ */
+export async function parseFitBuffer(arrayBuffer) {
+  const { Buffer, FitParser } = await loadFitDeps();
+  const fitParser = new FitParser({
+    force: true,
+    speedUnit: 'km/h',
+    lengthUnit: 'km',
+    elapsedRecordField: true,
+    mode: 'list',
+  });
+  return new Promise((resolve, reject) => {
+    fitParser.parse(Buffer.from(arrayBuffer), (error, data) => {
+      if (error) reject(error);
+      else resolve(data);
+    });
+  });
+}
+
 export function initGarminRunImport(onDataExtracted) {
   setupUploader('fitUpload', true, onDataExtracted);
 }
