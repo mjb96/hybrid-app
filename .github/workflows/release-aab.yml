@@ -91,14 +91,14 @@ jobs:
           gradle assembleRelease bundleRelease --no-daemon
 
       - name: Upload AAB artifact (Play upload)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: helyx-release-aab
           path: android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 30
 
       - name: Upload APK artifact (sideload / device test)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: helyx-release-apk
           path: android/app/build/outputs/apk/release/app-release.apk
