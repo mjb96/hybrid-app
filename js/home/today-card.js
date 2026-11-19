@@ -117,6 +117,7 @@ function baseModel({ state, program, model, briefing, score, now, offline, tz })
     eyebrow: 'Today',
     day: todayDay,
     dayLabel: DAY_NAMES[todayDay],
+    todayLabel: DAY_NAMES[todayDay],
     title: '',
     meta: '',
     guidance: '',
@@ -155,14 +156,16 @@ export function buildTodayCardModel(options) {
     const startedToday = oneOff.week.dates?.[day] === todayISO;
     card.state = startedToday ? 'in_progress' : 'unresolved';
     card.tone = 'progress';
-    card.eyebrow = startedToday ? 'In progress' : 'Finish this first';
     card.day = day;
     card.dayLabel = DAY_NAMES[day] || card.dayLabel;
+    card.eyebrow = startedToday ? 'In progress' : `Unfinished ${card.dayLabel}`;
     card.title = oneOff.week.sessionTitle || 'Strength Workout';
-    card.meta = completion.progressLabel || 'Workout started';
+    card.meta = startedToday
+      ? (completion.progressLabel || 'Workout started')
+      : `Today is ${card.todayLabel} · ${completion.progressLabel || 'workout started'}`;
     card.guidance = startedToday
       ? 'Your work is saved. Pick up where you left off.'
-      : `Started ${oneOff.week.dates?.[day] || 'earlier'} · finish or discard it before starting something else.`;
+      : `Started ${oneOff.week.dates?.[day] || 'earlier'} · finish or discard it before starting today's session.`;
     card.primary = { action: 'start-today-workout', label: 'Resume workout' };
     return card;
   }
@@ -217,12 +220,12 @@ export function buildTodayCardModel(options) {
     const session = programSession(program, unresolved.day);
     card.state = 'unresolved';
     card.tone = 'progress';
-    card.eyebrow = 'Finish this first';
     card.day = unresolved.day;
     card.dayLabel = DAY_NAMES[unresolved.day] || unresolved.day;
+    card.eyebrow = `Unfinished ${card.dayLabel}`;
     card.title = session.title;
-    card.meta = `${card.dayLabel} · ${unresolved.completion.progressLabel}`;
-    card.guidance = 'This session is still open. Finish or discard it before choosing another workout.';
+    card.meta = `Today is ${card.todayLabel} · ${unresolved.completion.progressLabel}`;
+    card.guidance = `Finish or discard ${card.dayLabel}'s workout before starting today's session.`;
     card.primary = { action: 'select-program-workout', day: unresolved.day, label: 'Resume workout' };
     return card;
   }

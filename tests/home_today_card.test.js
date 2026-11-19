@@ -75,6 +75,9 @@ test('an unfinished session from another day takes resume priority', () => {
   });
   assert.equal(card.state, 'unresolved');
   assert.equal(card.day, 'wed');
+  assert.equal(card.eyebrow, 'Unfinished Wednesday');
+  assert.match(card.meta, /Today is Monday/);
+  assert.match(card.guidance, /Wednesday's workout/);
   assert.equal(card.primary.label, 'Resume workout');
   assert.equal(card.secondary, null);
 });
@@ -138,6 +141,8 @@ test('one-off workouts remain resumable across days', () => {
   });
   assert.equal(card.state, 'unresolved');
   assert.equal(card.title, 'Upper body');
+  assert.equal(card.eyebrow, 'Unfinished Sunday');
+  assert.match(card.meta, /Today is Monday/);
   assert.equal(card.primary.action, 'start-today-workout');
 });
 
