@@ -5,6 +5,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { computePlateBreakdown, formatPlates, plateHint } from '../js/workout/plates.js';
+import { applyPlateHint } from '../js/workout/plate-hint-dom.js';
 import { buildExerciseCard } from '../js/templates.js';
 
 test('breaks a standard kg load into plates per side', () => {
@@ -59,11 +60,22 @@ test('plate hint is opt-in in the coach target', () => {
     diagnostic: { progression: { weight: 100, reps: 5, rationale: 'Add load.' } },
     blueprintLabel: '3 × 5', historicalLineText: 'Last: 95 × 5', setsMarkup: '',
   };
-  const off = buildExerciseCard({ ...base, plates: '20 + 20 / side' });
-  assert.doesNotMatch(off, /20 \+ 20 \/ side/);
-  const on = buildExerciseCard({ ...base, plates: '20 + 20 / side', showPlates: true });
-  assert.match(on, /cct-plates/);
-  assert.match(on, /20 \+ 20 \/ side/);
+  const off = buildExerciseCard(base);
+  assert.doesNotMatch(off, /data-plate-hint/);
+  const on = buildExerciseCard({ ...base, showPlates: true });
+  assert.match(on, /data-plate-hint/);
+  assert.match(on, /hidden/);
+});
+
+test('plate hint text is applied as text, never parsed as HTML', () => {
+  const node = { textContent: '', hidden: true };
+  const root = { querySelector: (selector) => (selector === '[data-plate-hint]' ? node : null) };
+  const malicious = '<img src=x onerror=alert(1)> / side';
+  assert.equal(applyPlateHint(root, malicious), true);
+  assert.equal(node.textContent, malicious);
+  assert.equal(node.hidden, false);
+  assert.equal(applyPlateHint({ querySelector: () => null }, '20 / side'), false);
+  assert.equal(applyPlateHint(null, '20 / side'), false);
 });
 
 test('per-side plate breakdown is not rendered in the workout logger', () => {
