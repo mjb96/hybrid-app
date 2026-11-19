@@ -575,6 +575,79 @@ gap in the journey, and is folded into the Phase 6 visual-system work.
 - Changing exercise/day/session preserves user-entered work.
 - Strength and running finish flows use the same interaction vocabulary.
 
+## Phase 2D — Logger upgrade (planned)
+
+**Status: L0 in progress.** The openGym logger was inspected as a reference for
+CONCEPTS only. No openGym code, media or nested data shape is copied.
+
+**Outcome:** the number the athlete types means what they think it means, and a
+set can be a rep set, a hold, a carry, or a failure without lying to volume,
+1RM, history or progression.
+
+### L0 — Truth fixes (first)
+- **DONE 2026-11-20 — a first-ever row no longer labels the prescription as
+  history.** `buildSetRow` defaulted `previousSetData` to the ghost target, so a
+  new lift with a coaching/target weight rendered `Last 112.5kg × 6` above
+  "First time logging this". The default is now null; only a real prior set
+  renders the persistent Last line.
+- **Unit switch needs an explicit decision.** Changing kg ↔ lbs must offer
+  Convert the numbers / Keep the numbers and change the label (openGym's
+  behaviour), never silently reinterpret stored loads. Convert every weight
+  field before writing the new unit.
+- Keep target, ghost and history visually separate: target is a prescription,
+  ghost is an editable suggestion, Last is measured work.
+
+### L1 — Load basis (the big one)
+- Add an optional `basis` to a set/exercise: `total` (default legacy), `each`
+  (a dumbbell pair; volume counts both) or `per-side` (one-arm; volume counts
+  the one implement). One-arm/pair detection comes from the catalogue and the
+  exercise name, never from guessing at entry time.
+- Store `w` as ENTERED and stamp the basis used; old sets have no basis and keep
+  exactly today's meaning (total, counted once). No retroactive rewrite.
+- Centralise `effectiveLoad(set, exerciseName)` and use it in `setVolume`,
+  e1RM, history, weekly aggregation and progression. The weight column label
+  becomes `Each (kg)` / `Both (kg)` / `Per side (kg)`.
+- Per-exercise setting lives with the exercise config, not only in Settings;
+  openGym plan prescriptions may carry it.
+
+### L2 — Set shapes
+- `failure: true` independent of type; unrated failure reads as RIR 0.
+- Timed holds (`sec`) and loaded carries (`m`) as set modes, with the row
+  switching its second input to time/distance. CSV import stops skipping holds
+  and carries and preserves them.
+- A `+ Drop` shortcut that seeds a percentage-lighter linked row (separate rows,
+  not openGym's nested `drops`). Rest-pause/cluster stay deferred until real
+  use demands them.
+
+### L3 — Rest and timer
+- Surface the rest tiers that already exist but are hidden (compound/accessory/
+  isolation), plus warm-up and next-exercise rest.
+- Per-exercise and per-set rest overrides (`restSec`) with an explicit "No
+  timer" value (0).
+- Superset rounds rest once, on the longest member.
+- Persist the running timer (`endsAt`) across reload/background; arm the
+  Android notification at START, not only when the countdown happens to end
+  while hidden. ±15s alongside the current adjustment.
+
+### L4 — Plates and warm-ups
+- Inline per-set plate line (per side) with a "short" warning and delta chips
+  between consecutive loads; bar weight per equipment type.
+- Warm-up rungs round down to the plates/dumbbells actually owned, adapting to
+  compound/isolation/bodyweight instead of the fixed 40/60/80 ladder.
+
+### L5 — Polish
+- Per-set note (140 chars), RIR/RPE display choice, planned-vs-last prefill
+  choice. No new account, sync or backend surface.
+
+### Acceptance
+- A 2 × 20 kg dumbbell set at 8 reps counts **320 kg** volume with basis
+  `each`, **160 kg** with `total`; a one-arm row counts once. Existing logs
+  keep their stored meaning.
+- A timed hold or carry is loggable and importable without inventing reps.
+- A failure set contributes RIR 0 unless the athlete rated it.
+- A running rest timer survives a reload and alerts when backgrounded.
+- Every new setting is reachable from Settings or the exercise config.
+
 ## Phase 3 — Progress and analytics redesign
 
 **Status: COMPLETE except readiness-component details, which need a persisted
@@ -1626,6 +1699,14 @@ testable on its own.
 
 ## 12. Session log
 
+- **2026-11-20 — Logger L0: the prescription stopped impersonating history.**
+  - A first-ever set row showed `Last 112.5kg × 6` whenever a coaching/target
+    ghost existed, while the card said "First time logging this". `buildSetRow`
+    defaulted `previousSetData` to the ghost target; only a real prior set now
+    renders the Last line.
+  - The logger upgrade plan (2D) is written: load basis, failure/timed/distance
+    set shapes, rest resolution/persistence, plate lines and warm-up rounding,
+    each additive and migration-free.
 - **2026-11-20 — Completed session summary and the anatomical heat map.**
   - A completed Today card now carries duration, volume, working sets, PRs,
     today's weigh-in and a front/back muscle heat map instead of only a review
