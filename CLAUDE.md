@@ -7,7 +7,7 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
 - **AGPL-3.0-only** (`LICENSE`), copyright the openHybrid contributors. Third-party notices
   are in `NOTICE.md`; update them before adding vendored code, fonts or media.
 - Contributions are accepted under the same licence. The hosted PWA and Android
-  app keep a source link under Settings → App → Source code.
+  app keep a source link under Settings → Data → App → Source code.
 
 ## Commands (keep all green before every commit)
 - `npm test` — node --test suite

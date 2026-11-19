@@ -129,8 +129,8 @@ python3 -m http.server 8770 --bind 127.0.0.1
 Open <http://127.0.0.1:8770/>.
 
 The first launch runs onboarding. No account is required. Use **Restore backup
-file** for a openHybrid JSON export, or **Settings → Data & backup → Import from
-Another App (CSV)** for an OpenGym/Strong/Hevy workout or bodyweight export. All
+file** for a openHybrid JSON export, or **Settings → Data → Import from Another App
+(CSV)** for an OpenGym/Strong/Hevy workout or bodyweight export. All
 logging works offline.
 
 ## Renaming from Helyx
