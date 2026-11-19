@@ -3,14 +3,20 @@
 Helyx is a hybrid strength + running PWA (~55k lines vanilla JS ES modules, no
 framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session.
 
+## License
+- **AGPL-3.0-only** (`LICENSE`), copyright Matthew Boman. Third-party notices
+  are in `NOTICE.md`; update them before adding vendored code, fonts or media.
+- Contributions are accepted under the same licence. The hosted PWA and Android
+  app keep a source link under Settings → App → Source code.
+
 ## Commands (keep all green before every commit)
 - `npm test` — node --test suite
 - `npm run typecheck` — tsc over jsconfig
 - `npm run smoke` — scripts/smoke.mjs (jsdom import + home render)
 - `npm run browser:verify` — 34 real-Chromium product checks through a parallel
-  worker pool (default leaves one core free; `-- --serial` for one-at-a-time
-  debugging, `-- --concurrency=N` to pin workers, `-- --timeout=N` to change the
-  180 s per-check kill)
+  worker pool (3 workers by default; `-- --serial` for one-at-a-time debugging,
+  `-- --concurrency=N` to pin workers, `-- --timeout=N` for the 180 s per-check
+  kill, `-- --retries=N` for the default single retry after a timeout)
 
 ## Architecture facts (verify before relying on them)
 - State: one big `appState` object → localStorage (source of truth) in the browser;

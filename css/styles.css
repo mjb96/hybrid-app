@@ -2827,6 +2827,10 @@ html[data-theme="light"] .today-card__score {
 }
 .settings-row:last-child { border-bottom: none; }
 .settings-row-info { cursor: default; }
+.settings-link {
+  display: inline-flex; align-items: center; min-height: 44px;
+  color: var(--accent-cyan); font-size: .78rem; font-weight: 700;
+}
 .settings-row-label {
   font-size: 0.85rem;
   font-weight: 600;

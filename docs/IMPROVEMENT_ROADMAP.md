@@ -1624,23 +1624,36 @@ Work in this order unless user evidence changes it:
 Avoid parallel redesign of every screen. Each step should be usable and
 testable on its own.
 
-## 12. Session log
-
+- **2026-11-19 — Relicensed to AGPL-3.0 and opened the source.**
+  - Replaced the all-rights-reserved `LICENSE` with the verbatim GNU Affero
+    General Public License v3 text; `package.json` now declares
+    `AGPL-3.0-only`.
+  - Added `NOTICE.md` for Leaflet (BSD-2-Clause), Sentry (MIT), the bundled FIT
+    parser/Buffer (MIT) and Plus Jakarta Sans (OFL-1.1).
+  - Settings → App links to the corresponding source, and
+    `tests/license.test.js` ratchets the licence text, package metadata, README
+    grant, third-party notices and the in-app source link.
 - **2026-11-19 — Parallel browser verification.**
   - `scripts/run-browser-checks.mjs` now runs the 34 independent checks through
     a worker pool instead of one blocking `spawnSync` at a time. Each check
     already binds port 0 and launches its own Playwright context, so isolation
     is unchanged; output is buffered and printed as one labelled block per
     check.
-  - Default concurrency leaves one core free for Chromium (3 on a 4-core
-    runner, 4 on 8+); `--serial` restores the old loop and `--concurrency=N`
-    pins workers. Invalid values fail instead of silently going serial.
+  - Default concurrency is 3 workers (2 on a 2-core machine, 1 on a single
+    core) after four simultaneous Chromium launches produced rare launch
+    deadlocks; `--serial` restores the old loop and `--concurrency=N` pins
+    workers. Invalid values fail instead of silently going serial.
   - The measured CI browser phase was ~423 s across 34 checks, dominated by
     per-check Chromium startup. Pooled runs cut wall time to roughly a third.
   - Each check now has a 180 s watchdog that kills its whole process group
     (Chromium included) and fails as `exit 124`, so a Playwright deadlock cannot
     hold CI open until the job limit; `--timeout=N` overrides it, and Ctrl-C
     tears down every active check.
+  - A timed-out check is retried once (`--retries=N`, 0 disables) after the
+    process group is killed, because a hung Playwright launch is transient.
+    Non-timeout failures are never retried. The success line only prints when
+    the run actually passed; the earlier version could time out checks and still
+    end with "All 34 passed".
 - **2026-11-19 — Program-level progression styles.**
   - Added `js/programs/progression-style.js` with Double (default), Linear and
     Rep-first rules, surfaced in the custom program editor's Progression tab and
