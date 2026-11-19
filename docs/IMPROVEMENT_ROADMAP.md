@@ -1626,6 +1626,19 @@ testable on its own.
 
 ## 12. Session log
 
+- **2026-11-20 — Bodyweight graph and weekly rate.**
+  - Progress → Body weight now has a real chart with labelled axes, daily
+    weigh-ins, a 7-day average and an optional goal line, plus 30-day/90-day/all
+    ranges and a weekly-averages list.
+  - `js/metrics/bodyweight.js` computes weekly means and a least-squares
+    21-day rate (minimum six weigh-ins across ten days), with lose/gain/hold
+    corridors and an on-pace verdict. `settings.targetWeight`/`rateGoal` are
+    optional and seeded by schema v8.
+  - Logging opens a prefilled sheet (last weight, today's date) with ±0.1/±0.5/±1
+    steppers, a date picker, recent weigh-ins with edit/delete, and a primary
+    Save. Selecting a past date updates that day instead of duplicating it.
+  - A new bodyweight browser check covers the graph, goal line, rate status,
+    range switch, stepper entry, recent list and goal editor.
 - **2026-11-19 — Equipment inventory accuracy.**
   - Optional pairs per plate size (`plateSetup[unit].counts`): a target the rack
     cannot build now says how much is short instead of implying plates the

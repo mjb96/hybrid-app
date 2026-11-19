@@ -1001,16 +1001,38 @@
       </div>
 
       <div id="analytics-bodyweight" class="analytics-section">
-        <h2 class="section-header">Body Weight</h2>
+        <div class="flex-between" style="align-items:center;gap:12px;flex-wrap:wrap;">
+          <h2 class="section-header" style="margin-bottom:0;">Body Weight</h2>
+          <div class="settings-toggle-group" role="group" aria-label="Body weight range">
+            <button class="settings-toggle-btn" data-action="bw-range" data-days="30">30d</button>
+            <button class="settings-toggle-btn active" data-action="bw-range" data-days="90">90d</button>
+            <button class="settings-toggle-btn" data-action="bw-range" data-days="0">All</button>
+          </div>
+        </div>
         <article class="card-dark p-3 mb-4">
-          <div class="flex gap-2 mb-3" style="align-items:center;">
-            <input type="number" step="0.1" id="analyticsBwInput" placeholder="Today's weight (kg)" style="flex:1;" aria-label="Body weight kg">
-            <button class="btn-action-block btn-blue mt-0" style="width:auto;padding:0 16px;" data-action="log-body-weight">Log</button>
+          <div class="bw-log-row">
+            <button type="button" class="btn-action-block btn-blue mt-0" data-action="open-bw-sheet">Log weight</button>
+            <span class="bw-log-hint" id="bwLastHint"></span>
           </div>
           <div id="bwChartContainer">
             <p style="color:var(--text-muted);font-size:0.75rem;">Log body weight to see trend.</p>
           </div>
+          <div id="bwSummary"></div>
+          <details class="bw-goal-editor">
+            <summary>Goal &amp; weekly rate</summary>
+            <div class="bw-goal-grid">
+              <label><span>Goal weight</span><input type="number" step="0.1" min="0" id="bwGoalWeight" placeholder="Optional"></label>
+              <label><span>Direction</span><select id="bwRateDir"><option value="">No rate range</option><option value="lose">Lose</option><option value="gain">Gain</option><option value="hold">Hold</option></select></label>
+              <label><span>Unit</span><select id="bwRateBy"><option value="%">% of body weight / week</option><option value="w">kg/lb / week</option></select></label>
+              <label><span>From</span><input type="number" step="0.05" min="0" id="bwRateLo" placeholder="0.5"></label>
+              <label><span>To / ±</span><input type="number" step="0.05" min="0" id="bwRateHi" placeholder="1"></label>
+            </div>
+            <div class="settings-profile-actions">
+              <button type="button" class="settings-action-btn" data-action="save-bw-goal">Save goal</button>
+            </div>
+          </details>
         </article>
+        <div id="bwWeeklyStats"></div>
       </div>
 
       <div id="analytics-activity" class="analytics-section">
@@ -2135,6 +2157,38 @@
       <button class="sheet-close-btn" data-action="close-program-workout-picker" aria-label="Close">✕</button>
     </div>
     <div id="programWorkoutPickerList" class="program-workout-picker__list"></div>
+  </div>
+
+  <!-- Weigh-in sheet — prefilled with the last weight; steppers make the common edits one tap. -->
+  <div id="bwSheetBackdrop" class="sheet-backdrop" data-action="close-bw-sheet"></div>
+  <div id="bwSheet" class="bottom-sheet" role="dialog" aria-labelledby="bwSheetTitle" data-modal-root data-modal-close-action="close-bw-sheet" data-modal-companion="#bwSheetBackdrop" inert aria-hidden="true">
+    <div class="bottom-sheet-handle"></div>
+    <div class="bottom-sheet-header">
+      <h3 id="bwSheetTitle" class="bottom-sheet-title">Log body weight</h3>
+      <button class="sheet-close-btn" data-action="close-bw-sheet" aria-label="Close">✕</button>
+    </div>
+    <div class="bw-sheet-step">
+      <button type="button" class="bw-sheet-pm" data-action="bw-step" data-delta="-0.1" aria-label="Decrease by 0.1">−</button>
+      <label class="bw-sheet-read">
+        <input id="bwSheetWeight" type="number" step="0.1" inputmode="decimal" aria-label="Weight">
+        <span id="bwSheetUnit">kg</span>
+      </label>
+      <button type="button" class="bw-sheet-pm" data-action="bw-step" data-delta="0.1" aria-label="Increase by 0.1">+</button>
+    </div>
+    <div class="bw-sheet-chips">
+      <button type="button" data-action="bw-step" data-delta="-1">−1</button>
+      <button type="button" data-action="bw-step" data-delta="-0.5">−0.5</button>
+      <button type="button" data-action="bw-step" data-delta="0.5">+0.5</button>
+      <button type="button" data-action="bw-step" data-delta="1">+1</button>
+    </div>
+    <div class="settings-row">
+      <label class="settings-row-label" for="bwSheetDate">Date</label>
+      <input type="date" class="settings-input" id="bwSheetDate">
+    </div>
+    <div class="settings-profile-actions">
+      <button type="button" class="btn-action-block btn-blue mt-0" style="width:100%;" data-action="save-bw-sheet">Save</button>
+    </div>
+    <div id="bwSheetRecent" class="bw-sheet-recent"></div>
   </div>
 
   <!-- Quick-start sheet — opened from Train; start another workout, run, walk or fast. -->

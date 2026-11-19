@@ -3,6 +3,7 @@
 // ==========================================
 import { rpeColour } from './utils.js';
 import { formatDayMonth } from '../dates.js';
+import { normalizeWeighIns } from '../metrics/bodyweight.js';
 
 // Shared helper: smooth cubic-bezier path through an array of [x,y] points
 function _smoothBezierPath(pts) {
@@ -387,80 +388,88 @@ export function render1RMProgressChart(container, weekLabels, sqData, bpData, dl
   container.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;">${yAxis}${series}${xAxis}${legend}</svg>`;
 }
 
-export function renderBodyWeightWithMA(container, bwLog) {
+/**
+ * Bodyweight history: daily readings, a 7-day mean, and an optional goal line.
+ * Points sit on a real time axis, so a two-week gap reads as a gap rather than
+ * one evenly spaced step.
+ *
+ * @param {HTMLElement|null} container
+ * @param {any[]} bwLog
+ * @param {{ unit?: string, goal?: number|null }} [options]
+ */
+export function renderBodyWeightWithMA(container, bwLog, options = {}) {
   if (!container) return;
-  const validEntries = (bwLog || []).filter(e => e && e.date && e.weight > 0);
-  if (validEntries.length < 3) {
-    renderBodyWeightChart(container, bwLog);
+  const unit = options.unit || 'kg';
+  const goal = Number(options.goal);
+  const hasGoal = Number.isFinite(goal) && goal > 0;
+  const log = normalizeWeighIns(bwLog);
+  if (log.length < 2) {
+    container.innerHTML = log.length === 1
+      ? `<p style="color:var(--text-secondary);font-size:.85rem;padding:8px 0;">One entry logged (${log[0].weight} ${unit}). Log another to see the trend.</p>`
+      : '<p style="color:var(--text-muted);font-size:.78rem;padding:8px 0;">Log body weight to see the trend.</p>';
     return;
   }
 
-  const sorted = [...validEntries].sort((a, b) => a.date.localeCompare(b.date));
-  const weights = sorted.map(e => e.weight);
-  const labels  = sorted.map(e => formatDayMonth(e.date));
-  const n = weights.length;
-
-  const W = 400, H = 165, PAD_L = 48, PAD_B = 30, PAD_T = 22, PAD_R = 12;
+  const W = 400, H = 200;
+  const PAD_L = 46, PAD_R = 14, PAD_T = 26, PAD_B = 30;
   const chartW = W - PAD_L - PAD_R;
-  const chartH = H - PAD_B - PAD_T;
+  const chartH = H - PAD_T - PAD_B;
+  const at = (date) => new Date(`${date}T12:00:00`).getTime();
+  const t0 = at(log[0].date);
+  const t1 = at(log[log.length - 1].date) || t0 + 86400000;
+  const xs = log.map((entry) => (t1 === t0 ? PAD_L + chartW / 2 : PAD_L + ((at(entry.date) - t0) / (t1 - t0)) * chartW));
+  const weights = log.map((entry) => entry.weight);
+  let ymin = Math.min(...weights);
+  let ymax = Math.max(...weights);
+  if (hasGoal) { ymin = Math.min(ymin, goal); ymax = Math.max(ymax, goal); }
+  if (ymin === ymax) { ymin -= 1; ymax += 1; }
+  const pad = Math.max((ymax - ymin) * 0.14, 0.5);
+  ymin -= pad; ymax += pad;
+  const toY = (weight) => PAD_T + chartH - ((weight - ymin) / (ymax - ymin)) * chartH;
+  const ys = log.map((entry) => toY(entry.weight));
 
-  const minW = Math.min(...weights) - 0.8;
-  const maxW = Math.max(...weights) + 0.8;
-  const rangeW = Math.max(maxW - minW, 1);
-
-  const toX = i => PAD_L + (i / (n - 1)) * chartW;
-  const toY = w => PAD_T + chartH - ((w - minW) / rangeW) * chartH;
-
-  // Compute 7-day moving average (rolling window from index 0)
-  const ma = weights.map((_, i) => {
-    const window = weights.slice(Math.max(0, i - 6), i + 1);
-    return window.reduce((a, b) => a + b, 0) / window.length;
+  const ma = weights.map((_, index) => {
+    const window = weights.slice(Math.max(0, index - 6), index + 1);
+    return window.reduce((sum, weight) => sum + weight, 0) / window.length;
   });
 
-  // Raw line fill
-  const fillPath = `M ${toX(0).toFixed(1)},${(PAD_T + chartH).toFixed(1)} ` +
-    weights.map((w, i) => `L ${toX(i).toFixed(1)},${toY(w).toFixed(1)}`).join(' ') +
-    ` L ${toX(n - 1).toFixed(1)},${(PAD_T + chartH).toFixed(1)} Z`;
-  const fill = `<path d="${fillPath}" fill="#a855f7" opacity="0.10"/>`;
-
-  // Raw line
-  const rawPoints = weights.map((w, i) => `${toX(i).toFixed(1)},${toY(w).toFixed(1)}`).join(' ');
-  const rawLine = `<polyline fill="none" stroke="#a855f7" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" points="${rawPoints}"/>`;
-
-  // Raw dots
-  let rawDots = '';
-  weights.forEach((w, i) => {
-    rawDots += `<circle cx="${toX(i).toFixed(1)}" cy="${toY(w).toFixed(1)}" r="3" fill="#a855f7" opacity="0.7"/>`;
-  });
-
-  // MA dashed line
-  const maPoints = ma.map((w, i) => `${toX(i).toFixed(1)},${toY(w).toFixed(1)}`).join(' ');
-  const maLine = `<polyline fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="2.5" stroke-dasharray="5,3" stroke-linejoin="round" stroke-linecap="round" points="${maPoints}"/>`;
-
-  // Y axis: min, mid, max
-  let yAxis = '';
-  const midW = (minW + maxW) / 2;
-  [minW, midW, maxW].forEach(w => {
-    const vy = toY(w);
-    yAxis += `<text x="${PAD_L - 6}" y="${(vy + 4).toFixed(1)}" text-anchor="end" font-size="10" fill="rgba(255,255,255,0.6)">${w.toFixed(1)}</text>`;
-    yAxis += `<line x1="${PAD_L}" y1="${vy.toFixed(1)}" x2="${W - PAD_R}" y2="${vy.toFixed(1)}" stroke="rgba(255,255,255,0.10)" stroke-width="1"/>`;
-  });
-
-  // X axis dates
-  let xAxis = '';
-  const step = n <= 8 ? 1 : Math.ceil(n / 6);
-  for (let i = 0; i < n; i += step) {
-    xAxis += `<text x="${toX(i).toFixed(1)}" y="${H - 5}" text-anchor="middle" font-size="10" fill="rgba(255,255,255,0.7)">${labels[i]}</text>`;
+  let grid = '';
+  for (let i = 0; i <= 4; i++) {
+    const value = ymin + ((ymax - ymin) * i) / 4;
+    const y = toY(value);
+    grid += `<line x1="${PAD_L}" y1="${y.toFixed(1)}" x2="${W - PAD_R}" y2="${y.toFixed(1)}" stroke="rgba(148,163,184,.14)" stroke-width="1"/>`
+      + `<text x="${PAD_L - 6}" y="${(y + 3.5).toFixed(1)}" text-anchor="end" font-size="9.5" fill="rgba(203,213,225,.62)">${value.toFixed(1)}</text>`;
   }
 
-  // Legend top-left
-  const legend =
-    `<circle cx="${PAD_L}" cy="11" r="4" fill="#a855f7"/>` +
-    `<text x="${PAD_L + 8}" y="15" font-size="10" fill="rgba(255,255,255,0.75)">Daily</text>` +
-    `<line x1="${PAD_L + 42}" y1="11" x2="${PAD_L + 58}" y2="11" stroke="rgba(255,255,255,0.85)" stroke-width="2" stroke-dasharray="4,2"/>` +
-    `<text x="${PAD_L + 62}" y="15" font-size="10" fill="rgba(255,255,255,0.75)">7d MA</text>`;
+  const xLabelIdx = [...new Set([0, Math.floor((log.length - 1) / 2), log.length - 1])];
+  const xAxis = xLabelIdx.map((index) => `<text x="${xs[index].toFixed(1)}" y="${H - 7}" text-anchor="${index === 0 ? 'start' : index === log.length - 1 ? 'end' : 'middle'}" font-size="9.5" fill="rgba(203,213,225,.62)">${formatDayMonth(log[index].date)}</text>`).join('');
 
-  container.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;">${yAxis}${fill}${rawLine}${rawDots}${maLine}${xAxis}${legend}</svg>`;
+  const fillPath = `M ${xs[0].toFixed(1)},${(PAD_T + chartH).toFixed(1)} `
+    + xs.map((x, index) => `L ${x.toFixed(1)},${ys[index].toFixed(1)}`).join(' ')
+    + ` L ${xs[xs.length - 1].toFixed(1)},${(PAD_T + chartH).toFixed(1)} Z`;
+  const dailyPath = xs.map((x, index) => `${index === 0 ? 'M' : 'L'}${x.toFixed(1)},${ys[index].toFixed(1)}`).join(' ');
+  const maPath = xs.map((x, index) => `${index === 0 ? 'M' : 'L'}${x.toFixed(1)},${toY(ma[index]).toFixed(1)}`).join(' ');
+  const dots = xs.map((x, index) => `<circle cx="${x.toFixed(1)}" cy="${ys[index].toFixed(1)}" r="2.6" fill="#22d3ee"><title>${log[index].date} · ${weights[index]} ${unit}</title></circle>`).join('');
+
+  const goalLine = hasGoal
+    ? `<line x1="${PAD_L}" y1="${toY(goal).toFixed(1)}" x2="${W - PAD_R}" y2="${toY(goal).toFixed(1)}" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="6 4"/>`
+      + `<text x="${W - PAD_R}" y="${(toY(goal) - 6).toFixed(1)}" text-anchor="end" font-size="9.5" font-weight="700" fill="#f59e0b">Goal ${goal} ${unit}</text>`
+    : '';
+
+  const legend = `<circle cx="${PAD_L}" cy="11" r="3.5" fill="#22d3ee"/>`
+    + `<text x="${PAD_L + 8}" y="14.5" font-size="9.5" fill="var(--text-secondary)">Daily</text>`
+    + `<line x1="${PAD_L + 44}" y1="11" x2="${PAD_L + 58}" y2="11" stroke="#a3e635" stroke-width="2.5"/>`
+    + `<text x="${PAD_L + 63}" y="14.5" font-size="9.5" fill="var(--text-secondary)">7d avg</text>`
+    + (hasGoal ? `<line x1="${PAD_L + 112}" y1="11" x2="${PAD_L + 126}" y2="11" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4 2"/><text x="${PAD_L + 131}" y="14.5" font-size="9.5" fill="var(--text-secondary)">Goal</text>` : '');
+
+  container.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;" role="img" aria-label="Body weight history">`
+    + `<defs><linearGradient id="bwArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#22d3ee" stop-opacity=".24"/><stop offset="100%" stop-color="#22d3ee" stop-opacity="0"/></linearGradient></defs>`
+    + grid
+    + `<path d="${fillPath}" fill="url(#bwArea)"/>`
+    + `<path d="${dailyPath}" fill="none" stroke="#22d3ee" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round" opacity=".75"/>`
+    + `<path d="${maPath}" fill="none" stroke="#a3e635" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>`
+    + dots + goalLine + xAxis + legend
+    + `</svg>`;
 }
 
 export function renderConsistencyHeatmap(container, trainingDays, weekLabels) {

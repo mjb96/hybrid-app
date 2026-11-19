@@ -84,7 +84,7 @@ test('v7 seeds optional equipment inventory without changing the active kit', ()
   };
   migrateState(state);
   const profile = state.settings.equipmentProfiles[0];
-  assert.equal(state.schemaVersion, 7);
+  assert.equal(state.schemaVersion, CURRENT_SCHEMA_VERSION);
   assert.deepEqual(profile.dumbbells, { kg: [], lb: [] });
   assert.deepEqual(profile.machineStacks, {});
   assert.deepEqual(profile.plateSetup.kg.counts, {});
@@ -92,6 +92,14 @@ test('v7 seeds optional equipment inventory without changing the active kit', ()
   // The existing bar/plates are untouched: absent counts mean unlimited.
   assert.equal(profile.plateSetup.kg.bar, 20);
   assert.deepEqual(profile.plateSetup.kg.plates, [25, 15]);
+});
+
+test('v8 seeds the optional bodyweight goal and rate corridor', () => {
+  const state = { schemaVersion: 7, settings: {} };
+  migrateState(state);
+  assert.equal(state.schemaVersion, 8);
+  assert.equal(state.settings.targetWeight, null);
+  assert.equal(state.settings.rateGoal, null);
 });
 
 test('migrateState is idempotent — already-current state is untouched', () => {

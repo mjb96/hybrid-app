@@ -47,7 +47,8 @@ import { initHome, renderHome, openFastingDetail, answerCoachOnHome } from './ho
 import { computeDashboardModel } from './home/dashboard-model.js';
 import { buildTrainLanding } from './train/train-landing.js';
 import { renderTrainLanding } from './train/view-train-landing.js';
-import { initAnalytics, renderAnalytics, saveThresholdPace, logBodyWeight, setAnalyticsContext, shareScoreCard } from './analytics.js';
+import { initAnalytics, renderAnalytics, saveThresholdPace, saveBodyweightGoal, setBodyweightRangeAction, setAnalyticsContext, shareScoreCard } from './analytics.js';
+import { initBodyweightSheet, openBodyweightSheet, closeBodyweightSheet, stepBodyweight, saveBodyweightSheet, deleteBodyweightEntry } from './bodyweight-sheet.js';
 import { initSessionRecap, openSessionRecap, closeSessionRecap, isSessionRecapOpen, sharePRFromRecap } from './session-recap.js';
 import { initDragDrop } from './dragdrop.js';
 import {
@@ -1306,7 +1307,14 @@ else if (action === 'export-csv') triggerCSVExport();
   }
 
   // Analytics
-  else if (action === 'log-body-weight') logBodyWeight();
+  else if (action === 'open-bw-sheet') openBodyweightSheet();
+  else if (action === 'close-bw-sheet') closeBodyweightSheet();
+  else if (action === 'bw-step') stepBodyweight(target.getAttribute('data-delta'));
+  else if (action === 'save-bw-sheet') saveBodyweightSheet();
+  else if (action === 'edit-bw-row') openBodyweightSheet(target.getAttribute('data-date') || undefined);
+  else if (action === 'delete-bw-row') deleteBodyweightEntry(target.getAttribute('data-date') || '');
+  else if (action === 'bw-range') setBodyweightRangeAction(target.getAttribute('data-days'));
+  else if (action === 'save-bw-goal') saveBodyweightGoal();
 
   // Program Rating Modal
   else if (action === 'rate-program') _openRatingModal(target.dataset.programId || appState.activeProgramId);
@@ -1491,6 +1499,7 @@ const saveState = (suppress) => saveStateToLocalStorage(suppress);
 initEngine(getState, getDays);
 initHome(getState, getSelectedDay, getDays);
 initAnalytics(getState, getDays);
+initBodyweightSheet(renderAnalytics);
 initDragDrop(getState, getSelectedDay, saveState);
 initWorkout(getState, getSelectedDay, getDays, saveState, switchGlobalAppTab, scheduleLocalSave);
 initSettings(getState);

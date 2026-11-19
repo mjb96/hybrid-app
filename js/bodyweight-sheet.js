@@ -1,0 +1,160 @@
+// =============================================================================
+// WEIGH-IN SHEET (js/bodyweight-sheet.js)
+//
+// A weigh-in is a number the athlete already knows. The old inline form asked
+// them to type it (and the date) every time; openGym's sheet opens at the last
+// weight with ±0.1 / ±0.5 / ±1 steppers, remembers today's entry, and keeps the
+// recent readings one tap away. This module owns that sheet; the Progress view
+// owns the graph.
+// =============================================================================
+import { appState, saveStateToLocalStorage } from './state.js';
+import { openManagedModal, closeManagedModal } from './ui/modal-stack.js';
+import { confirmModal } from './ui/confirm-modal.js';
+import { formatDayMonth, todayKey } from './dates.js';
+import { showToast } from './toast.js';
+
+let _render = () => {};
+
+/** @param {() => void} render */
+export function initBodyweightSheet(render) {
+  _render = typeof render === 'function' ? render : () => {};
+}
+
+function unit() {
+  return appState.settings?.weightUnit === 'lbs' ? 'lbs' : 'kg';
+}
+
+function validDate(value) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(value || ''));
+}
+
+function entries() {
+  return (Array.isArray(appState.bodyWeightLog) ? appState.bodyWeightLog : [])
+    .filter((entry) => entry && validDate(entry.date) && Number(entry.weight) > 0)
+    .sort((a, b) => b.date.localeCompare(a.date));
+}
+
+/**
+ * Open the sheet on a date, prefilled with that day's weight or the latest one.
+ * @param {string} [date]
+ */
+export function openBodyweightSheet(date) {
+  const sheet = document.getElementById('bwSheet');
+  const backdrop = document.getElementById('bwSheetBackdrop');
+  if (!sheet) return;
+  const entriesNewest = entries();
+  const chosen = validDate(date) ? date : todayKey();
+  const existing = entriesNewest.find((entry) => entry.date === chosen);
+  const latest = entriesNewest[0];
+  const weight = existing?.weight ?? latest?.weight ?? appState.settings?.targetWeight ?? 70;
+
+  const dateInput = /** @type {HTMLInputElement|null} */ (document.getElementById('bwSheetDate'));
+  if (dateInput) { dateInput.value = chosen; dateInput.max = todayKey(); }
+  const weightInput = /** @type {HTMLInputElement|null} */ (document.getElementById('bwSheetWeight'));
+  if (weightInput) weightInput.value = Number(weight).toFixed(1);
+  const unitLabel = document.getElementById('bwSheetUnit');
+  if (unitLabel) unitLabel.textContent = unit();
+  const title = document.getElementById('bwSheetTitle');
+  if (title) title.textContent = existing ? 'Edit weigh-in' : 'Log body weight';
+
+  renderRecent(entriesNewest.filter((entry) => entry.date !== chosen).slice(0, 4));
+  sheet.classList.add('active');
+  backdrop?.classList.add('active');
+  openManagedModal(sheet, { initialFocus: '#bwSheetWeight' });
+}
+
+/** @param {Array<{date:string, weight:number}>} recent */
+function renderRecent(recent) {
+  const host = document.getElementById('bwSheetRecent');
+  if (!host) return;
+  host.textContent = '';
+  if (!recent.length) return;
+
+  const title = document.createElement('div');
+  title.className = 'bw-sheet-recent-title';
+  title.textContent = 'Recent weigh-ins';
+  host.append(title);
+
+  for (const entry of recent) {
+    const row = document.createElement('div');
+    row.className = 'bw-sheet-recent-row';
+
+    const when = document.createElement('span');
+    when.textContent = formatDayMonth(entry.date);
+
+    const right = document.createElement('span');
+    const value = document.createElement('strong');
+    value.textContent = `${Number(entry.weight).toFixed(1)} ${unit()}`;
+
+    const edit = document.createElement('button');
+    edit.type = 'button';
+    edit.dataset.action = 'edit-bw-row';
+    edit.dataset.date = entry.date;
+    edit.textContent = 'Edit';
+
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.dataset.action = 'delete-bw-row';
+    remove.dataset.date = entry.date;
+    remove.setAttribute('aria-label', `Delete weigh-in ${entry.date}`);
+    remove.textContent = 'Delete';
+
+    right.append(value, edit, remove);
+    row.append(when, right);
+    host.append(row);
+  }
+}
+
+export function closeBodyweightSheet() {
+  const sheet = document.getElementById('bwSheet');
+  document.getElementById('bwSheetBackdrop')?.classList.remove('active');
+  sheet?.classList.remove('active');
+  if (sheet) closeManagedModal(sheet);
+}
+
+/**
+ * @param {number|string} delta
+ */
+export function stepBodyweight(delta) {
+  const input = /** @type {HTMLInputElement|null} */ (document.getElementById('bwSheetWeight'));
+  if (!input) return;
+  const current = parseFloat(input.value) || 0;
+  const next = Math.min(500, Math.max(1, Math.round((current + Number(delta) || 0) * 10) / 10));
+  input.value = next.toFixed(1);
+}
+
+export function saveBodyweightSheet() {
+  const dateInput = /** @type {HTMLInputElement|null} */ (document.getElementById('bwSheetDate'));
+  const weightInput = /** @type {HTMLInputElement|null} */ (document.getElementById('bwSheetWeight'));
+  const date = validDate(dateInput?.value) ? dateInput.value : todayKey();
+  const weight = parseFloat(weightInput?.value || '');
+  if (!Number.isFinite(weight) || weight <= 0) return;
+  if (date > todayKey()) {
+    showToast('Choose today or an earlier date');
+    return;
+  }
+  if (!Array.isArray(appState.bodyWeightLog)) appState.bodyWeightLog = [];
+  const index = appState.bodyWeightLog.findIndex((entry) => entry?.date === date);
+  if (index >= 0) appState.bodyWeightLog[index] = { ...appState.bodyWeightLog[index], date, weight };
+  else appState.bodyWeightLog.push({ date, weight });
+  saveStateToLocalStorage(true);
+  closeBodyweightSheet();
+  _render();
+}
+
+/** @param {string} date */
+export async function deleteBodyweightEntry(date) {
+  const entry = entries().find((row) => row.date === date);
+  if (!entry) return;
+  const confirmed = await confirmModal({
+    title: 'Delete weigh-in?',
+    message: `${date} · ${Number(entry.weight).toFixed(1)} ${unit()}`,
+    confirmLabel: 'Delete',
+    danger: true,
+  });
+  if (!confirmed) return;
+  appState.bodyWeightLog = (appState.bodyWeightLog || []).filter((row) => row?.date !== date);
+  saveStateToLocalStorage(true);
+  closeBodyweightSheet();
+  _render();
+}
