@@ -423,29 +423,20 @@
   <main id="app-root">
 
     <section id="view-home" class="view-container active" aria-label="Home Dashboard">
-      
-      <div class="home-header">
+
+      <header class="home-header">
         <div class="home-header-meta">
-          <span class="home-app-label">Helyx</span>
+          <span class="home-greeting" id="homeGreeting">Good morning</span>
           <h1 id="homeWeekBlockIndicator" class="home-week-label">Week 1</h1>
           <span class="home-phase-label" id="homePhaseLabelTag"></span>
         </div>
-        <div class="home-week-progress" aria-label="Weekly completion" style="display:none;">
-          <span id="homeWeeklyProgressPct" class="home-week-progress__pct">0%</span>
-          <div class="home-week-progress__track"><div id="homeWeeklyProgressBar" class="home-week-progress__fill"></div></div>
-          <span id="homeWeeklyProgressTasks" class="home-week-progress__tasks"></span>
-        </div>
         <button class="home-avatar" id="homeAvatar" data-action="open-profile" aria-label="Open your profile">?</button>
-      </div>
+      </header>
 
-      <!-- TODAY — one state-aware decision surface for the current session.
-           The full Hybrid Score and detailed coaching evidence live in Progress. -->
+      <!-- Today is the one decision surface. -->
       <div id="homeTodayCard"></div>
 
-      <!-- Starting a run / walk / fast now lives in Train's Quick start, so Home
-           stays quiet. The only thing that surfaces here is a live status pill
-           while a fast is actually running (never hide an in-progress timer
-           behind a menu). -->
+      <!-- A live fast is status, not a menu: never hide an in-progress timer. -->
       <div class="qa-row qa-row--fasting mb-4" id="dashboardQuickActions" aria-label="Active fast" style="grid-template-columns:1fr;margin-top:10px;display:none;">
         <button class="qa-btn" id="qaFasting" data-action="open-fasting-detail" aria-label="View your active fast">
           <span class="qa-icon">⏱️</span>
@@ -453,7 +444,8 @@
         </button>
       </div>
 
-      <!-- Coaching alerts — surfaced (previously hidden): stall, deload, week-compare -->
+      <!-- Safety and load flags stay above the weekly strip, but only render
+           when the model actually raises them. -->
       <div id="homeAlerts">
         <article id="homeOvertrainingCard" class="card-dark home-alert-card home-alert-card--danger" style="display:none;" role="alert">
           <div class="card-icon-title" style="color:var(--color-red);"><span>🚨</span> <span id="homeOvertrainingTitle">Overtraining risk</span></div>
@@ -466,11 +458,6 @@
           <p class="text-muted" style="font-size:0.66rem;line-height:1.4;margin:10px 0 0;opacity:0.8;">These are training-load signals, not a medical assessment. Helyx is a fitness tool, not medical advice — see a professional if you feel unwell.</p>
         </article>
 
-        <article id="homeEngineAlertCard" class="home-alert-card home-alert-card--warn" style="display:none;">
-          <div class="home-alert-card__head"><span>⚠️</span><h2 id="homeEngineAlertTitle">Engine Alert</h2></div>
-          <p id="homeEngineAlertDesc" class="home-alert-card__desc"></p>
-        </article>
-
         <article id="homeDeloadSuggestionCard" class="card-dark home-alert-card" style="display:none;border-left:3px solid var(--color-amber);">
           <div class="card-icon-title" style="color:var(--color-amber);"><span>🔄</span> Deload Suggested</div>
           <p id="homeDeloadReason" class="text-muted" style="font-size:0.74rem;line-height:1.4;margin:8px 0 14px;"></p>
@@ -479,11 +466,42 @@
             <button class="btn-action-block btn-amber mt-0" data-action="execute-deload-week" style="flex:1;">Apply Deload</button>
           </div>
         </article>
+      </div>
 
-        <article id="homeWeekCompareCard" class="card-dark home-alert-card" style="display:none;">
-          <div class="card-icon-title" style="color:var(--color-blue);"><span>📊</span> This Week vs Last</div>
-          <div id="homeWeekCompareGrid" class="grid-2-col gap-2" style="margin-top:8px;"></div>
-        </article>
+      <section class="home-week" id="homeWeekStrip" aria-label="This week">
+        <div class="home-week__head">
+          <div>
+            <span class="home-week__eyebrow">This week</span>
+            <strong class="home-week__range" id="homeWeekRange">Your seven-day plan</strong>
+          </div>
+          <span class="home-week__count" id="homeWeekCount">—</span>
+        </div>
+        <div class="home-week__days" id="homeWeekDays"></div>
+      </section>
+
+      <button class="home-insight" id="homeInsightCard" data-action="open-analytics" data-context="progress" hidden>
+        <span class="home-insight__eyebrow">Coach</span>
+        <span class="home-insight__text" id="homeInsightText"></span>
+        <span class="home-insight__arrow" aria-hidden="true">›</span>
+      </button>
+
+      <div class="home-quick-actions" id="homeQuickActions" aria-label="Quick actions">
+        <button class="home-quick-btn" data-action="open-analytics" data-context="bodyweight">
+          <span class="home-quick-btn__icon">⚖️</span>
+          <span>Weight</span>
+        </button>
+        <button class="home-quick-btn" data-action="open-quick-start">
+          <span class="home-quick-btn__icon">⚡</span>
+          <span>Workout</span>
+        </button>
+        <button class="home-quick-btn" data-action="open-run-logger">
+          <span class="home-quick-btn__icon">🏃</span>
+          <span>Run</span>
+        </button>
+        <button class="home-quick-btn btn-history-link" data-action="open-activities">
+          <span class="home-quick-btn__icon">📅</span>
+          <span>History</span>
+        </button>
       </div>
 
       <button id="homeVolumeGuideCard" class="card-dark home-volume-guide mb-4" data-action="open-analytics" data-context="strength_pr" aria-label="Open Volume Guide" style="display:none;">
@@ -493,15 +511,14 @@
         <span class="home-volume-guide__arrow" aria-hidden="true">›</span>
       </button>
 
-      <!-- In Focus: the owner's preferred Home analytics cards. These use the
-           shared calendar-week model and retain exact-date bar interaction. -->
+      <!-- Secondary trends: kept for attribution and deep links, below the
+           decision surface rather than competing with it. -->
       <div class="app-section-heading">
         <div class="app-section-heading__title">In Focus</div>
-        <div class="app-section-heading__sub">Your training this week</div>
+        <div class="app-section-heading__sub">This week's trends · open any chart in Progress</div>
       </div>
 
       <div class="in-focus-carousel">
-
         <article class="card-dark carousel-card home-metric-card home-metric-card--gym" data-action="open-analytics" data-context="strength-volume-trends">
           <div class="hmcard-top">
             <span class="hmcard-icon">🏋️</span>
@@ -522,16 +539,7 @@
           <div class="hmcard-sub" id="focusRunSub">tap to view analytics</div>
           <div class="bar-chart-container" id="runBarChart"></div>
         </article>
-
       </div>
-
-      <!-- At-a-Glance was removed because it repeated metrics already owned by
-           Today, In Focus, and Progress. Fasting remains above by owner choice. -->
-
-      <button class="btn-history-link mb-4" data-action="open-activities">
-        <span>📅 Activities</span>
-        <span class="btn-history-arrow">→</span>
-      </button>
 
     </section>
 

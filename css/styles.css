@@ -1932,6 +1932,186 @@ body.sheet-scroll-locked {
 
 /* Home Today card — one natural decision surface instead of separate score,
    coaching and workout cards competing in the first viewport. */
+/* ── Home decision-first surface ─────────────────────────────────────────── */
+.home-greeting {
+  color: var(--text-muted);
+  font-size: 0.66rem;
+  font-weight: 750;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+.home-week {
+  margin: 0 0 16px;
+  padding: 15px 14px 13px;
+  border: 1px solid var(--border-default);
+  border-radius: 18px;
+  background:
+    radial-gradient(120% 120% at 100% 0%, rgba(99,102,241,0.10), transparent 58%),
+    var(--bg-card);
+}
+.home-week__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 11px;
+}
+.home-week__eyebrow,
+.home-insight__eyebrow {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.61rem;
+  font-weight: 800;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+}
+.home-week__range {
+  display: block;
+  margin-top: 3px;
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  letter-spacing: -0.01em;
+}
+.home-week__count {
+  flex: 0 0 auto;
+  padding: 4px 8px;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  color: var(--text-secondary);
+  font-size: 0.62rem;
+  font-weight: 750;
+  white-space: nowrap;
+}
+.home-week__days {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(44px, 1fr));
+  gap: 5px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+.home-week__days::-webkit-scrollbar { display: none; }
+.home-week-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 0;
+  min-height: 66px;
+  padding: 7px 2px;
+  border: 1px solid var(--border-default);
+  border-radius: 11px;
+  color: var(--text-secondary);
+  background: rgba(255,255,255,0.02);
+  font: inherit;
+  cursor: pointer;
+}
+.home-week-day:active { transform: scale(0.97); }
+.home-week-day:disabled { cursor: default; opacity: 0.62; }
+.home-week-day__name {
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.home-week-day__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-faint);
+}
+.home-week-day__date {
+  font-size: 0.54rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.home-week-day--done { border-color: rgba(16,185,129,0.35); background: rgba(16,185,129,0.08); }
+.home-week-day--done .home-week-day__dot { background: var(--color-green, #10b981); }
+.home-week-day--today { border-color: var(--color-orange, #ff6b00); background: rgba(255,107,0,0.08); }
+.home-week-day--today .home-week-day__dot { background: var(--color-orange, #ff6b00); box-shadow: 0 0 0 3px rgba(255,107,0,0.14); }
+.home-week-day--missed { border-color: rgba(239,68,68,0.30); }
+.home-week-day--missed .home-week-day__dot { background: var(--color-red, #ef4444); }
+.home-week-day--planned .home-week-day__dot { background: var(--text-muted); }
+.home-week-day--rest { opacity: 0.60; }
+.home-week-day.is-today { color: var(--text-primary); }
+.home-week-day.is-today .home-week-day__name { color: var(--color-orange, #ff6b00); }
+
+.home-insight {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  min-height: 58px;
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-default);
+  border-radius: 15px;
+  color: var(--text-secondary);
+  background: linear-gradient(135deg, rgba(99,102,241,0.10), var(--bg-card));
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.home-insight:active { transform: scale(0.99); }
+.home-insight__eyebrow { flex: 0 0 auto; color: var(--color-cyan, #22d3ee); }
+.home-insight__text { flex: 1; font-size: 0.76rem; line-height: 1.4; }
+.home-insight__arrow { flex: 0 0 auto; color: var(--text-muted); font-size: 1.25rem; }
+
+.home-quick-actions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0 0 18px;
+}
+.home-quick-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  min-height: 62px;
+  padding: 7px 3px;
+  border: 1px solid var(--border-default);
+  border-radius: 13px;
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  font: inherit;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+}
+.home-quick-btn:active { transform: scale(0.98); }
+.home-quick-btn__icon { flex: 0 0 auto; font-size: 1.16rem; line-height: 1; }
+/* The Activities button keeps the old contract class for measurement/checks. */
+.home-quick-btn.btn-history-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  padding: 7px 3px;
+  border: 1px solid var(--border-default);
+  border-radius: 13px;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 0.62rem;
+  text-align: center;
+}
+.home-quick-btn.btn-history-link:active { background: var(--bg-card); }
+
+html[data-theme="light"] .home-week,
+html[data-theme="light"] .home-quick-btn,
+html[data-theme="light"] .home-quick-btn.btn-history-link {
+  background: #fff;
+}
+html[data-theme="light"] .home-insight { background: linear-gradient(135deg, rgba(99,102,241,0.07), #fff); }
+
 .today-card {
   --today-accent: var(--color-blue, #2563eb);
   position: relative;

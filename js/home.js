@@ -19,6 +19,8 @@ import { renderActivityCalendar } from './home/activity-calendar.js';
 import { initFastingCard } from './home/fasting-card.js';
 import { initWeeklyFitnessGraph, refreshWeeklyFitnessGraph } from './home/weekly-fitness-graph.js';
 import { setHTML } from './ui/render.js';
+import { escapeHtml } from './util.js';
+import { buildHomeWeekStrip } from './home/week-strip.js';
 import { reportHandledError, renderSafely } from './monitoring/report-error.js';
 import { todayKey } from './dates.js';
 import { buildVolumeGuideModel, hasExplicitMusclePriorities } from './analytics/volume-guide.js';
@@ -240,6 +242,89 @@ function renderHomeVolumeGuide(appState, activeProgram) {
 }
 
 
+
+function greetingFor(name) {
+  const hour = new Date().getHours();
+  const part = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+  const first = String(name || '').trim().split(/\s+/)[0];
+  return first ? `${part}, ${first}` : part;
+}
+
+function shortDate(iso) {
+  const [y, m, d] = String(iso || '').split('-').map(Number);
+  if (!y || !m || !d) return '';
+  return new Date(Date.UTC(y, m - 1, d, 12)).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' });
+}
+
+function renderHomeGreeting(appState) {
+  const el = document.getElementById('homeGreeting');
+  if (el) el.textContent = greetingFor(appState?.settings?.name);
+}
+
+function renderHomeWeek(appState, activeProgram) {
+  const host = document.getElementById('homeWeekDays');
+  const rangeEl = document.getElementById('homeWeekRange');
+  const countEl = document.getElementById('homeWeekCount');
+  if (!host) return;
+  const strip = buildHomeWeekStrip({
+    state: appState,
+    program: activeProgram,
+    days: _getDays(),
+    today: todayKey(),
+  });
+  const today = todayKey();
+  host.innerHTML = strip.days.map((cell) => {
+    const disabled = !cell.date || (cell.date && cell.date > today);
+    const classes = ['home-week-day', `home-week-day--${cell.status}`];
+    if (cell.isToday) classes.push('is-today');
+    const dateLabel = cell.date ? shortDate(cell.date) : '';
+    const statusLabel = cell.status === 'done' ? 'completed'
+      : cell.status === 'missed' ? 'missed'
+      : cell.status === 'today' ? 'today'
+      : cell.status === 'planned' ? 'planned'
+      : 'rest';
+    return `<button type="button" class="${classes.join(' ')}" data-home-date="${escapeHtml(cell.date || '')}" ${disabled ? 'disabled' : ''} aria-label="${escapeHtml(`${cell.label} ${dateLabel}, ${statusLabel}`)}">
+      <span class="home-week-day__name">${escapeHtml(cell.label)}</span>
+      <span class="home-week-day__dot" aria-hidden="true"></span>
+      <span class="home-week-day__date">${escapeHtml(dateLabel)}</span>
+    </button>`;
+  }).join('');
+  if (rangeEl) {
+    const first = strip.days.find((d) => d.date)?.date;
+    const last = [...strip.days].reverse().find((d) => d.date)?.date;
+    rangeEl.textContent = first && last ? `${shortDate(first)} – ${shortDate(last)}` : 'Your seven-day plan';
+  }
+  if (countEl) {
+    countEl.textContent = strip.plannedCount
+      ? `${strip.doneCount} / ${strip.plannedCount} done`
+      : 'Recovery week';
+  }
+}
+
+function renderHomeInsight(model) {
+  const card = document.getElementById('homeInsightCard');
+  const text = document.getElementById('homeInsightText');
+  const insight = model?.topInsight;
+  if (!card || !text || !insight) return;
+  text.textContent = insight.text;
+  const nav = String(insight.nav || 'progress');
+  if (nav === 'custom:fasting') {
+    card.setAttribute('data-action', 'open-fasting-detail');
+    card.removeAttribute('data-context');
+  } else {
+    card.setAttribute('data-action', 'open-analytics');
+    card.setAttribute('data-context', nav);
+  }
+  card.hidden = false;
+}
+
+document.addEventListener('click', (e) => {
+  const cell = e.target.closest('.home-week-day[data-home-date]');
+  if (!cell || cell.disabled) return;
+  const date = cell.getAttribute('data-home-date');
+  if (date) document.dispatchEvent(new CustomEvent('app:open-activities', { detail: { date } }));
+});
+
 export function renderHome() {
   const appState = _getState();
   // Home is a calendar-today surface. The cockpit's selected day is navigation
@@ -283,6 +368,10 @@ export function renderHome() {
   // One shared brain pass — the header progress, week-compare card and every
   // tile all read from this single model so their numbers never diverge.
   const model = computeDashboardModel(appState, DEFAULT_DAYS, activeProgram, homeDay);
+
+  renderHomeGreeting(appState);
+  renderHomeWeek(appState, activeProgram);
+  renderHomeInsight(model);
 
   // V2 (S4): engine stall alerts move off Home — the one-hero Home keeps only
   // the recovery flag slot (overtraining/deload). Stall diagnostics still surface
