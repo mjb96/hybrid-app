@@ -64,7 +64,7 @@ const checks = [
 // Checks are independent (each binds port 0 and launches its own Playwright
 // context), so they run through a small worker pool instead of one blocking
 // spawnSync at a time. Output is buffered per check and printed as one block
-// when it finishes: the suite is 36 checks and ~7 minutes serially, mostly
+// when it finishes: the suite is 37 checks and ~7 minutes serially, mostly
 // browser startup, so overlapping them is the difference between a coffee and
 // a glance. `--serial` restores the sequential loop when debugging.
 const args = process.argv.slice(2);

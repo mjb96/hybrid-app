@@ -63,9 +63,10 @@ the same training picture.
   coaching. The suggested next load follows that program's style while keeping
   RPE, fatigue, cutting and stall safeguards.
 - **Import and export your history** — bring workout history and bodyweight from
-  OpenGym, Strong or Hevy CSV exports. Strength sets and weigh-ins import
-  directly; cardio rows are skipped for now. Export the full training log or a
-  clean bodyweight CSV. No account or server involved.
+  OpenGym, Strong or Hevy CSV exports, or batch-import Garmin/Wahoo FIT files.
+  Strength sets, cardio runs and weigh-ins all import. Export the full training
+  log, a clean bodyweight CSV or a complete JSON backup. No account or server
+  involved.
 - **Durable on Android** — the shell mirrors the same state into app-private
   storage, so WebView eviction or a full localStorage quota does not lose the
   last change; a failed write is reported instead of silently claiming success.
@@ -146,7 +147,7 @@ format, not branding.
 | --- | --- |
 | `npm test` | Node unit tests |
 | `npm run verify` | Type check, precache check, workflow gates, unit tests, smoke render |
-| `npm run browser:verify` | 36 Playwright product checks (parallel, 180 s per-check kill with one timeout retry; `-- --serial` to debug) |
+| `npm run browser:verify` | 37 Playwright product checks (parallel, 180 s per-check kill with one timeout retry; `-- --serial` to debug) |
 | `npm run perf:baseline` | Boot performance and bounded-DOM baseline |
 | `npm run precache:gen` | Regenerate the service-worker precache manifest |
 
