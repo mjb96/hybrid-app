@@ -23,6 +23,7 @@ import {
   clearCloudOverwriteBackup,
   trainingStateSummary,
 } from './state/recovery-vault.js';
+import { writeMirror, restoreStateMirror, mirrorSupported } from './state/mirror.js';
 import {
   ensureActivation, beginActivation, archiveForeignWeeks,
 } from './state/activation-identity.js';
@@ -40,6 +41,8 @@ export { triggerEngineExport, triggerCSVExport, triggerEngineImport, setImportSu
 export { getCloudOverwriteBackup, clearCloudOverwriteBackup };
 
 export const STORAGE_KEY = 'hybrid_engine_v2_state';
+// Written beside the state so the native mirror can tell which copy is newer.
+export const SAVED_AT_KEY = STORAGE_KEY + '_saved_at';
 
 // Recovery point written just before a cloud pull overwrites local state. The
 // cloud sync is last-write-wins with no merge, so a stale/empty device could
@@ -715,6 +718,21 @@ const PERSIST_WARN_MS = 16; // one frame budget
 
 function _now() { return (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(); }
 
+// One honest warning per failure streak: a full localStorage must never look
+// like a successful save. The mirror may still have the change; say which.
+let _storageFailureNotified = false;
+function _notifyStorageFailure(mirrored) {
+  if (_storageFailureNotified) return;
+  _storageFailureNotified = true;
+  if (typeof document === 'undefined') return;
+  showToast(
+    mirrored
+      ? 'Device storage is full — this change was saved in the app’s private mirror.'
+      : 'Device storage is full — this change was not saved. Export a backup now.',
+    true,
+  );
+}
+
 // The one place that actually serialises + writes local state. Cancels any
 // pending debounce (it just wrote the latest), recomputes memoized load metrics,
 // and — in dev — warns when a single write blows the frame budget.
@@ -727,17 +745,32 @@ function writeLocalNow() {
   if (isRecoveryGatePending()) return false;
   appState.loadMetrics = memoizedLoadMetrics(appState);
   const t0 = _persistDebug ? _now() : 0;
+  const json = JSON.stringify(appState);
+  const savedAt = new Date().toISOString();
+  const mirrorOn = mirrorSupported();
   let saved = false;
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+    localStorage.setItem(STORAGE_KEY, json);
+    // Only the Android build has a mirror to compare against; browser/PWA
+    // builds keep their single-write budget.
+    if (mirrorOn) {
+      try { localStorage.setItem(SAVED_AT_KEY, savedAt); } catch { /* tie-breaker only */ }
+    }
     _cloudDirty = true;
     saved = true;
   } catch (e) {
     console.error('Failed to save state locally:', e);
   }
+  // The Android shell keeps an app-private mirror of the same document. It is a
+  // backup on a normal save and the durable copy when localStorage is full.
+  const mirrorWrite = mirrorOn ? writeMirror(json) : Promise.resolve({ status: 'unavailable' });
+  void mirrorWrite.then((result) => {
+    if (saved) { _storageFailureNotified = false; return; }
+    _notifyStorageFailure(!!result && result.status === 'saved');
+  });
   if (_persistDebug) {
     const dt = _now() - t0;
-    if (dt > PERSIST_WARN_MS) console.warn(`[persist] local write ${dt.toFixed(1)}ms (state ~${JSON.stringify(appState).length} bytes)`);
+    if (dt > PERSIST_WARN_MS) console.warn(`[persist] local write ${dt.toFixed(1)}ms (state ~${json.length} bytes)`);
   }
   return saved;
 }
@@ -949,6 +982,19 @@ export async function pullEngineDataFromStorage() {
   let localData = null;
   let rawLocal = null;
   let loadedCloudState = false;
+  // The Android shell's private mirror is the durable copy when WebView
+  // storage was cleared, is corrupt, or failed a quota write. It only wins if
+  // it is newer than localStorage; the browser path no-ops.
+  let mirrorRestore = null;
+  try {
+    mirrorRestore = await restoreStateMirror({
+      storage: _defaultStorage(),
+      stateKey: STORAGE_KEY,
+      savedAtKey: SAVED_AT_KEY,
+    });
+  } catch (e) {
+    console.warn('State mirror restore failed:', e);
+  }
   try {
     rawLocal = localStorage.getItem(STORAGE_KEY);
     if (rawLocal) {
@@ -956,6 +1002,11 @@ export async function pullEngineDataFromStorage() {
     }
   } catch (e) {
     console.error('Failed to parse local storage:', e);
+  }
+  if (mirrorRestore && mirrorRestore.restored && mirrorRestore.state) {
+    localData = mirrorRestore.state;
+    rawLocal = JSON.stringify(localData);
+    console.info('Restored app state from the Android private mirror.');
   }
 
   const baseDefaults = {

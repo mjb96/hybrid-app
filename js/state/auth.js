@@ -6,6 +6,7 @@
 import { getSupabaseClient } from './supabase.js';
 import { showToast } from '../toast.js';
 import { clearRouteDatabase } from '../db.js';
+import { clearMirror } from './mirror.js';
 
 let _onLoginSuccess = null;
 
@@ -138,6 +139,10 @@ export function clearHelyxLocalData(storage = (typeof localStorage !== 'undefine
     return 0;
   }
   toRemove.forEach((k) => storage.removeItem(k));
+  // The Android mirror holds the same sensitive document; account deletion must
+  // remove it too. Fire-and-forget: the local keys are already gone, and the
+  // bridge persists the clear on its own IO thread.
+  void clearMirror();
   return toRemove.length;
 }
 

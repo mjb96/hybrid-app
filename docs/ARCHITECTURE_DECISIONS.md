@@ -33,7 +33,8 @@ Marginal case-normalisation cost per navigation (negligible).
 **Date:** 2026-07-13 · **Status:** accepted · **Phase:** 2.6
 
 **Context.** Workout history, GPS routes and imported health data live in the WebView
-data directory (localStorage + IndexedDB). `android:allowBackup="true"` made all of it
+data directory (localStorage + IndexedDB) and in the app-private state mirror
+(`filesDir/state-mirror`). `android:allowBackup="true"` made all of it
 eligible for Google Auto Backup (cloud) and device-to-device transfer, moving sensitive
 health/location data off-device with no explicit user action.
 

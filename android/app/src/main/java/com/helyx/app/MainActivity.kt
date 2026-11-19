@@ -47,6 +47,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var notifBridge: NotifyBridge
     private lateinit var fileExportBridge: FileExportBridge
     private lateinit var autoBackupBridge: AutoBackupBridge
+    private lateinit var stateMirrorBridge: StateMirrorBridge
 
     private var fileChooserCallback: ValueCallback<Array<Uri>>? = null
     private var lastBackPressTime = 0L
@@ -187,6 +188,10 @@ class MainActivity : AppCompatActivity() {
                 openBackupDirectoryLauncher.launch(intent)
             },
         )
+        stateMirrorBridge = StateMirrorBridge(
+            context = this,
+            webView = webView,
+        )
 
         configureWebView()
         installSafeAreaBridge()
@@ -248,6 +253,7 @@ class MainActivity : AppCompatActivity() {
             addJavascriptInterface(notifBridge, "HybridNotifyBridge")
             addJavascriptInterface(fileExportBridge, "HybridFileExportBridge")
             addJavascriptInterface(autoBackupBridge, "HybridAutoBackupBridge")
+            addJavascriptInterface(stateMirrorBridge, "HybridStateMirrorBridge")
             loadUrl(BuildConfig.APP_URL)
         }
     }
