@@ -470,15 +470,19 @@
         </article>
       </div>
 
-      <section class="home-week" id="homeWeekStrip" data-home-card="weekStrip" aria-label="This week">
-        <div class="home-week__head">
-          <div>
-            <span class="home-week__eyebrow">This week</span>
-            <strong class="home-week__range" id="homeWeekRange">Your seven-day plan</strong>
+      <section class="home-week" id="homeWeekStrip" aria-label="This week">
+        <div class="home-week__rail" data-home-card="weekStrip">
+          <div class="home-week__head">
+            <div>
+              <span class="home-week__eyebrow">This week</span>
+              <strong class="home-week__range" id="homeWeekRange">Your seven-day plan</strong>
+            </div>
+            <span class="home-week__count" id="homeWeekCount">—</span>
           </div>
-          <span class="home-week__count" id="homeWeekCount">—</span>
+          <div class="home-week__days" id="homeWeekDays"></div>
         </div>
-        <div class="home-week__days" id="homeWeekDays"></div>
+        <!-- Pinned: the strip may be hidden in Customize; the decision cannot. -->
+        <div id="homeTodayCard"></div>
       </section>
 
       <!-- A live fast is status, not a menu: never hide an in-progress timer. -->
@@ -488,9 +492,6 @@
           <span class="qa-text"><span class="qa-label">Fasting</span><span class="qa-sub">Intermittent fasting</span></span>
         </button>
       </div>
-
-      <!-- This week first, then the one decision surface: what to do today. -->
-      <div id="homeTodayCard"></div>
 
       <div id="homeBodyweightCard" data-home-card="bodyweight"></div>
 

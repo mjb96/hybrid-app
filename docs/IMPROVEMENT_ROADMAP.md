@@ -227,7 +227,7 @@ surfaces, not implementation-file ownership.
 
 | Surface | Current user job and entry | Important states/actions | Product owner |
 | --- | --- | --- | --- |
-| **Home** | Open app and decide what matters today | One state-aware Today card, alerts, two retained In Focus graphs, Activities; sparse-data, rest-day, completed, active-fast, warning, and offline states | **Home**. Today owns the first decision; In Focus remains the intentional weekly analytics surface and Progress owns deeper interpretation. |
+| **Home** | Open app and decide what matters today | One week surface: the seven-day rail plus a state-aware Today decision that collapses to one compact row on a fresh day; alerts, Activities; sparse-data, rest-day, completed, active-fast, warning, and offline states | **Home**. Today owns the first decision and never hides its primary action; the rail is optional, Today is pinned. Progress owns deeper interpretation. |
 | **Train** (`workout` route retained) | Start/resume a planned or one-off session and log strength/running | Day selector, schedule context, session timer, GPS/manual run, exercise/set logger, advanced set options, swap/add/reorder/superset/plate math, finish, clear; rest, empty one-off, in-progress, completed, GPS wait/failure and invalid-input states | **Train**. The new shell owns both the old Workout destination and Quick Start. A true Train landing remains future work. |
 | **Progress hub** (`analytics` route retained) | Understand training history and choose a domain | Hybrid Score, Strength, Running, Recovery & Load, Review, optional Fasting, Body Weight, Projections | **Progress**. The old visible “Insights” label is retired; internal context IDs remain compatible. |
 | **Progress details** | Explain a metric and expose evidence | Strength overview/stats, weekly volume, Gym Performance, exercise/muscle/metric drilldowns; Running overview/stats/performance/metric; Recovery overview/stats/performance; Review week/month; Hybrid Score; activity calendar; fasting/bodyweight/projections | **Progress**. Origin-aware Back returns to Home or Progress; entity drilldowns return to their parent and preserve calendar week. |
@@ -1626,6 +1626,18 @@ testable on its own.
 
 ## 12. Session log
 
+- **2026-11-20 — Home: Today folded into the week surface.**
+  - `#homeTodayCard` now lives inside `#homeWeekStrip`: the seven-day rail is the
+    header and Today is the decision body, not a second card.
+  - A fresh `ready` day collapses to one compact row with the primary action
+    still visible. Tapping today's date cell or the row expands the guidance,
+    secondary action and offline status; tapping again collapses it.
+  - In-progress, completed, rest, no-plan and unresolved states stay fully open,
+    so a warning or a result can never hide behind a chevron.
+  - `data-home-card="weekStrip"` moved onto the rail. Hiding "This week" in
+    Customize removes only the seven cells; Today remains pinned.
+  - The home-today browser check now covers collapse/expand, the 44px Start
+    target while collapsed, and the hidden-rail case.
 - **2026-11-20 — Catalogue is metadata-only; imported form text removed.**
   - Kept all 5,555 usable openGym/ExerciseDB catalogue names, ids, muscles and
     equipment for search and plan import, but stopped shipping the 5,400

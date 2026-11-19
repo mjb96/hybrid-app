@@ -72,7 +72,7 @@ function program(restToday = false) {
   };
 }
 
-function fixture({ state = 'ready', theme = 'dark' } = {}) {
+function fixture({ state = 'ready', theme = 'dark', hideWeekStrip = false } = {}) {
   const testProgram = program(state === 'rest');
   const lifts = Object.fromEntries(DAY_KEYS.map((day) => [
     day,
@@ -113,6 +113,7 @@ function fixture({ state = 'ready', theme = 'dark' } = {}) {
       name: 'Browser', theme, onboardingComplete: true,
       weightUnit: 'kg', distanceUnit: 'km', weekStartDay: 'mon',
       fitnessGoal: 'hybrid', fitnessLevel: 'intermediate', equipmentTier: 'gym',
+      ...(hideWeekStrip ? { ui: { home: { hidden: ['weekStrip'] }, progress: { hidden: [] } } } : {}),
     },
     customPrograms: [testProgram],
     weeks: { '1': week },
@@ -124,9 +125,9 @@ function fixture({ state = 'ready', theme = 'dark' } = {}) {
   };
 }
 
-async function openState({ state, theme = 'dark', width = 390, height = 844 }) {
+async function openState({ state, theme = 'dark', width = 390, height = 844, hideWeekStrip = false }) {
   const context = await createBrowserContext(browser, { viewport: { width, height }, timezoneId: TZ });
-  const seed = fixture({ state, theme });
+  const seed = fixture({ state, theme, hideWeekStrip });
   await context.addInitScript(([key, value]) => localStorage.setItem(key, value), [STORAGE_KEY, JSON.stringify(seed)]);
   await context.addInitScript(pinClock, CLOCK);
   const page = await context.newPage();
@@ -147,6 +148,8 @@ try {
         const cardRect = card?.getBoundingClientRect();
         return {
           state: card?.getAttribute('data-today-state'),
+          insideWeek: !!card?.closest('#homeWeekStrip'),
+          collapsed: !!card?.classList.contains('is-collapsed'),
           primaryCount: card?.querySelectorAll('.today-card__primary').length || 0,
           cardWithinViewport: !!cardRect && cardRect.left >= 0 && cardRect.right <= innerWidth && cardRect.bottom <= innerHeight,
           primaryHeight: primary?.getBoundingClientRect().height || 0,
@@ -157,12 +160,29 @@ try {
         };
       });
       ok(layout.state === 'ready', `${theme} ${width}px renders ready state`);
+      ok(layout.insideWeek, `${theme} ${width}px keeps Today inside the week surface`);
+      ok(layout.collapsed, `${theme} ${width}px starts the ready day compact`);
       ok(layout.primaryCount === 1, `${theme} ${width}px has exactly one Today primary action`);
+      ok(layout.primaryHeight >= 44, `${theme} ${width}px Start meets 44px touch target while collapsed`);
       ok(layout.cardWithinViewport, `${theme} ${width}px keeps the complete Today decision in the first viewport`);
-      ok(layout.primaryHeight >= 44 && layout.secondaryHeight >= 44, `${theme} ${width}px controls meet 44px touch target`);
       ok(layout.inFocusCards === 0, `${theme} ${width}px removes the In Focus cards`);
       ok(layout.glanceGrids === 0, `${theme} ${width}px removes the repeated At-a-Glance grid`);
       ok(!layout.overflow, `${theme} ${width}px has no horizontal overflow`);
+
+      await page.locator('.home-week-day.is-today').click();
+      const expanded = await page.evaluate(() => {
+        const card = document.querySelector('.today-card');
+        const secondary = document.querySelector('.today-card__secondary');
+        return {
+          collapsed: card?.classList.contains('is-collapsed'),
+          expandedAttr: card?.querySelector('[data-action="toggle-today-card"]')?.getAttribute('aria-expanded'),
+          secondaryHeight: secondary?.getBoundingClientRect().height || 0,
+        };
+      });
+      ok(!expanded.collapsed && expanded.expandedAttr === 'true', `${theme} ${width}px tapping today expands the decision`);
+      ok(expanded.secondaryHeight >= 44, `${theme} ${width}px expanded controls meet 44px touch target`);
+      await page.locator('.home-week-day.is-today').click();
+      ok(await page.locator('.today-card').evaluate((el) => el.classList.contains('is-collapsed')), `${theme} ${width}px tapping today again collapses it`);
       await context.close();
     }
   }
@@ -210,6 +230,14 @@ try {
     await page.locator('#homePrimaryCta').click();
     ok(await page.locator('#view-workout').evaluate((el) => el.classList.contains('active')), 'Resume opens Train');
     ok(await page.locator('#cockpitDaySelectorBar .day-pill.active').getAttribute('data-day') === otherDay, 'Resume restores the unresolved workout day');
+    await context.close();
+  }
+
+  {
+    const { context, page } = await openState({ state: 'ready', hideWeekStrip: true });
+    ok(await page.locator('.home-week__rail').evaluate((el) => el.classList.contains('home-card-hidden')), 'hiding This week removes only the seven-day rail');
+    ok(await page.locator('#homeTodayCard .today-card').isVisible(), 'the pinned Today decision survives a hidden week strip');
+    ok(await page.locator('#homePrimaryCta').isVisible(), 'the primary action survives a hidden week strip');
     await context.close();
   }
 } finally {

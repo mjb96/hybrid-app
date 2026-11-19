@@ -8,7 +8,7 @@ import { computeHybridScore } from './brain/hybrid-score/hybrid-score.js';
 import { recordDailyScore } from './brain/hybrid-score/history.js';
 import { buildMorningBriefing } from './brain/morning-briefing.js';
 import { dayVerdict } from './brain/day-verdict.js';
-import { buildTodayCardModel, todayCardHTML, todayProgramDay } from './home/today-card.js';
+import { buildTodayCardModel, isTodayCardCollapsible, todayCardHTML, todayProgramDay } from './home/today-card.js';
 import { celebrateMilestone, celebrate } from './ui/celebration.js';
 import { assessOvertrainingRisk, riskSignature } from './brain/risk.js';
 import { answerCoachQuestion } from './brain/coach-qa.js';
@@ -29,6 +29,12 @@ import { buildVolumeGuideModel, hasExplicitMusclePriorities } from './analytics/
 let _getState;
 let _getSelectedDay;
 let _getDays;
+
+// Today's expansion is presentation-only, so it deliberately stays out of
+// appState: a fresh app open returns to the compact week-first layout, and the
+// state never enters an export or sync surface.
+let _todayCardExpanded = false;
+let _todayCardExpandedDate = null;
 
 export function initHome(getStateFn, getSelectedDayFn, getDaysFn) {
   _getState = getStateFn;
@@ -316,17 +322,70 @@ function renderHomeInsight(model, state) {
   card.hidden = false;
 }
 
+function _todayCardIsCollapsible() {
+  return !!document.querySelector('#homeTodayCard .today-card.is-collapsible');
+}
+
+function _setTodayCardExpanded(expanded) {
+  const card = document.querySelector('#homeTodayCard .today-card.is-collapsible');
+  if (!card) return false;
+  _todayCardExpanded = !!expanded;
+  card.classList.toggle('is-collapsed', !_todayCardExpanded);
+  const toggle = card.querySelector('[data-action="toggle-today-card"]');
+  if (toggle) {
+    toggle.setAttribute('aria-expanded', String(_todayCardExpanded));
+    toggle.setAttribute('aria-label', `${_todayCardExpanded ? 'Hide' : 'Show'} workout details`);
+  }
+  document.querySelector('.home-week-day.is-today')
+    ?.setAttribute('aria-expanded', String(_todayCardExpanded));
+  return true;
+}
+
+function _toggleTodayCard() {
+  return _setTodayCardExpanded(!_todayCardExpanded);
+}
+
+function _syncTodayCardToggle(card, expanded) {
+  const cell = document.querySelector('.home-week-day.is-today');
+  if (!cell) return;
+  if (isTodayCardCollapsible(card)) {
+    cell.setAttribute('aria-expanded', String(expanded));
+    cell.setAttribute('aria-controls', 'homeTodayCardDetail');
+  } else {
+    cell.removeAttribute('aria-expanded');
+    cell.removeAttribute('aria-controls');
+  }
+}
+
 document.addEventListener('click', (e) => {
-  const cell = e.target.closest('.home-week-day[data-home-date]');
+  const toggle = e.target.closest?.('[data-action="toggle-today-card"]');
+  if (toggle) {
+    e.preventDefault();
+    _toggleTodayCard();
+    return;
+  }
+  const cell = e.target.closest?.('.home-week-day[data-home-date]');
   if (!cell || cell.disabled) return;
   const date = cell.getAttribute('data-home-date');
+  // Today's cell opens the decision panel it points at. Other dates keep the
+  // existing history behaviour; a completed Today still has its Review action.
+  if (date === todayKey() && _todayCardIsCollapsible()) {
+    _toggleTodayCard();
+    return;
+  }
   if (date) document.dispatchEvent(new CustomEvent('app:open-activities', { detail: { date } }));
 });
 
 function applyHomeCardVisibility(appState) {
   document.querySelectorAll('[data-home-card]').forEach((el) => {
     const id = el.getAttribute('data-home-card');
-    el.classList.toggle('home-card-hidden', !isCardVisible(appState?.settings, 'home', id));
+    const hidden = !isCardVisible(appState?.settings, 'home', id);
+    el.classList.toggle('home-card-hidden', hidden);
+    // Only the seven-day rail is optional. Today is pinned inside the same
+    // surface, so hiding "This week" must not remove the primary action.
+    if (id === 'weekStrip') {
+      el.closest('.home-week')?.classList.toggle('home-week--strip-hidden', hidden);
+    }
   });
 }
 
@@ -406,6 +465,14 @@ export function renderHome() {
   const briefing = buildHomeBriefing(appState, model, scoreResult, activeProgram, homeDay, overtrainingActive);
   const todayMount = document.getElementById('homeTodayCard');
   if (todayMount) {
+    // A new calendar day starts compact again. Within the day, the athlete's
+    // expansion survives re-renders (a logged set, a data refresh) but never
+    // enters appState or an export.
+    const todayISO = todayKey();
+    if (_todayCardExpandedDate !== todayISO) {
+      _todayCardExpandedDate = todayISO;
+      _todayCardExpanded = false;
+    }
     const card = buildTodayCardModel({
       state: appState,
       program: activeProgram,
@@ -414,7 +481,9 @@ export function renderHome() {
       score: scoreResult,
       offline: typeof navigator !== 'undefined' && navigator.onLine === false,
     });
-    setHTML(todayMount, todayCardHTML(card));
+    const expanded = isTodayCardCollapsible(card) && _todayCardExpanded;
+    setHTML(todayMount, todayCardHTML(card, { expanded }));
+    _syncTodayCardToggle(card, expanded);
   }
   renderHomeSupportingSignals(appState, model);
   renderHomeVolumeGuide(appState, activeProgram);

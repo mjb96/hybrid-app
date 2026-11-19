@@ -121,11 +121,16 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   Equipment switches, adds, renames and deletes profiles (the last cannot be
   deleted). v6→v7 seeds the optional inventory shape; v5→v6 seeded the first
   profile from the legacy kit.
-- Home decision surface: `index.html` puts the generated week strip
-  (`js/home/week-strip.js` → `#homeWeekDays`) first, then one compact Today card
-  (`#homeTodayCard`, rendered by `js/home/today-card.js`). The card keeps the
-  eyebrow/title/meta/short guidance and one primary action; it deliberately
-  omits the state pill, score row and evidence drawer. Below it sit the compact
+- Home decision surface: `index.html` renders ONE week surface
+  (`#homeWeekStrip`) containing the optional seven-day rail
+  (`js/home/week-strip.js` → `#homeWeekDays`, `data-home-card="weekStrip"`) and
+  the pinned Today decision (`#homeTodayCard`, rendered by
+  `js/home/today-card.js`). A fresh `ready` day collapses Today to one compact
+  row but KEEPS `#homePrimaryCta` visible; tapping today's date cell or the row
+  expands the guidance, and `isTodayCardCollapsible` keeps in-progress/
+  completed/rest/no-plan/unresolved states fully open. Hiding "This week" in
+  Customize hides only the rail, never Today. The card deliberately omits the
+  state pill, score row and evidence drawer. Below it sit the compact
   bodyweight card (`js/home/bodyweight-card.js` → `#homeBodyweightCard`) with
   one-tap prefilled logging, one coach insight from `model.topInsight`, and a
   2×2 quick-action grid. The In Focus cards and their graph module were removed;

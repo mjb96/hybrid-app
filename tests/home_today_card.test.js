@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildTodayCardModel, todayCardHTML, todayProgramDay } from '../js/home/today-card.js';
+import {
+  buildTodayCardModel, isTodayCardCollapsible, todayCardHTML, todayProgramDay,
+} from '../js/home/today-card.js';
 
 const MONDAY = new Date('2026-08-03T09:00:00+10:00');
 const DISPLAY_TZ = 'Australia/Sydney';
@@ -182,4 +184,51 @@ test('Hybrid Score stays supporting until confidence is meaningful', () => {
     score: { hasData: true, score: 74, confidence: 75, delta: 2, band: { status: 'Productive' } },
   });
   assert.deepEqual(established.score, { value: 74, label: 'Hybrid Score · +2 today' });
+});
+
+test('only a fresh ready day collapses; states with a warning or a result stay open', () => {
+  assert.equal(isTodayCardCollapsible({ state: 'ready' }), true);
+  for (const state of ['in_progress', 'completed', 'rest', 'no_plan', 'unresolved']) {
+    assert.equal(isTodayCardCollapsible({ state }), false, `${state} must stay fully open`);
+  }
+});
+
+test('the ready card collapses to one compact row without hiding its primary action', () => {
+  const card = buildTodayCardModel({
+    state: state(), program: PROGRAM, model, now: MONDAY, tz: DISPLAY_TZ,
+  });
+  const html = todayCardHTML(card, { expanded: false });
+  assert.match(html, /is-collapsible/);
+  assert.match(html, /is-collapsed/);
+  assert.match(html, /data-action="toggle-today-card"/);
+  assert.match(html, /aria-expanded="false"/);
+  assert.match(html, /aria-controls="homeTodayCardDetail"/);
+  assert.equal((html.match(/id="homePrimaryCta"/g) || []).length, 1);
+  assert.match(html, /id="homeTodayCardDetail"/);
+});
+
+test('expanding the ready card removes the collapsed class and flips the toggle', () => {
+  const card = buildTodayCardModel({
+    state: state(), program: PROGRAM, model, now: MONDAY, tz: DISPLAY_TZ,
+  });
+  const html = todayCardHTML(card, { expanded: true });
+  assert.doesNotMatch(html, /is-collapsed/);
+  assert.match(html, /aria-expanded="true"/);
+  assert.equal((html.match(/id="homePrimaryCta"/g) || []).length, 1);
+});
+
+test('a completed card never becomes a collapsed row', () => {
+  const s = state();
+  s.weeks['1'].lifts.mon['Bench Press'] = [
+    { w: '60', r: '5', c: true },
+    { w: '60', r: '5', c: true },
+  ];
+  s.weeks['1'].dates.mon = '2026-08-03';
+  s.weeks['1'].sessionStatus.mon = 'finished';
+  const card = buildTodayCardModel({
+    state: s, program: PROGRAM, model, now: MONDAY, tz: DISPLAY_TZ,
+  });
+  const html = todayCardHTML(card, { expanded: false });
+  assert.equal(card.state, 'completed');
+  assert.doesNotMatch(html, /is-collapsible|is-collapsed|toggle-today-card/);
 });

@@ -1947,13 +1947,15 @@ body.sheet-scroll-locked {
 }
 .home-week {
   margin: 0 0 16px;
-  padding: 15px 14px 13px;
+  padding: 0;
   border: 1px solid var(--border-default);
   border-radius: 18px;
   background:
     radial-gradient(120% 120% at 100% 0%, rgba(99,102,241,0.10), transparent 58%),
     var(--bg-card);
+  overflow: hidden;
 }
+.home-week__rail { padding: 15px 14px 13px; }
 .home-week__head {
   display: flex;
   align-items: flex-end;
@@ -2212,12 +2214,106 @@ html[data-theme="light"] .home-insight { background: linear-gradient(135deg, rgb
 }
 .today-card__secondary:active { transform: scale(.98); }
 
+/* ── Today inside the week surface ─────────────────────────────────────────
+   The seven-day rail is the header; today's decision is the body. The Today
+   card keeps its own state classes so every state consumer is unchanged, but
+   it no longer draws a second card boundary. */
+.home-week #homeTodayCard { border-top: 1px solid var(--border-default); }
+.home-week .today-card {
+  margin: 0;
+  padding: 13px 14px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+.home-week .today-card::after { display: none; }
+.home-week--strip-hidden #homeTodayCard { border-top: 0; }
+.home-week--strip-hidden .today-card { padding-top: 15px; }
+
+.today-card__head { position: relative; }
+.today-card.is-collapsible .today-card__head { padding-right: 30px; }
+.today-card__toggle {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  color: var(--text-muted);
+  background: transparent;
+  cursor: pointer;
+}
+.today-card__toggle:focus-visible {
+  outline: 2px solid var(--color-cyan, #22d3ee);
+  outline-offset: 3px;
+}
+.today-card__chevron {
+  width: 8px;
+  height: 8px;
+  margin: 0 3px 4px 0;
+  border-right: 1.6px solid currentColor;
+  border-bottom: 1.6px solid currentColor;
+  transform: rotate(45deg);
+  transition: transform .18s ease, margin .18s ease;
+}
+.today-card__toggle[aria-expanded="true"] .today-card__chevron {
+  margin: 4px 3px 0 0;
+  transform: rotate(225deg);
+}
+
+/* Collapsed: one compact row, but the primary action never hides. */
+.today-card.is-collapsed {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "head actions";
+  align-items: center;
+  column-gap: 10px;
+}
+.today-card.is-collapsed .today-card__head { grid-area: head; min-width: 0; }
+.today-card.is-collapsed .today-card__title {
+  font-size: 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.today-card.is-collapsed .today-card__meta {
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.today-card.is-collapsed .today-card__detail,
+.today-card.is-collapsed .today-card__secondary { display: none; }
+.today-card.is-collapsed .today-card__actions {
+  grid-area: actions;
+  display: block;
+  margin: 0;
+}
+.today-card.is-collapsed .today-card__primary {
+  width: auto;
+  min-height: 44px;
+  padding: 0 15px;
+  border-radius: 12px;
+  font-size: .72rem;
+  white-space: nowrap;
+}
+
 html[data-theme="light"] .today-card {
   border-color: color-mix(in srgb, var(--today-accent) 18%, #e2e8f0);
   background:
     radial-gradient(130% 120% at 100% 0%, color-mix(in srgb, var(--today-accent) 8%, transparent), transparent 62%),
     #fff;
   box-shadow: 0 4px 14px rgba(15, 23, 42, .06);
+}
+html[data-theme="light"] .home-week .today-card {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 /* dvh tracks the CURRENT visual viewport; vh tracks the largest one (URL bar
