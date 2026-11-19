@@ -21,6 +21,7 @@ import {
 import { migrateLegacyRunSessions, runSessionsForDay } from './state/run-sessions.js';
 import { isCompletedSet } from './set-utils.js';
 import { sessionSetPlan, clearSessionSetPlan, clearDaySetPlans } from './workout/set-plan.js';
+import { ensureEquipmentProfiles, projectActiveEquipmentProfile } from './equipment-profiles.js';
 import {
   beginRecoveryGate,
   reconcileRecoveryGate,
@@ -792,7 +793,7 @@ export async function pullEngineDataFromStorage() {
     wellnessLog: [],
     fastingSession: { active: false, startTime: null, goal: 16, history: [] },
     programLibrary: { bookmarks: [], completions: [], recentlyViewed: [], personalRatings: {}, activeFilters: {} },
-    settings: { name: '', weightUnit: 'kg', distanceUnit: 'km', progressionIncrement: 2.5, defaultBodyWeight: null, autoAdvanceWeek: true, theme: 'dark', onboardingComplete: false, fitnessGoal: 'hybrid', weightGoal: 'maintain', fitnessLevel: 'intermediate', equipmentTier: 'gym', weekStartDay: 'mon', fastingDefault: 16, reminderTime: { hour: 7, minute: 30 }, notifWeeklySummary: false, notifStreak: false, streakAlertTime: { hour: 20, minute: 0 }, notifMissedWorkout: false, notifFastingStage: true, musclePriorities: {}, equipment: { barbell: true, rack: true, dumbbells: true, cables: true, pullupBar: true, bands: false, kettlebells: false, ezBar: false, treadmill: false }, bandWeights: { L: 10, M: 20, H: 30 }, restPeriods: { compound: 180, accessory: 120, isolation: 90 }, restTimerEnabled: true, restOverrides: {}, avatarDataUrl: null },
+    settings: { name: '', weightUnit: 'kg', distanceUnit: 'km', progressionIncrement: 2.5, defaultBodyWeight: null, autoAdvanceWeek: true, theme: 'dark', onboardingComplete: false, fitnessGoal: 'hybrid', weightGoal: 'maintain', fitnessLevel: 'intermediate', equipmentTier: 'gym', weekStartDay: 'mon', fastingDefault: 16, reminderTime: { hour: 7, minute: 30 }, notifWeeklySummary: false, notifStreak: false, streakAlertTime: { hour: 20, minute: 0 }, notifMissedWorkout: false, notifFastingStage: true, musclePriorities: {}, equipment: { barbell: true, rack: true, dumbbells: true, cables: true, pullupBar: true, bands: false, kettlebells: false, ezBar: false, treadmill: false }, bandWeights: { L: 10, M: 20, H: 30 }, equipmentProfiles: [], activeEquipmentProfileId: null, restPeriods: { compound: 180, accessory: 120, isolation: 90 }, restTimerEnabled: true, restOverrides: {}, avatarDataUrl: null },
     profileSections: { order: null, hidden: [] },
     dashboardTiles: { order: null, hidden: null },   // hidden:null = focused default set (R4)
     hybridScore: { history: [], xp: 0, lastRecordedDate: null },
@@ -876,6 +877,11 @@ export async function pullEngineDataFromStorage() {
     showMigrationRecovery(migrationError);
     throw migrationError;
   }
+
+  // Keep the active profile and the legacy projection fields in lockstep even
+  // when a backup/import predates profiles or carries a stale projection.
+  ensureEquipmentProfiles(appState);
+  projectActiveEquipmentProfile(appState);
 
   reconcileRecoveryGate({
     hadLocalState: localData != null,

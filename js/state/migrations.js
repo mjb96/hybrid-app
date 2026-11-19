@@ -268,9 +268,48 @@ const MIGRATIONS = [
     }
     state.settings.bandWeights = { L: 10, M: 20, H: 30 };
   },
+
+  // v5 → v6: seed an equipment profile from the existing kit. The profile is
+  // the source of truth from here on; `settings.equipment` and
+  // `settings.bandWeights` stay as the active profile's projection so every
+  // existing caller keeps working. One profile means no visible change until
+  // the athlete adds a second location.
+  (state) => {
+    if (!state.settings || typeof state.settings !== 'object' || Array.isArray(state.settings)) {
+      state.settings = {};
+    }
+    const settings = state.settings;
+    const keys = ['barbell', 'rack', 'dumbbells', 'cables', 'pullupBar', 'bands', 'kettlebells', 'ezBar', 'treadmill'];
+    const core = new Set(['barbell', 'rack', 'dumbbells', 'cables', 'pullupBar']);
+    const sourceEquipment = settings.equipment && typeof settings.equipment === 'object' ? settings.equipment : {};
+    const sourceBands = settings.bandWeights && typeof settings.bandWeights === 'object' ? settings.bandWeights : {};
+    /** @type {Record<string, boolean>} */
+    const equipment = {};
+    for (const key of keys) {
+      equipment[key] = sourceEquipment[key] == null ? core.has(key) : !!sourceEquipment[key];
+    }
+    const band = (value, fallback) => {
+      const n = parseFloat(value);
+      return Number.isFinite(n) && n >= 0 ? n : fallback;
+    };
+    const bandWeights = { L: band(sourceBands.L, 10), M: band(sourceBands.M, 20), H: band(sourceBands.H, 30) };
+
+    if (!Array.isArray(settings.equipmentProfiles) || settings.equipmentProfiles.length === 0) {
+      settings.equipmentProfiles = [{
+        id: 'eqp_default',
+        name: 'My gym',
+        equipment,
+        bandWeights,
+      }];
+    }
+    const profiles = settings.equipmentProfiles;
+    if (!profiles.some((profile) => profile && profile.id === settings.activeEquipmentProfileId)) {
+      settings.activeEquipmentProfileId = profiles[0]?.id || 'eqp_default';
+    }
+  },
 ];
 
-export const CURRENT_SCHEMA_VERSION = MIGRATIONS.length; // 5
+export const CURRENT_SCHEMA_VERSION = MIGRATIONS.length; // 6
 
 /** Error raised when a state upgrade cannot safely commit. */
 export class StateMigrationError extends Error {

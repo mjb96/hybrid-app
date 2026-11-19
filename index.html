@@ -1585,7 +1585,20 @@
         <!-- Equipment -->
         <div class="settings-section">
           <div class="settings-section-label">Equipment</div>
-          <div class="settings-hint">Select everything available to you. Used for program recommendations.</div>
+          <div class="settings-hint">Different gyms need different kits. Helyx uses the active profile for program fit and exercise swaps.</div>
+          <div class="settings-row">
+            <label class="settings-row-label" for="settingsEquipmentProfile">Profile</label>
+            <select class="settings-input settings-profile-select" id="settingsEquipmentProfile" aria-label="Equipment profile"></select>
+          </div>
+          <div class="settings-row">
+            <label class="settings-row-label" for="settingsEquipmentProfileName">Name</label>
+            <input type="text" class="settings-input settings-profile-name" id="settingsEquipmentProfileName" placeholder="Home, Commercial gym…" maxlength="32" autocomplete="off">
+          </div>
+          <div class="settings-profile-actions">
+            <button type="button" class="settings-action-btn" data-action="equipment-profile-add">Add profile</button>
+            <button type="button" class="settings-action-btn settings-action-btn-danger" data-action="equipment-profile-delete">Delete</button>
+          </div>
+          <div class="settings-hint">Select everything available in this profile.</div>
           <label class="hc-data-toggle"><input type="checkbox" data-equipment="barbell" checked><span>Barbell &amp; Plates</span></label>
           <label class="hc-data-toggle"><input type="checkbox" data-equipment="rack" checked><span>Power Rack / Squat Rack</span></label>
           <label class="hc-data-toggle"><input type="checkbox" data-equipment="dumbbells" checked><span>Dumbbells</span></label>

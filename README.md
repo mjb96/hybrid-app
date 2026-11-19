@@ -38,6 +38,9 @@ the same training picture.
   Android automatic backups move data deliberately.
 - **Modules** — hide Running & GPS, Fasting, Health Connect or Recovery & Load
   from Settings → Modules. Hiding a module never deletes its data.
+- **Equipment profiles** — keep separate kits for home and the commercial gym.
+  The active profile drives program fit, exercise swaps and equipment-aware
+  recommendations; switching takes one tap in Settings.
 - **Import your history** — bring workout history and bodyweight from OpenGym,
   Strong or Hevy CSV exports. Strength sets and weigh-ins import directly; cardio
   rows are skipped for now. No account or server involved.
@@ -56,7 +59,7 @@ the same training picture.
 | Offline | Service worker + generated precache manifest |
 | Local data | `localStorage` for app state, IndexedDB for GPS routes; Android adds an app-private atomic file mirror |
 | Native | Kotlin Android WebView shell, `minSdk 26`, `targetSdk 36` |
-| Verification | `node --test`, TypeScript checking of JSDoc-annotated JS, 33 Playwright browser checks |
+| Verification | `node --test`, TypeScript checking of JSDoc-annotated JS, 34 Playwright browser checks |
 | Runtime | Node.js 20+ for tooling |
 
 ## Architecture
@@ -105,7 +108,7 @@ logging works offline.
 | --- | --- |
 | `npm test` | Node unit tests |
 | `npm run verify` | Type check, precache check, workflow gates, unit tests, smoke render |
-| `npm run browser:verify` | 33 Playwright product checks |
+| `npm run browser:verify` | 34 Playwright product checks |
 | `npm run perf:baseline` | Boot performance and bounded-DOM baseline |
 | `npm run precache:gen` | Regenerate the service-worker precache manifest |
 
