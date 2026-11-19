@@ -16,7 +16,7 @@ import {
 } from '../js/programs/activation.js';
 
 const PROGRAMS = {
-  hybridhq_foundations: { name: 'Helyx Foundations', durationWeeks: 12, sessionsPerWeek: 5, difficulty: 'intermediate', category: 'hybrid' },
+  hybridhq_foundations: { name: 'openHybrid Foundations', durationWeeks: 12, sessionsPerWeek: 5, difficulty: 'intermediate', category: 'hybrid' },
   sub20_5k_hybrid:      { name: 'Sub-20 5K Hybrid Engine', durationWeeks: 9, sessionsPerWeek: 6, difficulty: 'advanced', category: 'hybrid' },
   sparse_prog:          { name: 'Sparse Program' }, // no weeks/days/difficulty/category
 };
@@ -31,7 +31,7 @@ test('first activation (no current program) reads as "Start", no replace warning
   const plan = buildActivationPlan({ activeProgramId: null, currentWeek: '1' }, 'hybridhq_foundations', deps);
   assert.equal(plan.ok, true);
   assert.equal(plan.mode, 'first');
-  assert.match(plan.title, /^Start Helyx Foundations\?$/);
+  assert.match(plan.title, /^Start openHybrid Foundations\?$/);
   assert.equal(plan.impact.some(i => /Replaces/.test(i.text)), false);
   assert.equal(plan.impact.some(i => /history and completed weeks are kept/.test(i.text)), true);
 });
@@ -39,7 +39,7 @@ test('first activation (no current program) reads as "Start", no replace warning
 test('switching from another program names the program being replaced', () => {
   const plan = buildActivationPlan({ activeProgramId: 'sub20_5k_hybrid', currentWeek: '3' }, 'hybridhq_foundations', deps);
   assert.equal(plan.mode, 'switch');
-  assert.match(plan.title, /^Switch to Helyx Foundations\?$/);
+  assert.match(plan.title, /^Switch to openHybrid Foundations\?$/);
   const replace = plan.impact.find(i => i.tone === 'warn' && /Replaces/.test(i.text));
   assert.ok(replace, 'a replace warning exists');
   assert.match(replace.text, /Sub-20 5K Hybrid Engine/);
@@ -48,7 +48,7 @@ test('switching from another program names the program being replaced', () => {
 test('reactivating the current program reads as "Restart"', () => {
   const plan = buildActivationPlan({ activeProgramId: 'hybridhq_foundations', currentWeek: '4' }, 'hybridhq_foundations', deps);
   assert.equal(plan.mode, 'restart');
-  assert.match(plan.title, /^Restart Helyx Foundations\?$/);
+  assert.match(plan.title, /^Restart openHybrid Foundations\?$/);
 });
 
 // ---- Natural-language summary + missing-metadata fallbacks -----------------
@@ -104,7 +104,7 @@ test('resume plan names the prior program and restores its last week', () => {
   const plan = buildResumePlan(state, 'act_old', deps);
   assert.equal(plan.ok, true);
   assert.equal(plan.mode, 'resume');
-  assert.match(plan.title, /^Resume Helyx Foundations\?$/);
+  assert.match(plan.title, /^Resume openHybrid Foundations\?$/);
   assert.equal(plan.defaultStartWeek, 5);
   assert.deepEqual(plan.startWeekChoices.map((choice) => choice.week), [5]);
   assert.ok(plan.impact.some((item) => /original logged weeks/.test(item.text)));

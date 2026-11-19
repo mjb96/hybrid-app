@@ -10,13 +10,13 @@
   5. Keep "Last updated" accurate whenever you change data practices.
 -->
 
-# Helyx — Privacy Policy
+# openHybrid — Privacy Policy
 
 **Last updated: {{DATE}}**
 
-Helyx ("the app", "we", "us") is a strength-and-running training app. This
-policy explains what data Helyx handles, why, and your rights over it. We built
-Helyx to keep your data on your device by default and to sync only what you
+openHybrid ("the app", "we", "us") is a strength-and-running training app. This
+policy explains what data openHybrid handles, why, and your rights over it. We built
+openHybrid to keep your data on your device by default and to sync only what you
 choose to.
 
 **Data controller:** {{YOUR NAME OR COMPANY}}
@@ -26,13 +26,13 @@ choose to.
 
 ## 1. Summary (the short version)
 - Your training data lives **on your device**. There is no account system and
-  no cloud sync; Helyx does not receive your training history.
+  no cloud sync; openHybrid does not receive your training history.
 - We do **not** sell your data, show ads, or use advertising/behavioural analytics.
 - Health and location data are treated as **sensitive**. We minimise what we
   collect and never use it for advertising.
 - You can **export or delete** your data at any time.
 
-## 2. What data Helyx handles
+## 2. What data openHybrid handles
 
 ### 2.1 Data you enter or generate
 - **Training logs:** workouts, sets, reps, weights, RPE/RIR, running distance
@@ -42,14 +42,14 @@ choose to.
   reminder preferences.
 
 ### 2.2 Health & fitness data (sensitive)
-If you connect **Health Connect** (Android, optional), Helyx reads only the
+If you connect **Health Connect** (Android, optional), openHybrid reads only the
 supported fields you select: daily steps, sleep duration, resting heart rate,
 and heart-rate variability (HRV). This data powers your in-app recovery and
 training views and stays on the device. You can turn individual fields off in
-Helyx and revoke permission in Health Connect.
+openHybrid and revoke permission in Health Connect.
 
 ### 2.3 Location data (sensitive)
-If you use **GPS run tracking**, Helyx uses your device location **while a run
+If you use **GPS run tracking**, openHybrid uses your device location **while a run
 is active** to record your route, distance, and pace. On Android this runs in a
 foreground service with a visible notification while tracking, and stops when
 you end the run. Location is **not** collected in the background outside of an
@@ -57,27 +57,27 @@ active run, and is never used for advertising. Your saved routes are stored
 with the rest of your training data.
 
 ### 2.4 No account data
-Helyx has no account system. It does not ask for your name, email address or a
+openHybrid has no account system. It does not ask for your name, email address or a
 password, and it operates without a backend.
 
 ### 2.5 Diagnostics (crash reports)
 We use **Sentry** to receive error and crash reports so we can fix bugs. This
 reporting runs automatically in the distributed build; there is currently no
-in-app opt-out. Reports are **scrubbed** before sending: Helyx disables default
+in-app opt-out. Reports are **scrubbed** before sending: openHybrid disables default
 PII, removes request/user/device contexts, removes request bodies, redacts
-network URLs, and does not enable performance tracing. Helyx is designed not to
+network URLs, and does not enable performance tracing. openHybrid is designed not to
 send your training, health, route, or profile data in crash reports.
 
 ### 2.6 Data we do **not** collect
 No advertising identifiers, no advertising or behavioural analytics, no
-contacts, and no microphone access. Helyx only uses a photo you explicitly
+contacts, and no microphone access. openHybrid only uses a photo you explicitly
 choose as an avatar.
 
 ## 3. How your data is stored and synced
 - **On your device:** your training data is saved locally so the app works
   offline. On Android it is also mirrored into the app's private storage so a
   WebView storage eviction does not lose it.
-- **No cloud copy:** Helyx does not send your training, health or route data to
+- **No cloud copy:** openHybrid does not send your training, health or route data to
   a server. Moving devices is a deliberate JSON export/import or Android
   automatic backup.
 - Diagnostics sent to Sentry use HTTPS/TLS.
@@ -107,13 +107,13 @@ processed only with your explicit consent (by enabling the relevant feature).
 
 ## 6. Data retention
 - Local data stays until you delete it or uninstall the app.
-- Helyx holds no cloud copy of your training data.
+- openHybrid holds no cloud copy of your training data.
 - Crash reports are retained for {{SENTRY_RETENTION_PERIOD}} and then deleted.
 
 ## 7. Your rights
 Depending on where you live (e.g. EEA/UK), you have the right to access,
 correct, export (portability), delete, or restrict processing of your data, and
-to withdraw consent. Helyx lets you:
+to withdraw consent. openHybrid lets you:
 - **Export** your full data as a file (Settings → Export).
 - **Delete** local data in Settings → Reset All Data, or by clearing app data /
   uninstalling.
@@ -122,13 +122,13 @@ To exercise any right, contact {{CONTACT_EMAIL}}. You also have the right to
 complain to your local data-protection authority.
 
 ## 8. Deleting your data
-Helyx has no account to delete. Local data is removed by Settings → Reset All
+openHybrid has no account to delete. Local data is removed by Settings → Reset All
 Data, by clearing the app's storage, or by uninstalling. Android automatic
 backup files remain in the folder you chose until you delete them. If you have a
 privacy question about a crash report, contact **{{CONTACT_EMAIL}}**.
 
 ## 9. Children
-Helyx is not directed to children under {{MIN_AGE, e.g. 16}} and we do not
+openHybrid is not directed to children under {{MIN_AGE, e.g. 16}} and we do not
 knowingly collect their data.
 
 ## 10. International transfers

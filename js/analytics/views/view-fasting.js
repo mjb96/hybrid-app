@@ -659,7 +659,7 @@ export function renderFastingAnalytics(getState) {
       <article class="card-dark p-4 mb-3" style="text-align:center;padding:36px 20px;">
         <div style="font-size:2rem;margin-bottom:12px;">⏱️</div>
         <div style="font-size:0.95rem;font-weight:700;color:rgba(255,255,255,0.7);margin-bottom:8px;">No fasting data yet</div>
-        <div style="font-size:0.8rem;color:rgba(255,255,255,0.38);line-height:1.6;margin-bottom:20px;">Track your fast and Helyx shows your metabolic stages, streaks and how fasting links to your recovery.</div>
+        <div style="font-size:0.8rem;color:rgba(255,255,255,0.38);line-height:1.6;margin-bottom:20px;">Track your fast and openHybrid shows your metabolic stages, streaks and how fasting links to your recovery.</div>
         <button class="btn-action-block btn-blue" data-action="fast-start" style="max-width:280px;margin:0 auto;">Start your first fast</button>
       </article>
     `;

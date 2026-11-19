@@ -1,14 +1,14 @@
-package com.helyx.app
+package com.mjb96.openhybrid
 
 import java.time.LocalDate
 
 /** Pure validation and retention rules for automatic portable JSON backups. */
 object AutoBackupSafe {
     const val MAX_CONTENT_BYTES = 100 * 1024 * 1024
-    const val LATEST_NAME = "helyx-auto-latest.json"
+    const val LATEST_NAME = "openhybrid-auto-latest.json"
     private val REASON = Regex("^[a-z][a-z-]{0,31}$")
-    private val DAILY = Regex("^helyx-auto-(\\d{4}-\\d{2}-\\d{2})\\.json$")
-    private val WEEKLY = Regex("^helyx-auto-week-(\\d{4}-\\d{2}-\\d{2})\\.json$")
+    private val DAILY = Regex("^openhybrid-auto-(\\d{4}-\\d{2}-\\d{2})\\.json$")
+    private val WEEKLY = Regex("^openhybrid-auto-week-(\\d{4}-\\d{2}-\\d{2})\\.json$")
 
     data class Request(
         val content: String,
@@ -38,8 +38,8 @@ object AutoBackupSafe {
 
     fun names(dayKey: String, weekKey: String): Names = Names(
         latest = LATEST_NAME,
-        daily = "helyx-auto-$dayKey.json",
-        weekly = "helyx-auto-week-$weekKey.json",
+        daily = "openhybrid-auto-$dayKey.json",
+        weekly = "openhybrid-auto-week-$weekKey.json",
     )
 
     /** Oldest dated files beyond the bounded daily/weekly retention windows. */

@@ -1,10 +1,10 @@
 # Play Console — Data Safety form: fill-in guide
 
-This maps Helyx's actual data handling to the Play Console **Data Safety**
+This maps openHybrid's actual data handling to the Play Console **Data Safety**
 questionnaire so `[You]` can complete it quickly and accurately. Answers below
 reflect the app as built; re-check if data practices change.
 
-> Play's definition of **"collected"** = data transmitted off the device. Helyx
+> Play's definition of **"collected"** = data transmitted off the device. openHybrid
 > stores training, health, location, photos and profile data **on-device only**;
 > none of it is transmitted. The only automatic egress is the configured Sentry
 > crash reporter. Crash/diagnostic collection is therefore **Required** unless
@@ -17,7 +17,7 @@ Official references (re-check at submission time):
 
 ## Global answers
 - **Is all data encrypted in transit?** → **Yes** (HTTPS/TLS to Sentry, Google Fonts, and the tile server).
-- **Do you provide a way to request data deletion?** → **Not applicable to an account** (Helyx has no accounts). Local data is deleted in-app via Settings → Reset All Data, or by clearing app storage/uninstalling.
+- **Do you provide a way to request data deletion?** → **Not applicable to an account** (openHybrid has no accounts). Local data is deleted in-app via Settings → Reset All Data, or by clearing app storage/uninstalling.
 - **Data collected is required or optional?** → Only crash/diagnostic reporting leaves the device, and it is **Required** because the distributed build has no user opt-out.
 - **Do you share data with third parties?** → **Legal review required.** Sentry may qualify for Play's service-provider exception. The public OpenStreetMap tile service and Google Fonts must be classified before selecting **No sharing**.
 
@@ -43,18 +43,18 @@ for **Advertising or marketing** or sold.
 ## Health Connect specifics
 Play + Health Connect have an **additional** policy: apps reading Health Connect
 data must show an in-app privacy policy link and only request data types they
-use. Helyx requests exactly the four fields listed above, but the current app
+use. openHybrid requests exactly the four fields listed above, but the current app
 still needs the hosted privacy-policy link added to Settings before submission.
 
 ## Account deletion (Play requirement)
-Helyx has **no accounts**, so Play's account-deletion requirement does not apply.
+openHybrid has **no accounts**, so Play's account-deletion requirement does not apply.
 Local data is removed in Settings → Reset All Data, by clearing app storage, or
 by uninstalling. Automatic backup files remain in the folder the user chose until
 they delete them. Keep the privacy policy's deletion section honest if this
 changes.
 
 ## Privacy link and Health Connect
-Helyx requests exactly the four Health Connect fields listed above. The hosted
+openHybrid requests exactly the four Health Connect fields listed above. The hosted
 privacy-policy link must still be added to Settings before submission.
 
 ## Content rating & target audience (adjacent forms)

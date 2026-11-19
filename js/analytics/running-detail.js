@@ -32,7 +32,7 @@ export const RUNNING_RANGE_OPTIONS = Object.freeze([
 ]);
 
 const SOURCE_LABELS = Object.freeze({
-  fit: 'FIT import', garmin: 'Garmin import', gps: 'Helyx GPS', manual: 'Manual log', legacy: 'Legacy log',
+  fit: 'FIT import', garmin: 'Garmin import', gps: 'openHybrid GPS', manual: 'Manual log', legacy: 'Legacy log',
 });
 
 function metric(id, label, unit, scope, calculation, options = {}) {
@@ -103,7 +103,7 @@ export const RUNNING_METRICS = Object.freeze([
   }),
   metric('running.threshold-pace', 'Threshold Pace', 'pace', 'configured', 'The athlete-entered threshold pace from Settings.', {
     color: '#f59e0b', series: 'none', source: 'Settings', empty: 'Set threshold pace in Settings to use this metric.',
-    limitations: ['Helyx does not yet retain threshold-setting history, so no honest trend series is available.'],
+    limitations: ['openHybrid does not yet retain threshold-setting history, so no honest trend series is available.'],
   }),
   metric('running.threshold-heart-rate', 'Threshold Heart Rate', 'heart-rate', 'rolling-28d', 'Estimate equal to 87% of the highest recorded maximum heart rate in the trailing 28 days.', {
     color: '#ef4444', source: 'Dated activities with maximum heart rate', empty: 'Import heart-rate-enabled activities to estimate threshold heart rate.',
@@ -129,7 +129,7 @@ export const RUNNING_METRICS = Object.freeze([
   }),
   metric('running.race-projections', 'Race Projections', 'projection', 'current-model', 'Current race-time estimates derived from the effective threshold pace/VDOT model.', {
     color: '#f59e0b', series: 'none', source: 'Current threshold pace or recent VDOT estimate', empty: 'Establish VDOT to unlock race projections.',
-    limitations: ['Confidence intervals and course/weather adjustments remain deferred roadmap work.', 'Helyx does not retain historical projection snapshots.'],
+    limitations: ['Confidence intervals and course/weather adjustments remain deferred roadmap work.', 'openHybrid does not retain historical projection snapshots.'],
   }),
   metric('running.personal-bests', 'Distance Personal Bests', 'count', 'lifetime', 'Fastest eligible dated performance inside the 5K, 10K, half-marathon and marathon distance brackets.', {
     color: '#f59e0b', series: 'record-progression', source: 'Dated run sessions with distance and duration', empty: 'Log a qualifying race-distance run to establish a personal best.'

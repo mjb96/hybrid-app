@@ -1,4 +1,4 @@
-package com.helyx.app
+package com.mjb96.openhybrid
 
 import android.app.NotificationManager
 import android.app.PendingIntent

@@ -93,7 +93,7 @@ export const PROGRAMS = {
     name: "Sub-20 5K Hybrid Engine",
     totalWeeks: 9,
     dossier: {
-      creator: "Helyx Built-in",
+      creator: "openHybrid Built-in",
       focus: "Concurrent Strength & Aerobic Capacity",
       philosophy: "A heavily balanced protocol designed to push your 5K pace below 20 minutes while maintaining maximal strength. It utilizes a base accumulation phase before shifting into lactate threshold intervals and heavy 5-rep max lifts."
     },

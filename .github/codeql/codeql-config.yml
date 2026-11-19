@@ -1,4 +1,4 @@
-name: Helyx CodeQL config
+name: openHybrid CodeQL config
 
 paths-ignore:
   - js/vendor

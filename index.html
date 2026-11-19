@@ -7,7 +7,7 @@
        store-review heuristics. Modern mobile browsers no longer double-tap-zoom
        form fields, so nothing here needs the old lock. -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Helyx</title>
+  <title>openHybrid</title>
 
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#070a12">
@@ -39,7 +39,7 @@
 
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Helyx">
+  <meta name="apple-mobile-web-app-title" content="openHybrid">
   <link rel="apple-touch-icon" href="./icon-512.png">
 
   <!-- Leaflet is loaded on demand (js/ui/leaflet-loader.js) only on map screens,
@@ -455,7 +455,7 @@
             <button class="btn-action-block btn-ghost mt-0" data-action="ack-overtraining" style="flex:1;">I understand</button>
             <button id="homeOvertrainingDeload" class="btn-action-block btn-red mt-0" data-action="execute-deload-week" style="flex:1;">Apply deload week</button>
           </div>
-          <p class="text-muted" style="font-size:0.66rem;line-height:1.4;margin:10px 0 0;opacity:0.8;">These are training-load signals, not a medical assessment. Helyx is a fitness tool, not medical advice — see a professional if you feel unwell.</p>
+          <p class="text-muted" style="font-size:0.66rem;line-height:1.4;margin:10px 0 0;opacity:0.8;">These are training-load signals, not a medical assessment. openHybrid is a fitness tool, not medical advice — see a professional if you feel unwell.</p>
         </article>
 
         <article id="homeDeloadSuggestionCard" class="card-dark home-alert-card" style="display:none;border-left:3px solid var(--color-amber);">
@@ -1250,30 +1250,30 @@
       <div class="ob-card">
         <div class="ob-entry-panel" id="obRecoveryGateway">
           <div class="ob-emoji">⚡</div>
-          <h1 class="ob-heading">Welcome to<br>Helyx</h1>
+          <h1 class="ob-heading">Welcome to<br>openHybrid</h1>
           <p class="ob-sub">Build strength. Run faster. Keep your training history yours.</p>
 
           <button class="ob-cta ob-entry-primary" data-action="ob-start-new">
-            <span>Set up Helyx</span>
+            <span>Set up openHybrid</span>
             <small>Start a new profile on this device</small>
           </button>
 
           <div class="ob-returning-card" aria-labelledby="obReturningTitle">
-            <h2 id="obReturningTitle">Already trained with Helyx?</h2>
+            <h2 id="obReturningTitle">Already trained with openHybrid?</h2>
             <p>Recover your existing profile instead of setting up again.</p>
             <button class="ob-recovery-action ob-recovery-action--backup" data-action="ob-import-backup">
               <span class="ob-recovery-action__icon" aria-hidden="true">↥</span>
-              <span><strong>Restore backup file</strong><small>Import your Helyx JSON · works offline</small></span>
+              <span><strong>Restore backup file</strong><small>Import your openHybrid JSON · works offline</small></span>
             </button>
-            <input type="file" id="onboardingImportFile" aria-label="Choose Helyx backup file to restore" accept=".json,application/json" class="hidden-input">
+            <input type="file" id="onboardingImportFile" aria-label="Choose openHybrid backup file to restore" accept=".json,application/json" class="hidden-input">
           </div>
-          <p class="ob-entry-warning">Setting up Helyx starts a new empty profile. Restore first if you have existing training data.</p>
+          <p class="ob-entry-warning">Setting up openHybrid starts a new empty profile. Restore first if you have existing training data.</p>
         </div>
 
         <div class="ob-entry-panel" id="obNewProfileSetup" hidden>
           <button class="ob-back-link ob-entry-back" data-action="ob-back-recovery">← Back to restore options</button>
           <div class="ob-emoji">⚡</div>
-          <h1 class="ob-heading">Create your<br>Helyx profile</h1>
+          <h1 class="ob-heading">Create your<br>openHybrid profile</h1>
           <p class="ob-sub">Build strength. Run faster. Let's set you up.</p>
           <div class="ob-field">
             <label class="ob-label" for="obName">What's your name?</label>
@@ -1420,7 +1420,7 @@
         <p class="ob-sub" style="margin-bottom:16px;">Here's your starting Hybrid Score</p>
         <div id="obScoreReveal" class="ob-score-reveal"></div>
         <p class="ob-sub" style="margin-top:16px;">Provisional — it sharpens into the real thing as you log sessions and check-ins.</p>
-        <button class="ob-cta" data-action="ob-finish" style="margin-top:20px;">Enter Helyx →</button>
+        <button class="ob-cta" data-action="ob-finish" style="margin-top:20px;">Enter openHybrid →</button>
       </div>
     </div>
 
@@ -1543,7 +1543,7 @@
         <!-- Modules -->
         <div class="settings-section" id="settingsModules">
           <div class="settings-section-label">Modules</div>
-          <div class="settings-hint">Hide parts of Helyx you do not use. Your data stays on this device and can be shown again at any time.</div>
+          <div class="settings-hint">Hide parts of openHybrid you do not use. Your data stays on this device and can be shown again at any time.</div>
           <div class="settings-row">
             <label class="settings-row-label">Running &amp; GPS</label>
             <label class="settings-switch"><input type="checkbox" data-module-toggle="running" checked><span class="settings-switch-track"></span></label>
@@ -1585,7 +1585,7 @@
         <!-- Equipment -->
         <div class="settings-section">
           <div class="settings-section-label">Equipment</div>
-          <div class="settings-hint">Different gyms need different kits. Helyx uses the active profile for program fit and exercise swaps.</div>
+          <div class="settings-hint">Different gyms need different kits. openHybrid uses the active profile for program fit and exercise swaps.</div>
           <div class="settings-row">
             <label class="settings-row-label" for="settingsEquipmentProfile">Profile</label>
             <select class="settings-input settings-profile-select" id="settingsEquipmentProfile" aria-label="Equipment profile"></select>
@@ -1769,7 +1769,7 @@
           </div>
 
           <button class="settings-action-btn" id="hcSyncNowBtn" data-action="hc-sync-now" style="display:none;">Sync Now</button>
-          <p class="hc-note" id="hcNote">Requires Helyx Android app with Health Connect permission granted.</p>
+          <p class="hc-note" id="hcNote">Requires openHybrid Android app with Health Connect permission granted.</p>
         </div>
 
         <!-- App Info -->
@@ -1777,11 +1777,11 @@
           <div class="settings-section-label">App</div>
           <div class="settings-row settings-row-info">
             <span class="settings-row-label">Version</span>
-            <span class="text-xs text-muted" id="settingsAppVersion">Helyx</span>
+            <span class="text-xs text-muted" id="settingsAppVersion">openHybrid</span>
           </div>
           <div class="settings-row">
             <span class="settings-row-label">Source code</span>
-            <a class="settings-link" href="https://github.com/mjb96/hybrid-app"
+            <a class="settings-link" href="https://github.com/mjb96/openHybrid"
                target="_blank" rel="noopener noreferrer">GitHub · AGPL-3.0</a>
           </div>
         </div>

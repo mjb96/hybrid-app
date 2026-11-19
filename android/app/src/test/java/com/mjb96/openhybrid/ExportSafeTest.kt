@@ -1,4 +1,4 @@
-package com.helyx.app
+package com.mjb96.openhybrid
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -10,8 +10,8 @@ class ExportSafeTest {
     @Test
     fun acceptsSupportedTextExports() {
         for ((name, mime) in listOf(
-            "helyx-training-2026-07-14.json" to "application/json",
-            "helyx-data-export.csv" to "text/csv",
+            "openhybrid-training-2026-07-14.json" to "application/json",
+            "openhybrid-data-export.csv" to "text/csv",
             "notes.txt" to "text/plain",
         )) {
             val request = ExportSafe.request(name, "content", mime, "file_123")

@@ -1,4 +1,4 @@
-package com.helyx.app
+package com.mjb96.openhybrid
 
 import android.content.Context
 import android.webkit.JavascriptInterface
@@ -119,6 +119,6 @@ class StateMirrorBridge(
     }
 
     private companion object {
-        const val REGISTRY = "__helyxStateMirrorCB"
+        const val REGISTRY = "__openhybridStateMirrorCB"
     }
 }

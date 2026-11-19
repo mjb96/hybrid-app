@@ -1,6 +1,6 @@
 # Hybrid Score™ — Design & Implementation Spec
 
-**The signature feature of Helyx.** One number, updated daily, that answers:
+**The signature feature of openHybrid.** One number, updated daily, that answers:
 *"How well am I progressing as a hybrid athlete — and what should I do about it today?"*
 
 Status: **design + engine implemented** (this doc is the source of truth for the model).

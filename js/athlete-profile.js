@@ -346,7 +346,7 @@ function shareProfileCard() {
   // Brand
   ctx.fillStyle = 'rgba(196,181,253,0.92)';
   ctx.font = `700 36px ${FONT}`;
-  ctx.fillText('⚡ HELYX', W / 2, 116);
+  ctx.fillText('⚡ OPENHYBRID', W / 2, 116);
 
   // Avatar
   ctx.beginPath(); ctx.arc(W / 2, 262, 82, 0, Math.PI * 2);
@@ -421,14 +421,14 @@ function shareProfileCard() {
   ctx.fillText(bodyWeight ? `${bodyWeight} ${unit} · Hybrid Athlete` : 'Hybrid Athlete', W / 2, 1250);
 
   const finish = (blob) => {
-    const file = blob && typeof File !== 'undefined' ? new File([blob], 'helyx-profile.png', { type: 'image/png' }) : null;
+    const file = blob && typeof File !== 'undefined' ? new File([blob], 'openhybrid-profile.png', { type: 'image/png' }) : null;
     if (file && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-      navigator.share({ files: [file], title: 'My Helyx Profile', text: `${name} · ${shareLevel.name} (Lv ${shareLevel.tier})` })
+      navigator.share({ files: [file], title: 'My openHybrid Profile', text: `${name} · ${shareLevel.name} (Lv ${shareLevel.tier})` })
         .catch(() => {});
     } else {
       const a = document.createElement('a');
       a.href = canvas.toDataURL('image/png');
-      a.download = 'helyx-profile.png';
+      a.download = 'openhybrid-profile.png';
       a.click();
       showToast('Profile card saved');
     }

@@ -66,7 +66,7 @@ export function initSettings(getStateFn) {
   // Single source of truth for the displayed version (aligns with package.json
   // + Android versionName). No hardcoded string to drift out of date.
   const vEl = document.getElementById('settingsAppVersion');
-  if (vEl) vEl.textContent = `Helyx v${APP_VERSION}`;
+  if (vEl) vEl.textContent = `openHybrid v${APP_VERSION}`;
 }
 
 // ==========================================
@@ -288,7 +288,7 @@ async function _syncAutomaticBackupUI() {
   label.textContent = configured ? 'Automatic JSON backup on' : 'Automatic backup not configured';
   detail.textContent = configured
     ? `${status.folderName || 'Selected folder'} · ${status.lastError || _friendlyBackupTime(status.lastBackupAt)}`
-    : 'Choose a folder once; Helyx will keep latest, seven daily and four weekly files.';
+    : 'Choose a folder once; openHybrid will keep latest, seven daily and four weekly files.';
   if (folderBtn) {
     folderBtn.style.display = '';
     folderBtn.textContent = configured ? 'Change Automatic Backup Folder' : 'Choose Automatic Backup Folder';
@@ -762,7 +762,7 @@ export async function exportData() {
     return;
   }
   const result = await saveTextExport({
-    filename: `helyx-training-${todayKey()}.json`,
+    filename: `openhybrid-training-${todayKey()}.json`,
     content: backup.content,
     mime: 'application/json',
   });
@@ -799,7 +799,7 @@ export async function backupNow() {
 export async function turnOffAutomaticBackup() {
   const ok = await confirmModal({
     title: 'Turn off automatic backups?',
-    message: 'Existing JSON files remain in your chosen folder. Helyx will stop writing new ones.',
+    message: 'Existing JSON files remain in your chosen folder. openHybrid will stop writing new ones.',
     confirmLabel: 'Turn off',
   });
   if (!ok) return;
@@ -970,7 +970,7 @@ export function handleImportFile(file) {
 export async function confirmResetAllData() {
   const ok = await confirmModal({
     title: 'Reset all training data?',
-    message: 'Every logged workout, run and setting in Helyx on this device will be cleared. JSON files already saved in your chosen folder are not deleted and can be imported again.',
+    message: 'Every logged workout, run and setting in openHybrid on this device will be cleared. JSON files already saved in your chosen folder are not deleted and can be imported again.',
     confirmLabel: 'Reset everything', danger: true,
   });
   if (!ok) return;

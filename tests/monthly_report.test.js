@@ -51,7 +51,7 @@ test('buildMonthlyReport: 28-day totals, deltas, score avg + trend', () => {
 test('reportToText: numbers-first monthly copy', () => {
   const r = buildMonthlyReport(makeState(), DAYS, null, NOW);
   const txt = reportToText(r, 'km');
-  assert.match(txt, /Last 30 days on Helyx: 5 sessions/);
+  assert.match(txt, /Last 30 days on openHybrid: 5 sessions/);
   assert.match(txt, /Avg Hybrid Score 82 \(\+8 vs prior month\)/);
   assert.match(reportToText({ hasData: false }), /will build as you train/);
 });

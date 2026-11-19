@@ -1,5 +1,5 @@
 // ============================================================================
-// Helyx — Program-day preview viewport check (real-browser geometry)
+// openHybrid — Program-day preview viewport check (real-browser geometry)
 // ----------------------------------------------------------------------------
 // jsdom/node tests can't verify pixel geometry, so this drives the REAL app in
 // a headless Chromium and asserts the layout contract that the day-preview

@@ -15,7 +15,7 @@
 // APK looked more reliable than the PWA. Hashing asset CONTENT into CACHE_NAME
 // makes any asset edit change sw.js, so the upgrade path fires on its own.
 //
-// The manual `helyx-vNN` prefix is preserved and still hand-bumpable; it is no
+// The manual `openhybrid-vNN` prefix is preserved and still hand-bumpable; it is no
 // longer load-bearing.
 //
 //   node scripts/gen-precache.mjs         # rewrite sw.js
@@ -84,7 +84,7 @@ export function computeAssetHash(assets = computeRequiredAssets()) {
   return digest.digest('hex').slice(0, 12);
 }
 
-/** Replace (or append) the hash suffix while keeping the human `helyx-vNN` prefix. */
+/** Replace (or append) the hash suffix while keeping the human `openhybrid-vNN` prefix. */
 export function cacheNameFor(current, hash) {
   return `${current.replace(HASH_SUFFIX, '')}-h${hash}`;
 }

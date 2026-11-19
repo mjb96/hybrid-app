@@ -233,7 +233,7 @@ function _fireWorkoutReminder() {
     "Your training plan is waiting. Let's go. ⚡",
   ];
   const body = messages[Math.floor(Math.random() * messages.length)];
-  notify('Helyx', body, 'training-reminder');
+  notify('openHybrid', body, 'training-reminder');
 }
 
 // ── Overtraining warning (R10 — fired from Home when risk is high) ────────────

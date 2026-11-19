@@ -1,4 +1,4 @@
-package com.helyx.app
+package com.mjb96.openhybrid
 
 /** Pure validation/escaping at the privileged text-export bridge boundary. */
 object ExportSafe {

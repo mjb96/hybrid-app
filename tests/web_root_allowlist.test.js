@@ -13,7 +13,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { stageWebRoot, WEB_ROOT_FORBIDDEN } from '../scripts/stage-web-root.mjs';
 
-const dest = mkdtempSync(join(tmpdir(), 'helyx-webroot-'));
+const dest = mkdtempSync(join(tmpdir(), 'openhybrid-webroot-'));
 stageWebRoot(dest);
 after(() => { try { rmSync(dest, { recursive: true, force: true }); } catch { /* ignore */ } });
 

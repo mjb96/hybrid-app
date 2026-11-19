@@ -119,7 +119,7 @@ export function resolveProgramForState(state, id) {
       totalWeeks: catalogEntry.durationWeeks || 12,
       weeklyVolModifiers: catalogEntry.weeklyVolModifiers || {},
       dossier: catalogEntry.dossier || {
-        creator: catalogEntry.author?.name || 'Helyx',
+        creator: catalogEntry.author?.name || 'openHybrid',
         focus:   catalogEntry.tagline || '',
         philosophy: catalogEntry.description || '',
       },
@@ -655,9 +655,9 @@ function memoizedLoadMetrics(state) {
 let _localTimer = null;
 let _localPending = false;
 const LOCAL_DEBOUNCE_MS = 400;
-// Dev instrumentation: set localStorage.helyxPersistDebug='1' to log slow writes.
+// Dev instrumentation: set localStorage.openhybridPersistDebug='1' to log slow writes.
 let _persistDebug = false;
-try { _persistDebug = typeof localStorage !== 'undefined' && localStorage.getItem('helyxPersistDebug') === '1'; } catch { /* ignore */ }
+try { _persistDebug = typeof localStorage !== 'undefined' && localStorage.getItem('openhybridPersistDebug') === '1'; } catch { /* ignore */ }
 const PERSIST_WARN_MS = 16; // one frame budget
 
 function _now() { return (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(); }
@@ -812,7 +812,7 @@ export async function pullEngineDataFromStorage() {
     settings: { ...baseDefaults.settings, ...(localData && localData.settings) },
   };
 
-  // Whether this device had a real saved Helyx blob when the app loaded. This is
+  // Whether this device had a real saved openHybrid blob when the app loaded. This is
   // the honest "returning user" signal for onboarding: a brand-new install has
   // none. It must be read here, before verifyWeekStorageSchema() seeds an empty
   // week scaffold — otherwise every fresh user looks like they already have data

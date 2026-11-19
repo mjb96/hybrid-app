@@ -1,4 +1,4 @@
-package com.helyx.app
+package com.mjb96.openhybrid
 
 import android.content.Context
 import android.content.Intent
@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicReference
 /**
  * Android-only automatic JSON backup adapter.
  *
- * The athlete explicitly chooses a Storage Access Framework folder once. Helyx
+ * The athlete explicitly chooses a Storage Access Framework folder once. openHybrid
  * then writes portable exports into that shared folder without requesting a new
  * destination for every session. Files remain there if app/WebView data is
  * cleared, while the persisted folder permission can be safely re-established.
@@ -78,7 +78,7 @@ class AutoBackupBridge(
                     if (previousUri != null && previousUri != uri) releasePermission(previousUri)
                 }.exceptionOrNull()
                 if (error != null) {
-                    resolve(callback, JSONObject().put("status", "error").put("message", "Helyx could not retain access to that folder."))
+                    resolve(callback, JSONObject().put("status", "error").put("message", "openHybrid could not retain access to that folder."))
                 } else {
                     resolveStatus(callback, "configured")
                 }
@@ -162,8 +162,8 @@ class AutoBackupBridge(
                 .getOrDefault(false)
             if (deleted) children.remove(name) else pruneWarning = true
         }
-        val dailyCount = children.keys.count { Regex("^helyx-auto-\\d{4}-\\d{2}-\\d{2}\\.json$").matches(it) }
-        val weeklyCount = children.keys.count { Regex("^helyx-auto-week-\\d{4}-\\d{2}-\\d{2}\\.json$").matches(it) }
+        val dailyCount = children.keys.count { Regex("^openhybrid-auto-\\d{4}-\\d{2}-\\d{2}\\.json$").matches(it) }
+        val weeklyCount = children.keys.count { Regex("^openhybrid-auto-week-\\d{4}-\\d{2}-\\d{2}\\.json$").matches(it) }
         return WriteDetails(dailyCount, weeklyCount, pruneWarning)
     }
 
@@ -249,7 +249,7 @@ class AutoBackupBridge(
     }
 
     private companion object {
-        const val PREFS = "helyx_auto_backup"
+        const val PREFS = "openhybrid_auto_backup"
         const val KEY_FOLDER_URI = "folder_uri"
         const val KEY_FOLDER_NAME = "folder_name"
         const val KEY_LAST_AT = "last_backup_at"

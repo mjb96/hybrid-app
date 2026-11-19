@@ -2,7 +2,7 @@
 // =============================================================================
 // WEEKLY AGGREGATE — analytics/weekly-aggregate.js
 //
-// The canonical CALENDAR-week analytics source. Helyx stores logged training by
+// The canonical CALENDAR-week analytics source. openHybrid stores logged training by
 // PROGRAM week (`state.weeks["N"]`) + weekday key (mon..sun), each anchored to a
 // real calendar date via `weeks[N].dates[day]` (stamped at log time). A program
 // week is NOT the same thing as a calendar week: `state.currentWeek` only

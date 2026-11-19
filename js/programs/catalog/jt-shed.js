@@ -166,7 +166,7 @@ export const LEGACY_JT_SHED_PROGRAMS = [
     name: 'Jacked & Tan: Shed Edition',
     tagline: 'A five-day home-gym adaptation of Jacked & Tan 2.0',
     description: 'A five-day home-gym adaptation of Jacked & Tan 2.0. Four sessions are built around back squat, bench press, deadlift and overhead press. The fifth session develops the back, arms, delts and core without adding another highly fatiguing main-lift day.',
-    author: { name: 'Helyx', type: 'community', verified: false },
+    author: { name: 'openHybrid', type: 'community', verified: false },
     category: 'hypertrophy',
     subcategory: 'strength-hypertrophy',
     tags: ['intermediate', 'strength', 'hypertrophy', 'muscle-gain', 'body-composition', 'work-capacity', 'home-gym', 'jacked-and-tan', 'tiered', '5-day'],
@@ -192,7 +192,7 @@ export const LEGACY_JT_SHED_PROGRAMS = [
     dayExercises,
     trainingMaxLifts: ['Back Squat', 'Barbell Bench Press', 'Conventional Deadlift', 'Standing Barbell Overhead Press', 'Romanian Deadlift', 'Front Squat', 'Close-Grip Bench Press'],
     progressionModel: 'jt-shed',
-    dossier: { creator: 'Helyx', focus: 'Strength + Hypertrophy (home gym)', philosophy: 'Adapt the Jacked & Tan 2.0 tier structure to a home gym: four main-lift days plus a lower-fatigue back/arms/delts/core day.' },
+    dossier: { creator: 'openHybrid', focus: 'Strength + Hypertrophy (home gym)', philosophy: 'Adapt the Jacked & Tan 2.0 tier structure to a home gym: four main-lift days plus a lower-fatigue back/arms/delts/core day.' },
   },
 ];
 
@@ -352,7 +352,7 @@ const JT_SHED_SIMPLIFIED_PROGRAMS = [
     name: 'Jacked & Tan: Shed Edition — Simplified',
     tagline: 'A straightforward 12-week strength and hypertrophy program for a barbell, dumbbells, bands and a pull-up bar.',
     description: 'A simplified home- or shed-gym adaptation inspired by Jacked & Tan’s volume-to-strength progression. It uses fixed rep blocks, RIR guidance, double progression, planned deloads and a controlled Week 12 rep-PR assessment without daily rep-max calculations.',
-    author: { name: 'Helyx', type: 'community', verified: false },
+    author: { name: 'openHybrid', type: 'community', verified: false },
     category: 'hypertrophy',
     subcategory: 'strength-hypertrophy',
     tags: ['intermediate', 'strength', 'hypertrophy', 'muscle-gain', 'body-composition', 'work-capacity', 'home-gym', 'jacked-and-tan', 'fixed-rep-blocks', 'double-progression', '5-day'],
@@ -378,7 +378,7 @@ const JT_SHED_SIMPLIFIED_PROGRAMS = [
     trainingMaxLifts: [],
     progressionModel: 'jt-shed-simplified',
     dossier: {
-      creator: 'Helyx',
+      creator: 'openHybrid',
       focus: 'Strength + Hypertrophy (home or shed gym)',
       philosophy: 'Use straightforward fixed-rep blocks, planned deloads, RIR guidance and double progression without daily rep-max calculations.',
     },

@@ -1,7 +1,7 @@
 // ==========================================
 // PROGRAM ATTRIBUTION TEST (tests/attribution.test.js)
 // ------------------------------------------
-// Helyx has no creator-verification mechanism, so the UI must NEVER imply a
+// openHybrid has no creator-verification mechanism, so the UI must NEVER imply a
 // named coach verified/endorsed a program. These prove the centralised
 // attribution wording is accurate and neutral, and that no catalog program
 // still carries a "verified" claim in the rendered output.
@@ -11,9 +11,9 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { programAttribution } from '../js/programs/attribution.js';
 
-test('official (first-party) programs read "by Helyx"', () => {
-  assert.deepEqual(programAttribution({ author: { name: 'Helyx', type: 'official' } }),
-    { text: 'by Helyx', kind: 'official' });
+test('official (first-party) programs read "by openHybrid"', () => {
+  assert.deepEqual(programAttribution({ author: { name: 'openHybrid', type: 'official' } }),
+    { text: 'by openHybrid', kind: 'official' });
 });
 
 test('named-coach programs read "Inspired by …" (not authored/endorsed)', () => {

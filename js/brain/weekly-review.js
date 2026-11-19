@@ -147,7 +147,7 @@ export function reviewToText(r, distUnit = 'km', weightUnit = 'kg') {
     `${r.totals.sessions} session${r.totals.sessions === 1 ? '' : 's'}`,
   ];
   if (r.totals.prCount > 0) bits.push(`${r.totals.prCount} PR${r.totals.prCount === 1 ? '' : 's'} 🏆`);
-  let txt = `Week ${r.wkNum} on Helyx: ${bits.join(' · ')}.`;
+  let txt = `Week ${r.wkNum} on openHybrid: ${bits.join(' · ')}.`;
   if (r.arc.hasData) txt += ` Hybrid Score ${r.arc.end}${r.arc.delta !== 0 ? ` (${r.arc.delta > 0 ? '+' : ''}${r.arc.delta} this week)` : ''}.`;
   txt += ` Next week's focus — ${r.focus.area}: ${r.focus.text}`;
   return txt;

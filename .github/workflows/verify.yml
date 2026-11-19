@@ -77,12 +77,27 @@ jobs:
         env:
           ANDROID_HOME: /usr/local/lib/android/sdk
           ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+          GRADLE_OPTS: "-Dorg.gradle.internal.repository.max.retries=5 -Dorg.gradle.internal.repository.initial.backoff=2000"
         run: |
-          # Maven Central and the Actions cache can return transient 429/5xx
-          # responses. Retry once so an external blip does not block a Pages
-          # deploy or a release; a real test/lint failure still fails twice.
-          if ! gradle testDebugUnitTest lintDebug assembleDebug --no-daemon; then
-            echo "::warning::Gradle failed; retrying once for a transient dependency or cache error."
-            sleep 20
-            gradle testDebugUnitTest lintDebug assembleDebug --no-daemon
-          fi
+          set -o pipefail
+          # Maven Central rate-limits shared GitHub runner IPs (429). The
+          # Google-hosted mirror in settings.gradle.kts is the primary fix;
+          # retry only dependency-resolution failures with backoff. A real
+          # test/lint failure still fails immediately.
+          attempt=1
+          while [ "$attempt" -le 3 ]; do
+            echo "Android build attempt $attempt/3"
+            if gradle testDebugUnitTest lintDebug assembleDebug --no-daemon --max-workers=2 2>&1 | tee /tmp/openhybrid-verify-build.log; then
+              exit 0
+            fi
+            if ! grep -qE "429|Too Many Requests|Could not resolve|Could not GET" /tmp/openhybrid-verify-build.log; then
+              echo "::error::Gradle failed for a non-dependency reason."
+              exit 1
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "::error::Gradle still blocked by dependency resolution after 3 attempts."
+              exit 1
+            fi
+            sleep $((attempt * 20))
+            attempt=$((attempt + 1))
+          done

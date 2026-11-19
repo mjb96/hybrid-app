@@ -4,7 +4,7 @@ import { browserIsRequired, createBrowserContext } from '../scripts/browser-runt
 
 test('browser checks are mandatory with the CI flag or environment gate', () => {
   assert.equal(browserIsRequired(['node', 'check.mjs', '--required'], {}), true);
-  assert.equal(browserIsRequired(['node', 'check.mjs'], { HELYX_BROWSER_REQUIRED: '1' }), true);
+  assert.equal(browserIsRequired(['node', 'check.mjs'], { OPENHYBRID_BROWSER_REQUIRED: '1' }), true);
   assert.equal(browserIsRequired(['node', 'check.mjs'], {}), false);
 });
 

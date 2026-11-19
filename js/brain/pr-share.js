@@ -15,7 +15,7 @@ export function prShareCaption(pr, state) {
   const unit = state?.settings?.weightUnit || 'kg';
   const name = pr?.name || 'a lift';
   const e1 = pr?.e1rm != null ? `${pr.e1rm}${unit}` : 'a new best';
-  return `New PR 🏆 ${name} — estimated 1RM ${e1}. Onto the next one. #Helyx`;
+  return `New PR 🏆 ${name} — estimated 1RM ${e1}. Onto the next one. #openHybrid`;
 }
 
 /** Pick the biggest PR (highest e1RM) from a recap's lifts, or null. */
@@ -61,7 +61,7 @@ export function drawPRCard(ctx, W, H, pr, state) {
   // Wordmark
   ctx.fillStyle = '#6b7688';
   ctx.font = '700 40px system-ui, sans-serif';
-  ctx.fillText('HELYX', W / 2, 1280);
+  ctx.fillText('OPENHYBRID', W / 2, 1280);
 }
 
 /** @param {any} pr @param {any} state @param {{showToast?:Function}} [opts] */
@@ -78,7 +78,7 @@ export function sharePRCard(pr, state, { showToast } = {}) {
   catch (_) { toast('Could not create the card'); return; }
 
   const caption = prShareCaption(pr, state);
-  const fname = 'helyx-pr.png';
+  const fname = 'openhybrid-pr.png';
   const finish = (blob) => {
     const file = blob && typeof File !== 'undefined' ? new File([blob], fname, { type: 'image/png' }) : null;
     if (file && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {

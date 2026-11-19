@@ -1,4 +1,4 @@
-package com.helyx.app
+package com.mjb96.openhybrid
 
 import java.io.DataInputStream
 import java.io.EOFException
@@ -144,7 +144,7 @@ class FileGpsSessionJournal(private val directory: File) : GpsSessionJournal {
         }
         val tmp = File(directory, "active.meta.tmp")
         java.io.FileOutputStream(tmp).use { output ->
-            props.store(output, "Helyx active GPS session")
+            props.store(output, "openHybrid active GPS session")
             output.flush()
             output.fd.sync()
         }

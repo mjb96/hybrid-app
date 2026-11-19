@@ -1,4 +1,4 @@
-package com.helyx.app
+package com.mjb96.openhybrid
 
 import java.io.File
 import java.io.FileOutputStream
@@ -17,9 +17,9 @@ import java.io.FileOutputStream
  * Android (see StateMirrorSafeTest).
  */
 object StateMirrorSafe {
-    const val FILE_NAME = "helyx-state.json"
-    const val BACKUP_NAME = "helyx-state.json.bak"
-    const val TEMP_NAME = "helyx-state.json.tmp"
+    const val FILE_NAME = "openhybrid-state.json"
+    const val BACKUP_NAME = "openhybrid-state.json.bak"
+    const val TEMP_NAME = "openhybrid-state.json.tmp"
 
     /** The state is well under 2 MB; this only stops a pathological bridge call. */
     const val MAX_BYTES = 32 * 1024 * 1024

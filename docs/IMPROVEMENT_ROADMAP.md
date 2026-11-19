@@ -1,4 +1,4 @@
-# Helyx Product Improvement Roadmap
+# openHybrid Product Improvement Roadmap
 
 > Product and engineering source of truth.
 >
@@ -7,7 +7,7 @@
 
 ## 1. Product objective
 
-Make Helyx feel like the most natural way to combine strength and running:
+Make openHybrid feel like the most natural way to combine strength and running:
 
 - obvious without being simplistic;
 - fast during training;
@@ -19,7 +19,7 @@ The active goal is **not** Play Store release. Release work is parked while the
 core product is improved. The next milestone is an app that feels coherent and
 effortless in repeated personal use, not an app with more features.
 
-Helyx should answer three questions exceptionally well:
+openHybrid should answer three questions exceptionally well:
 
 1. **What should I do today?**
 2. **How do I log it with minimal friction?**
@@ -66,7 +66,7 @@ Everything on a primary screen must help answer one of those questions.
 
 ### Product diagnosis
 
-Helyx does not need a broad redesign or a new visual identity. It needs
+openHybrid does not need a broad redesign or a new visual identity. It needs
 **progressive disclosure, clearer hierarchy, fewer competing actions, and
 stronger continuity between planning, training, and review**.
 
@@ -334,7 +334,7 @@ The visible information architecture can change without a risky route rewrite:
 
 **Status: FOUNDATION COMPLETE — In Focus polish remains a later bounded pass**
 
-**Outcome:** opening Helyx immediately answers what matters today.
+**Outcome:** opening openHybrid immediately answers what matters today.
 
 ### 1A. Navigation
 
@@ -1624,6 +1624,14 @@ Work in this order unless user evidence changes it:
 Avoid parallel redesign of every screen. Each step should be usable and
 testable on its own.
 
+- **2026-11-19 — Renamed Helyx to openHybrid.**
+  - Full identity rename: UI, docs, notifications, share/export filenames,
+    service-worker cache prefix, Sentry release and release artifacts.
+  - Android application ID and namespace moved to `com.mjb96.openhybrid`; the
+    Kotlin source/test packages moved with them. This is a new app identity, so
+    the README documents export/restore for existing installs.
+  - Repository links point at `mjb96/openHybrid`; the GitHub repository is
+    renamed to that canonical casing. The AGPL grant is unchanged.
 - **2026-11-19 — Relicensed to AGPL-3.0 and opened the source.**
   - Replaced the all-rights-reserved `LICENSE` with the verbatim GNU Affero
     General Public License v3 text; `package.json` now declares
@@ -2511,7 +2519,7 @@ testable on its own.
     changing anything: a dedicated advanced runner with no equipment and a
     beginner with a full gym got **byte-identical** suggestions, under the
     heading "Recommended For You · Based on your training".
-  - **The reasons were badges.** "Staff Pick" and "Helyx Certified" describe the
+  - **The reasons were badges.** "Staff Pick" and "openHybrid Certified" describe the
     programme, not the fit; the fallback was a spec ("4 days/week · 12 weeks").
     Neither answers "why am I being shown this?".
   - `js/programs/recommendation-fit.js` scores goal, experience level,

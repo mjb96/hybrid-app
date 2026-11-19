@@ -2,18 +2,18 @@
 // =============================================================================
 // ESTIMATED 1RM — one bounded strength-trend primitive.
 //
-// Helyx uses the Epley equation for a directional estimate, not as a measured
+// openHybrid uses the Epley equation for a directional estimate, not as a measured
 // maximal lift or a load prescription. Rep-based 1RM equations are least
 // defensible as sets get lighter and longer, so high-repetition work is kept in
 // volume/session totals but excluded from e1RM, PR and plateau calculations.
 // =============================================================================
 import { resolveExercise } from '../exercises/catalog.js';
 
-/** Highest repetition count Helyx accepts for an estimated-1RM data point. */
+/** Highest repetition count openHybrid accepts for an estimated-1RM data point. */
 export const MAX_E1RM_REPS = 12;
 
 /**
- * Whether a logged external-load set is suitable for Helyx's e1RM trend.
+ * Whether a logged external-load set is suitable for openHybrid's e1RM trend.
  * @param {unknown} weight
  * @param {unknown} reps
  */
@@ -49,7 +49,7 @@ export function estimatedE1rm(weight, reps) {
 }
 
 /**
- * Smallest estimated-1RM difference Helyx treats as a real change.
+ * Smallest estimated-1RM difference openHybrid treats as a real change.
  *
  * PR detection was previously spread across five sites using four different
  * rules — two of which counted an exact TIE as a personal record — so one
