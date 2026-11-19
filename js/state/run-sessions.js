@@ -33,8 +33,14 @@ export function newRunSessionId() {
       return `run_${crypto.randomUUID()}`;
     }
   } catch (_) { /* fall through */ }
-  const rand = Math.random().toString(36).slice(2, 10);
-  return `run_${Date.now().toString(36)}_${rand}`;
+  try {
+    if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+      const bytes = crypto.getRandomValues(new Uint8Array(4));
+      const rand = [...bytes].map((byte) => byte.toString(36).padStart(2, '0')).join('').slice(0, 8);
+      return `run_${Date.now().toString(36)}_${rand}`;
+    }
+  } catch { /* fall through to a timestamp-only id */ }
+  return `run_${Date.now().toString(36)}`;
 }
 
 /** Deterministic identity used when adopting one legacy week/day run object. */

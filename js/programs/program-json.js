@@ -98,11 +98,26 @@ export function parsePlanFile(text) {
 }
 
 /** Turn a parsed plan into a new editable custom program. */
+function randomSuffix() {
+  try {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID().slice(0, 8);
+    }
+  } catch { /* fall through */ }
+  try {
+    if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+      const bytes = crypto.getRandomValues(new Uint8Array(4));
+      return [...bytes].map((byte) => byte.toString(36).padStart(2, '0')).join('').slice(0, 8);
+    }
+  } catch { /* fall through */ }
+  return Date.now().toString(36);
+}
+
 export function createImportedProgram(plan, existingIds = []) {
   const ids = new Set(existingIds);
   let id;
   do {
-    id = `prog_import_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
+    id = `prog_import_${Date.now().toString(36)}_${randomSuffix()}`;
   } while (ids.has(id));
   return {
     ...plan,

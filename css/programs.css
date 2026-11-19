@@ -3389,6 +3389,10 @@ html[data-theme="light"] .lib-tab.active { background: rgba(37,99,235,0.08); col
 }
 
 .lib-empty-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--touch-target, 44px);
   margin-top: 16px;
   padding: 10px 24px;
   border-radius: 20px;

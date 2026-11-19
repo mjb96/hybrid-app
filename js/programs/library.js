@@ -469,6 +469,9 @@ function renderMyPlans(content) {
     html += `<div class="filtered-grid-header mb-4"><div class="filtered-grid-title">Completed</div><div class="filtered-grid-count">${completed.length}</div></div>
       <div class="program-grid">${completed.map(({ program }) => renderProgramCard(program, 'large')).join('')}</div>`;
   }
+  // Every dynamic fragment above is renderProgramCard() output, which escapes
+  // all program text/attributes; the interpolated counts are numbers.
+  // lgtm[js/xss-through-dom]
   content.innerHTML = html;
 }
 
