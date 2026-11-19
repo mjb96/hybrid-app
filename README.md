@@ -36,6 +36,8 @@ the same training picture.
 - **Offline-first** — the PWA precaches its runtime and keeps training data on
   the device. There is no account, server or cloud sync; JSON/CSV export and
   Android automatic backups move data deliberately.
+- **Modules** — hide Running & GPS, Fasting, Health Connect or Recovery & Load
+  from Settings → Modules. Hiding a module never deletes its data.
 - **Import your history** — bring workout history and bodyweight from OpenGym,
   Strong or Hevy CSV exports. Strength sets and weigh-ins import directly; cardio
   rows are skipped for now. No account or server involved.

@@ -301,13 +301,15 @@ function renderHomeWeek(appState, activeProgram) {
   }
 }
 
-function renderHomeInsight(model) {
+function renderHomeInsight(model, state) {
   const card = document.getElementById('homeInsightCard');
   const text = document.getElementById('homeInsightText');
   const insight = model?.topInsight;
   if (!card || !text || !insight) return;
-  text.textContent = insight.text;
   const nav = String(insight.nav || 'progress');
+  if (nav === 'custom:fasting' && state?.settings?.modules?.fasting === false) { card.hidden = true; return; }
+  if (nav.startsWith('recovery') && state?.settings?.modules?.recovery === false) { card.hidden = true; return; }
+  text.textContent = insight.text;
   if (nav === 'custom:fasting') {
     card.setAttribute('data-action', 'open-fasting-detail');
     card.removeAttribute('data-context');
@@ -371,7 +373,7 @@ export function renderHome() {
 
   renderHomeGreeting(appState);
   renderHomeWeek(appState, activeProgram);
-  renderHomeInsight(model);
+  renderHomeInsight(model, appState);
 
   // V2 (S4): engine stall alerts move off Home — the one-hero Home keeps only
   // the recovery flag slot (overtraining/deload). Stall diagnostics still surface

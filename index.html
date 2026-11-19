@@ -437,7 +437,7 @@
       <div id="homeTodayCard"></div>
 
       <!-- A live fast is status, not a menu: never hide an in-progress timer. -->
-      <div class="qa-row qa-row--fasting mb-4" id="dashboardQuickActions" aria-label="Active fast" style="grid-template-columns:1fr;margin-top:10px;display:none;">
+      <div class="qa-row qa-row--fasting mb-4" id="dashboardQuickActions" data-module="fasting" aria-label="Active fast" style="grid-template-columns:1fr;margin-top:10px;display:none;">
         <button class="qa-btn" id="qaFasting" data-action="open-fasting-detail" aria-label="View your active fast">
           <span class="qa-icon">⏱️</span>
           <span class="qa-text"><span class="qa-label">Fasting</span><span class="qa-sub">Intermittent fasting</span></span>
@@ -494,7 +494,7 @@
           <span class="home-quick-btn__icon">⚡</span>
           <span>Workout</span>
         </button>
-        <button class="home-quick-btn" data-action="open-run-logger">
+        <button class="home-quick-btn" data-action="open-run-logger" data-module="running">
           <span class="home-quick-btn__icon">🏃</span>
           <span>Run</span>
         </button>
@@ -529,7 +529,7 @@
           <div class="bar-chart-container" id="strengthBarChart"></div>
         </article>
 
-        <article class="card-dark carousel-card home-metric-card home-metric-card--run" data-action="open-analytics" data-context="run-performance">
+        <article class="card-dark carousel-card home-metric-card home-metric-card--run" data-action="open-analytics" data-context="run-performance" data-module="running">
           <div class="hmcard-top">
             <span class="hmcard-icon">🏃</span>
             <span class="hmcard-label">Run Performance</span>
@@ -1524,7 +1524,7 @@
               <button class="settings-toggle-btn" data-action="set-progression" data-kg="5">5 kg</button>
             </div>
           </div>
-          <div class="settings-row">
+          <div class="settings-row" data-module="running">
             <label class="settings-row-label">Threshold Pace</label>
             <div class="settings-input-unit-row">
               <input type="text" class="settings-input settings-input-short" id="settingsThresholdPace" placeholder="4:30" maxlength="5">
@@ -1537,6 +1537,28 @@
               <button class="settings-toggle-btn active" data-action="set-week-start" data-day="mon">Monday</button>
               <button class="settings-toggle-btn" data-action="set-week-start" data-day="sun">Sunday</button>
             </div>
+          </div>
+        </div>
+
+        <!-- Modules -->
+        <div class="settings-section" id="settingsModules">
+          <div class="settings-section-label">Modules</div>
+          <div class="settings-hint">Hide parts of Helyx you do not use. Your data stays on this device and can be shown again at any time.</div>
+          <div class="settings-row">
+            <label class="settings-row-label">Running &amp; GPS</label>
+            <label class="settings-switch"><input type="checkbox" data-module-toggle="running" checked><span class="settings-switch-track"></span></label>
+          </div>
+          <div class="settings-row">
+            <label class="settings-row-label">Fasting</label>
+            <label class="settings-switch"><input type="checkbox" data-module-toggle="fasting" checked><span class="settings-switch-track"></span></label>
+          </div>
+          <div class="settings-row">
+            <label class="settings-row-label">Health Connect</label>
+            <label class="settings-switch"><input type="checkbox" data-module-toggle="health" checked><span class="settings-switch-track"></span></label>
+          </div>
+          <div class="settings-row">
+            <label class="settings-row-label">Recovery &amp; Load</label>
+            <label class="settings-switch"><input type="checkbox" data-module-toggle="recovery" checked><span class="settings-switch-track"></span></label>
           </div>
         </div>
 
@@ -1589,7 +1611,7 @@
         </div>
 
         <!-- Fasting -->
-        <div class="settings-section">
+        <div class="settings-section" data-module="fasting">
           <div class="settings-section-label">Fasting</div>
           <div class="settings-row">
             <label class="settings-row-label">Default Protocol</label>
@@ -1684,7 +1706,7 @@
         </div>
 
         <!-- Health Connect -->
-        <div class="settings-section">
+        <div class="settings-section" data-module="health">
           <div class="settings-section-label">Health Connect</div>
 
           <div class="hc-status-card" id="hcStatusCard">

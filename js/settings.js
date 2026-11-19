@@ -10,6 +10,7 @@ import { APP_VERSION } from './constants.js';
 import { setRestTiers, setRestTimerEnabled, setRestOverrides, initRestPersistence } from './timers.js';
 import { todayKey } from './dates.js';
 import { parseWorkoutCsv, applyWorkoutCsvImport, CSV_IMPORT_LIMITS } from './portability/import-workout-csv.js';
+import { moduleEnabled, setModuleEnabled, applyModuleVisibility } from './modules.js';
 import { looksLikeBodyCsv, parseBodyCsv, applyBodyweightCsvImport } from './portability/import-body-csv.js';
 import { resolveExercise } from './exercises/catalog.js';
 import { exportResultMessage, saveTextExport } from './portability/export-service.js';
@@ -96,6 +97,10 @@ function _syncSettingsUI() {
   const appState = _getState();
   const s = appState.settings || {};
   void _syncAutomaticBackupUI();
+
+  document.querySelectorAll('[data-module-toggle]').forEach((input) => {
+    input.checked = moduleEnabled(appState, input.getAttribute('data-module-toggle'));
+  });
 
   const nameInput = document.getElementById('settingsNameInput');
   if (nameInput) nameInput.value = s.name || '';
@@ -584,6 +589,14 @@ export function saveBandWeights() {
     H: read('settingsBandHeavy', 30),
   };
   saveStateToLocalStorage(true);
+}
+
+export function toggleModule(id, on) {
+  const appState = _getState();
+  if (!setModuleEnabled(appState, id, on)) return;
+  applyModuleVisibility(appState);
+  saveStateToLocalStorage(true);
+  document.dispatchEvent(new CustomEvent('app:modules-changed', { detail: { id, on: !!on } }));
 }
 
 export function saveThresholdPace() {

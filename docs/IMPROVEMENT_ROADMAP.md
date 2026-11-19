@@ -1626,6 +1626,14 @@ testable on its own.
 
 ## 12. Session log
 
+- **2026-11-19 — Modules: hide Running, Fasting, Health and Recovery.**
+  - Added Settings → Modules switches persisted in `settings.modules`, default on.
+  - Home hides the run quick action, run trend card, active fast pill and fasting
+    insight; Train filters run/walk quick starts and recent runs; Progress drops
+    running/recovery domains and fasting/projection destinations; Settings hides
+    Fasting and Health Connect sections.
+  - Data is never deleted. Deep links and existing history remain readable.
+  - Dummy run data covers the module gate in `tests/module_gates.test.js`.
 - **2026-11-19 — Home rebuilt as a decision surface.**
   - Home now reads: greeting/date → Today card → safety flags → seven-day week
     strip → one coach insight → quick actions. The In Focus charts remain as a

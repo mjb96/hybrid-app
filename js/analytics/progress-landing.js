@@ -29,6 +29,7 @@ import { weekStartOf, localDayKey, addDaysISO, DAY_KEYS, loggedSessionsByDate } 
 import { comparePeriodValues } from './period-comparison.js';
 import { calendarStrengthSummary, calendarWeekE1rmSeriesForLift } from './strength-calendar.js';
 import { weightUnitOf } from './utils.js';
+import { moduleEnabled } from '../modules.js';
 import { classifyPlannedSession } from '../workout/completion-policy.js';
 
 /** Days of a Monday-based week that have already elapsed, 1..7. */
@@ -357,11 +358,11 @@ export function secondaryDestinations(state) {
   const items = [
     { id: 'hybrid-score', title: 'Hybrid Score', desc: 'Optional synthesis of strength, running and recovery' },
   ];
-  if (fastingIsEnabled(state)) {
+  if (moduleEnabled(state, 'fasting') && fastingIsEnabled(state)) {
     items.push({ id: 'fasting', title: 'Fasting', desc: 'Your fast, protocols and metabolic stages' });
   }
   items.push({ id: 'bodyweight', title: 'Body Weight', desc: 'Weight trend and log' });
-  items.push({ id: 'projections', title: 'Projections', desc: 'Predicted race times and milestone ETAs' });
+  if (moduleEnabled(state, 'running')) items.push({ id: 'projections', title: 'Projections', desc: 'Predicted race times and milestone ETAs' });
   return items;
 }
 
@@ -406,8 +407,8 @@ export function buildProgressLanding(state, opts = {}) {
   const domains = [
     consistencyDomain(state, { days, program: opts.program, todayISO, weekStart }),
     strengthDomain(state, { weekStart, unit }),
-    runningDomain(opts.runningMetric),
-    recoveryDomain(opts.readiness),
+    ...(moduleEnabled(state, 'running') ? [runningDomain(opts.runningMetric)] : []),
+    ...(moduleEnabled(state, 'recovery') ? [recoveryDomain(opts.readiness)] : []),
   ];
 
   return {
