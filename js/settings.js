@@ -1,7 +1,8 @@
 // ==========================================
 // SETTINGS
 // ==========================================
-import { saveStateToLocalStorage, STORAGE_KEY } from './state.js';
+import { saveStateToLocalStorage, STORAGE_KEY, SAVED_AT_KEY } from './state.js';
+import { writeMirror, clearMirror } from './state/mirror.js';
 import { putRouteRecords, putRoutes, clearRouteDatabase } from './db.js';
 import { parseImport } from './state/route-portability.js';
 import { CURRENT_SCHEMA_VERSION, isStateMigrationError, migrateState } from './state/migrations.js';
@@ -836,7 +837,10 @@ export function handleImportFile(file) {
       // silent no-op.
       const current = localStorage.getItem(STORAGE_KEY);
       if (current) localStorage.setItem(STORAGE_KEY + '_backup', current);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(migratedState));
+      const importedJson = JSON.stringify(migratedState);
+      localStorage.setItem(STORAGE_KEY, importedJson);
+      localStorage.setItem(SAVED_AT_KEY, new Date().toISOString());
+      await writeMirror(importedJson);
 
       // Restore rich session-linked routes when present; v2 backups fall back to
       // their legacy week/day map. Stable ids make either path idempotent.
@@ -870,7 +874,9 @@ export async function confirmResetAllData() {
   localStorage.removeItem(STORAGE_KEY);
   localStorage.removeItem(STORAGE_KEY + '_backup');
   localStorage.removeItem(STORAGE_KEY + '_active_gps_session');
+  localStorage.removeItem(SAVED_AT_KEY);
   try { await clearRouteDatabase(); } catch { /* best-effort */ }
+  await clearMirror();
   showToast('Data cleared — reloading…');
   setTimeout(() => location.reload(), 1200);
 }

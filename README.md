@@ -33,6 +33,9 @@ the same training picture.
   programmes, plus a program builder.
 - **Offline-first** — the PWA precaches its runtime and keeps training data on
   the device; an optional Supabase account adds cross-device sync.
+- **Durable on Android** — the shell mirrors the same state into app-private
+  storage, so WebView eviction or a full localStorage quota does not lose the
+  last change; a failed write is reported instead of silently claiming success.
 - **Android shell** — bundled assets in a hardened WebView with native Health
   Connect, GPS and notification bridges.
 
@@ -43,10 +46,10 @@ the same training picture.
 | Web app | Vanilla JavaScript ES modules, no framework, no build step |
 | Styling | Plain CSS with a shared visual system |
 | Offline | Service worker + generated precache manifest |
-| Local data | `localStorage` for app state, IndexedDB for GPS routes |
+| Local data | `localStorage` for app state, IndexedDB for GPS routes; Android adds an app-private atomic file mirror |
 | Cloud (optional) | Supabase Auth + one `user_data` row per user, protected by RLS |
 | Native | Kotlin Android WebView shell, `minSdk 26`, `targetSdk 36` |
-| Verification | `node --test`, TypeScript checking of JSDoc-annotated JS, Playwright browser checks |
+| Verification | `node --test`, TypeScript checking of JSDoc-annotated JS, 32 Playwright browser checks |
 | Runtime | Node.js 20+ for tooling |
 
 ## Architecture

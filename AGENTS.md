@@ -144,6 +144,11 @@ framework; ~16k CSS; service-worker PWA). This file is auto-loaded every session
   fsynced active-session journal; JS drains/replays native fixes and acknowledges the
   journal only after app-state persistence. Browser/PWA GPS still uses web geolocation
   and is foreground-only.
+- Android state mirror: `js/state/mirror.js` + `StateMirrorBridge`/`StateMirrorSafe`
+  keep an app-private, atomically replaced copy of the serialized app state beside
+  localStorage. It is written after every local save, read on boot, and restored only
+  when localStorage is missing/corrupt/older. A localStorage quota failure surfaces an
+  honest toast and leaves the mirror as the durable copy; browser/PWA builds no-op.
 - Live run surface: `js/gps-tracker.js` drives TWO surfaces from one state machine
   (cockpit + Quick Activity) via the `UI` scope map — a named ID there must exist in
   `index.html`. All live numbers go through `js/gps/active-run-display.js`: never write

@@ -1626,6 +1626,22 @@ testable on its own.
 
 ## 12. Session log
 
+- **2026-11-19 — Android state mirror for offline durability.**
+  - Added `StateMirrorBridge` and `StateMirrorSafe`: the Android shell now
+    keeps an app-private copy of the serialized app state, written atomically
+    (temp file → fsync → rename) with a `.bak` of the previous good copy.
+  - `js/state/mirror.js` restores the mirror only when localStorage is missing,
+    corrupt or older; it writes after every local save and coalesces bursts.
+    A localStorage quota failure now says whether the change reached the private
+    mirror or was not saved, instead of claiming success.
+  - Import rewrites the mirror; reset and account deletion clear it. The
+    threat model, ADR-002 and the bridge list were updated for the sixth native
+    bridge.
+  - Verification: 1,808 JS tests, typecheck, precache and smoke; Android
+    `testDebugUnitTest`, `lintDebug` and `assembleDebug` pass (5 new JVM tests).
+  - Next: verify mirror recovery on a physical device, then decide whether the
+    full native rewrite is still wanted now that the WebView shell has durable
+    local storage.
 - **2026-08-13 (later) — Shed PPLUL replaced its fixed wave with the owner’s
   performance-based ongoing block.**
   - The five lifting days now match the supplied plan exercise-for-exercise and
