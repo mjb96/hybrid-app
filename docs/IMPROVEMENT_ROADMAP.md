@@ -584,6 +584,54 @@ CONCEPTS only. No openGym code, media or nested data shape is copied.
 set can be a rep set, a hold, a carry, or a failure without lying to volume,
 1RM, history or progression.
 
+### Surface model — list, not one exercise per page
+- **No page-per-exercise carousel.** openGym's version is built around a large
+  exercise demo; without that media it would hide the session and add a swipe
+  to every jump. Hevy's scrolling exercise list is the better reference.
+- Keep the existing accordion: a numbered exercise rail (`1..N`) jumps between
+  exercises, the active card expands, completed cards collapse to a summary,
+  and Prev/Next at the card foot moves focus without hiding the rest.
+- A deliberate "Focus" mode may come later as an optional layout; it is not the
+  default and is not part of the first slice.
+
+### Settings model — simple but comprehensive
+Three levels only. Session defaults live in Settings; per-exercise and per-set
+options live in the `⋯` sheets. Nothing appears in two places.
+
+**Settings → Training → Logging (session defaults)**
+- Weight unit (kg/lbs) with an explicit Convert / Keep numbers choice.
+- Dumbbell load default: **Each / Both**; one-arm work is detected, and an
+  exercise can override it.
+- Effort scale: **Off / RIR / RPE** (one scale, not one per set).
+- Rest: auto timer on/off; compound / accessory / isolation tiers; warm-up rest.
+- Auto warm-up ramp: off/on (rungs round to owned plates/dumbbells).
+- Previous values: **Last / Best** under each exercise.
+- New exercises start with: **Plan / Last session**.
+- Plate hints: off/on (bar and plate inventory stay under Equipment).
+- Keep screen awake; collapse completed exercises.
+
+**Per-exercise `⋯` (only what that exercise needs)**
+- Mode: Reps / Time / Distance.
+- Load default: Weighted / Bodyweight / Assisted / Band.
+- Weight meaning: Each / Both / Per side (auto-detected, overrideable).
+- Rest: Use default / Custom / No timer.
+- Warm-up: Auto / Own / None (only when the ramp is relevant).
+- Note.
+
+**Per-set `⋯`**
+- Set type: Working / Warm-up / Drop / Failure.
+- Load mode (the row-level version of the default).
+- Rest after this set: default / custom / no timer.
+- RIR/RPE after completion; note; remove.
+
+**Deliberately not copied from openGym**
+- Pyramid sets, tempo, per-side L/R sub-rows, per-exercise unit pins,
+  per-exercise plate-loading overrides, cardio mode inside the strength logger,
+  circuits/AMRAP player, animations/orientation/button-layout switches, custom
+  sound packs, spoken cues, and warm-up/bodyweight volume toggles. These are
+  either separate features, analytics settings, or complexity without a clear
+  logging payoff.
+
 ### L0 — Truth fixes (first)
 - **DONE 2026-11-20 — a first-ever row no longer labels the prescription as
   history.** `buildSetRow` defaulted `previousSetData` to the ghost target, so a
