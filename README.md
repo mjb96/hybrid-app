@@ -162,8 +162,8 @@ data.
 - The hosted PWA is a preview; Android is the primary offline target.
 - There is no account system and no cloud sync. Moving data between devices is
   a JSON export/import or the Android automatic-backup folder.
-- Workout CSV import currently handles strength sets; cardio rows are skipped
-  until the run-import pass lands. Bodyweight CSV is supported separately.
+- Workout CSV import covers strength sets and bodyweight. Cardio rows are
+  skipped; there is no cardio import planned right now.
 - There is no iOS project; iOS and billing are out of scope.
 - The legal documents in `docs/legal/` are drafts with placeholders and are not
   legal advice.
