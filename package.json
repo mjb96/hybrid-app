@@ -18,7 +18,8 @@
     "perf:baseline": "node scripts/performance-baseline.mjs",
     "workflow:check": "node scripts/verify-workflow-gates.mjs",
     "vendor:fit": "node scripts/vendor-fit.mjs",
-    "verify": "npm run typecheck && npm run precache:check && npm run workflow:check && npm test && npm run smoke"
+    "verify": "npm run typecheck && npm run precache:check && npm run workflow:check && npm test && npm run smoke",
+    "preflight": "npm run verify && npm run browser:verify"
   },
   "devDependencies": {
     "@sentry/browser": "8.55.2",

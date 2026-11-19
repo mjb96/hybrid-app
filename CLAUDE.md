@@ -18,6 +18,8 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   worker pool (3 workers by default; `-- --serial` for one-at-a-time debugging,
   `-- --concurrency=N` to pin workers, `-- --timeout=N` for the 180 s per-check
   kill, `-- --retries=N` for the default single retry after a timeout)
+- `npm run preflight` — `verify` + the full browser suite. Run this before opening
+  or updating a PR that touches shared UI; never merge on pending checks.
 
 ## Architecture facts (verify before relying on them)
 - State: one big `appState` object → localStorage (source of truth) in the browser;
