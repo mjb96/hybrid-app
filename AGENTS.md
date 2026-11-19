@@ -40,6 +40,11 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   filter through `moduleEnabled`; analytics sections carry `data-module` hooks so a
   deep link cannot reopen a hidden module. Settings must reflect the switches. Data is
   never deleted, and stored history remains readable.
+- Progression styles: `js/programs/progression-style.js` defines `double`
+  (default), `linear` and `rep-first`. Custom programs store `progressionStyle`;
+  `computeDiagnosticForLift(..., { progressionStyle })` forwards it to
+  `suggestProgression`, and the program editor's Progression tab exposes the
+  choice. RPE/fatigue/cut/stall holds still take precedence in every style.
 - Equipment profiles: `js/equipment-profiles.js` owns
   `settings.equipmentProfiles` (array of
   `{ id, name, equipment, bandWeights, plateSetup }`) plus

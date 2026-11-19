@@ -17,6 +17,7 @@ import {
   PROGRESSION_SHAPES, DELOAD_CADENCES, planProgressionShape, applyProgressionShape,
   describeProgressionPlan,
 } from './programs/progression.js';
+import { PROGRESSION_STYLES, normalizeProgressionStyle } from './programs/progression-style.js';
 import {
   EDITOR_DAYS, EDITOR_DAY_LABELS, copyProgramDay, dayTrainingSummary,
   previewProgramWeek, programEditorSummary, validateProgramDraft,
@@ -284,6 +285,7 @@ function renderExerciseRow(day, name, index, count) {
 
 function renderProgression(program) {
   const simple = progressionMode === 'simple';
+  const progressionStyle = normalizeProgressionStyle(program.progressionStyle);
   return `
     <section aria-labelledby="builderProgressionTitle">
       <div class="program-editor__section-heading">
@@ -291,6 +293,19 @@ function renderProgression(program) {
           <div class="program-editor__eyebrow">WEEK BY WEEK</div>
           <h2 id="builderProgressionTitle">Progression</h2>
           <p>These targets apply to every lift in that week. Per-exercise targets are coming in the structured-programming upgrade.</p>
+        </div>
+      </div>
+      <div class="program-editor__coach-style">
+        <div class="program-editor__eyebrow">COACH PROGRESSION</div>
+        <p>How the suggested next load responds when you complete the target.</p>
+        <div class="program-editor__shape-list" role="radiogroup" aria-label="Coach progression style">
+          ${PROGRESSION_STYLES.map((style) => `
+            <button class="program-editor__shape${style.id === progressionStyle ? ' is-active' : ''}"
+                    role="radio" aria-checked="${style.id === progressionStyle}"
+                    data-action="b-prog-style" data-style="${escapeHtml(style.id)}">
+              <strong>${escapeHtml(style.label)}</strong>
+              <span>${escapeHtml(style.blurb)}</span>
+            </button>`).join('')}
         </div>
       </div>
       <div class="program-editor__mode" role="tablist" aria-label="Progression editing mode">
@@ -658,6 +673,14 @@ document.addEventListener('click', async (event) => {
   else if (action === 'b-prog-mode') {
     progressionMode = target.dataset.mode === 'advanced' ? 'advanced' : 'simple';
     renderBuilderUI();
+  }
+  else if (action === 'b-prog-style') {
+    const program = getProgram();
+    if (program) {
+      program.progressionStyle = normalizeProgressionStyle(target.dataset.style);
+      persistProgram({ reconcile: false });
+      renderBuilderUI();
+    }
   }
   else if (action === 'b-prog-shape') {
     const picked = PROGRESSION_SHAPES.find((shape) => shape.id === target.dataset.shape);

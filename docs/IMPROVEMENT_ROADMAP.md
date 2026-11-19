@@ -1626,6 +1626,16 @@ testable on its own.
 
 ## 12. Session log
 
+- **2026-11-19 — Program-level progression styles.**
+  - Added `js/programs/progression-style.js` with Double (default), Linear and
+    Rep-first rules, surfaced in the custom program editor's Progression tab and
+    stored as `program.progressionStyle`.
+  - `suggestProgression` keeps the existing RPE/fatigue/cut/stall safeguards:
+    Linear holds on a missed top set; Rep-first builds to target + 2 reps before
+    adding load; Double remains the current behaviour.
+  - `computeDiagnosticForLift` accepts the program style and the workout coach
+    target follows it. The program-editor browser check covers selection and
+    persistence.
 - **2026-11-19 — Equipment profiles for different gyms.**
   - Added `js/equipment-profiles.js` (pure model) and a v5→v6 migration that
     seeds one profile from the existing kit; the legacy `settings.equipment` /

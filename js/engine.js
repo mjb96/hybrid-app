@@ -16,6 +16,7 @@ import { daysBetween } from './dates.js';
 import { isJtShedProgram, jtLiftTarget, jtStoredRolesFor } from './programs/jt-shed-model.js';
 import { isShedPplulProgram, shedPplulLiftTarget } from './programs/shed-pplul-model.js';
 import { getCatalogEntry } from './programs/catalog.js';
+import { DEFAULT_PROGRESSION_STYLE, normalizeProgressionStyle } from './programs/progression-style.js';
 
 // Re-exported for backwards-compatible import sites (and the engine test suite).
 export { isCompletedSet };
@@ -164,7 +165,7 @@ export function repGoalFromTarget(value) {
 // ==========================================
 // DIAGNOSTIC ENGINE
 // ==========================================
-export function computeDiagnosticForLift(currentWeekString, dayKey, liftName, repTarget = 0) {
+export function computeDiagnosticForLift(currentWeekString, dayKey, liftName, repTarget = 0, opts = {}) {
   /** @type {{ suggestedWeight: string|number, suggestedReps: string|number, isStalled: boolean, isFatigueOverload: boolean, message: string, progression: null | { action: string, weight: number|'', reps: number|'', rationale: string } }} */
   let result = { suggestedWeight: '', suggestedReps: '', isStalled: false, isFatigueOverload: false, message: '', progression: null };
   
@@ -280,6 +281,7 @@ export function computeDiagnosticForLift(currentWeekString, dayKey, liftName, re
     stalled: result.isStalled,
     fatigued: result.isFatigueOverload,
     hardRpe: CONFIG.fatigueRpeThreshold || 8.5,
+    style: opts.progressionStyle,
   });
   if (prog.action !== 'baseline') {
     result.progression = prog;
@@ -299,6 +301,9 @@ export function computeDiagnosticForLift(currentWeekString, dayKey, liftName, re
 //   • effort maximal / session RPE high → hold load and consolidate
 //   • flat three-session trend        → hold and review instead of auto-deloading
 //   • cutting (energy deficit)    → preserve strength: hold load, progress reps
+// Program-level styles on top of those rules:
+//   • linear    — a miss holds the load; a clean session adds load
+//   • rep-first — hold load until every top set reaches target + 2, then add load
 // Pure (no state access) so it drives the cockpit ghost, the coach label and the
 // quick-log target from one source, and is trivially unit-testable.
 // ==========================================
@@ -308,7 +313,8 @@ export function computeDiagnosticForLift(currentWeekString, dayKey, liftName, re
  *   the most recent session for this lift; each has at least `w` and `r`.
  * @param {number} repTarget       prescribed top-of-range rep goal for the lift.
  * @param {{ increment?: number, weightGoal?: 'cut'|'maintain'|'bulk',
- *           stalled?: boolean, fatigued?: boolean, hardRpe?: number }} [opts]
+ *           stalled?: boolean, fatigued?: boolean, hardRpe?: number,
+ *           style?: 'double'|'linear'|'rep-first'|string }} [opts]
  * @returns {{ action: 'baseline'|'load-up'|'hold'|'rep-up',
  *             weight: number|'', reps: number|'', rationale: string }}
  */
@@ -348,24 +354,57 @@ export function suggestProgression(lastWorkingSets, repTarget, opts = {}) {
   const hitTarget  = referenceSets.every((set) => parseInt(set.r, 10) >= target);
   const hardEffort = avgRpe != null && avgRpe >= hardRpe;
   const rpeNote    = avgRpe != null ? ` @ RPE ${+avgRpe.toFixed(1)}` : '';
+  // A zero target is the "no numeric prescription" case; keep the historical
+  // double-progression behaviour rather than inventing a rep ceiling.
+  const style = repTarget > 0 ? normalizeProgressionStyle(opts.style) : DEFAULT_PROGRESSION_STYLE;
 
-  // Rep target not met yet → keep the load, chase one more rep.
+  // Shared hold for maximal effort, accumulated fatigue, or a cut.
+  const holdForEffort = () => {
+    const why = goal === 'cut'
+      ? `Cutting — hold ${W} and keep the reps.`
+      : `Completed ${R}${rpeNote} — hold ${W} to consolidate.`;
+    return { action: /** @type {const} */ ('hold'), weight: W, reps: target, rationale: why };
+  };
+
+  if (style === 'linear') {
+    // Fixed reps: a missed top set holds the same load until it is completed.
+    if (!hitTarget) {
+      return { action: 'hold', weight: W, reps: target,
+        rationale: `Linear — hold ${W} until every top set hits ${target}.` };
+    }
+    if (hardEffort || opts.fatigued || goal === 'cut') return holdForEffort();
+    const next = round(W + increment);
+    return { action: 'load-up', weight: next, reps: target,
+      rationale: `Linear — all top sets hit ${target}${rpeNote} — add load to ${next}.` };
+  }
+
+  if (style === 'rep-first') {
+    // Rep target not met yet → keep the load, chase one more rep.
+    if (!hitTarget) {
+      const nextReps = Math.min(target, R + 1);
+      return { action: 'rep-up', weight: W, reps: nextReps,
+        rationale: `Chase ${nextReps} reps at ${W} before adding load.` };
+    }
+    if (hardEffort || opts.fatigued || goal === 'cut') return holdForEffort();
+    // Build two reps past the prescription before adding weight.
+    if (R < target + 2) {
+      const nextReps = Math.min(target + 2, R + 1);
+      return { action: 'rep-up', weight: W, reps: nextReps,
+        rationale: `Rep-first — build to ${target + 2} reps at ${W} before adding load.` };
+    }
+    const next = round(W + increment);
+    return { action: 'load-up', weight: next, reps: target,
+      rationale: `Rep-first — reached ${target + 2} reps at ${W}${rpeNote} — add load to ${next}.` };
+  }
+
+  // Double progression (default): chase the rep target, then add load.
   if (!hitTarget) {
     const nextReps = Math.min(target, R + 1);
     return { action: 'rep-up', weight: W, reps: nextReps,
       rationale: `Chase ${nextReps} reps at ${W} before adding load.` };
   }
+  if (hardEffort || opts.fatigued || goal === 'cut') return holdForEffort();
 
-  // Rep target met but effort was maximal, or we're in a deficit → hold load and
-  // consolidate rather than grind a load increase into a stall/injury.
-  if (hardEffort || opts.fatigued || goal === 'cut') {
-    const why = goal === 'cut'
-      ? `Cutting — hold ${W} and keep the reps.`
-      : `Completed ${R}${rpeNote} — hold ${W} to consolidate.`;
-    return { action: 'hold', weight: W, reps: target, rationale: why };
-  }
-
-  // Rep target met with effort in reserve → add a load increment.
   const next = round(W + increment);
   return { action: 'load-up', weight: next, reps: target,
     rationale: `All top-load sets hit ${target}${rpeNote} — add load to ${next}.` };

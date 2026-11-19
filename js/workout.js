@@ -316,7 +316,9 @@ function _buildExerciseCardEl(liftName, loggedLiftsData, weekData, wk, selectedD
       const weekModifier = getWeekModifier(activeProgram, wk);
       const jtCtx = { program: activeProgram, week: wk, dayKey: selectedDay };
       target = liftTarget(homeBlueprint.desc, displayLiftName, weekModifier, jtCtx);
-      diagnostic = computeDiagnosticForLift(wk, selectedDay, liftName, repGoalFromTarget(target.reps) || 0);
+      diagnostic = computeDiagnosticForLift(wk, selectedDay, liftName, repGoalFromTarget(target.reps) || 0, {
+        progressionStyle: activeProgram?.progressionStyle,
+      });
       // Label shows the SAME target we materialise (inline spec or week modifier),
       // so "Target: 4 × 5" always matches the number of set rows populated —
       // including after the athlete removes a set, which is why the count comes

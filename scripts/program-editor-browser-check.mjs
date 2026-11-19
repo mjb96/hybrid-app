@@ -191,10 +191,14 @@ for (const width of WIDTHS) {
 
   const read = () => page.evaluate(async () => {
     const state = await import('./js/state.js');
-    const mods = state.getProgramById('prog_browser_editor').weeklyVolModifiers;
+    const program = state.getProgramById('prog_browser_editor');
+    const mods = program.weeklyVolModifiers;
     return {
       simpleActive: !!document.querySelector('.program-editor__mode-btn.is-active')?.textContent?.includes('Simple'),
-      shapes: document.querySelectorAll('.program-editor__shape').length,
+      shapes: document.querySelectorAll('[data-action="b-prog-shape"]').length,
+      styles: document.querySelectorAll('[data-action="b-prog-style"]').length,
+      styleActive: document.querySelector('[data-action="b-prog-style"].is-active')?.dataset.style || '',
+      progressionStyle: program.progressionStyle || 'double',
       weekRows: document.querySelectorAll('.program-editor__week').length,
       preview: document.querySelector('.program-editor__shape-preview p')?.textContent?.trim() || '',
       undoShown: !!document.querySelector('[data-action="b-undo"]'),
@@ -206,9 +210,21 @@ for (const width of WIDTHS) {
   console.log(`  4C simple  shapes=${initial.shapes} weekRows=${initial.weekRows} preview="${initial.preview}"`);
   check(initial.simpleActive, 'the progression tab must open on Simple');
   check(initial.shapes === 3, `expected three progression shapes, got ${initial.shapes}`);
+  check(initial.styles === 3, `expected three coach progression styles, got ${initial.styles}`);
+  check(initial.styleActive === 'double', `default coach style must be double, got ${initial.styleActive}`);
   check(initial.weekRows === 0, 'the per-week grid belongs to Advanced, not Simple');
   check(/sets/.test(initial.preview), `the shape must describe the block it would produce, got "${initial.preview}"`);
   check(!initial.undoShown, 'nothing has been applied yet, so there is nothing to undo');
+
+  // The coach style is a persisted program preference, independent of the
+  // weekly volume/intensity block below it.
+  await page.click('[data-action="b-prog-style"][data-style="linear"]');
+  await page.waitForTimeout(150);
+  const styled = await read();
+  check(styled.styleActive === 'linear', 'choosing Linear must select it');
+  check(styled.progressionStyle === 'linear', 'the coach style must be persisted on the program');
+  await page.click('[data-action="b-prog-style"][data-style="double"]');
+  await page.waitForTimeout(150);
 
   // Choosing a shape and a deload cadence PREVIEWS; it must not write.
   await page.click('[data-action="b-prog-shape"][data-shape="volume"]');
@@ -242,7 +258,7 @@ for (const width of WIDTHS) {
   await page.waitForTimeout(200);
   const advanced = await page.evaluate(() => ({
     weekRows: document.querySelectorAll('.program-editor__week').length,
-    shapes: document.querySelectorAll('.program-editor__shape').length,
+    shapes: document.querySelectorAll('[data-action="b-prog-shape"]').length,
     lowControls: [...document.querySelectorAll('#builderViewContainer button, #builderViewContainer select')]
       .filter((el) => { const r = el.getBoundingClientRect(); return r.height > 0 && r.height < 43; }).length,
   }));
