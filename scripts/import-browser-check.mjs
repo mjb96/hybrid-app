@@ -92,13 +92,15 @@ try {
   const copy = await modal.innerText();
   ok(/2 workouts · 2 strength sets/.test(copy), 'CSV preview counts the dated sessions');
   ok(/1 cardio row will be imported as run data/.test(copy), 'CSV preview admits cardio as runs');
+  // A successful import closes Settings, refreshes in place and opens History.
+  // No reload: the old reload raced the assertions on slow CI runners.
   await page.click('.cmodal [data-cm="ok"]');
+  await page.waitForSelector('#activitiesScreen .activity-history-row', { timeout: 20000 });
 
   await page.waitForFunction((key) => {
     const saved = JSON.parse(localStorage.getItem(key) || '{}');
     return Object.keys(saved.weeks || {}).filter((id) => id.startsWith('arch:import:')).length === 2;
   }, STORAGE_KEY, { timeout: 15000 });
-  await page.waitForSelector('#homeWeekStrip');
 
   const saved = await page.evaluate((key) => JSON.parse(localStorage.getItem(key) || '{}'), STORAGE_KEY);
   const imported = Object.entries(saved.weeks || {}).filter(([id]) => id.startsWith('arch:import:'));
@@ -113,8 +115,7 @@ try {
   ok(cardio?.[1].runSessions.mon[0].pace === '10:00', 'the cardio run derived its pace');
   ok(cardio?.[1].gymStats.mon.time === undefined, 'the cardio session is not counted as strength');
 
-  await page.click('#homeQuickActions [data-action="open-activities"]');
-  await page.waitForFunction(() => document.getElementById('activitiesScreen')?.style.display !== 'none');
+  // History is already open from the import.
   const history = await page.locator('#activitiesScreen').innerText();
   ok(/Push A/.test(history), 'History lists the imported strength session');
   ok(/Treadmill/.test(history), 'History lists the imported run');

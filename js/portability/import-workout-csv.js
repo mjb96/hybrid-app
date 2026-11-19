@@ -149,6 +149,9 @@ const number = (value) => {
 };
 const round2 = (n) => Math.round(n * 100) / 100;
 const isWarmup = (value) => /warm|aufw|échauff/i.test(String(value || ''));
+// Exported cardio sets have no reps, so the exercise name is the honest signal
+// that a timed row is a run/row/bike rather than an isometric hold or carry.
+const CARDIO_NAME = /(?:\b(?:run|jog|walk|hike|treadmill|bike|cycle|cycling|row|rower|elliptical|swim|stair|ski|sprint|interval|cardio|jump)\b)/i;
 const setType = (value) => {
   const v = String(value || '').toLowerCase();
   if (isWarmup(v)) return 'W';
@@ -217,6 +220,7 @@ export function parseWorkoutCsv(text, opts = {}) {
   const sessions = new Map();
   let skippedCardio = 0;
   let skippedInvalid = 0;
+  let skippedUnsupported = 0;
   let totalSets = 0;
   let cardioRows = 0;
 
@@ -233,8 +237,31 @@ export function parseWorkoutCsv(text, opts = {}) {
     const reps = number(cell(row, columns.reps));
     const distance = number(cell(row, columns.distance));
     const seconds = number(cell(row, columns.seconds));
-    const isCardio = !(reps > 0) && ((distance || 0) > 0 || (seconds || 0) > 0);
-    if (!(reps > 0) && !isCardio) { skippedInvalid++; continue; }
+    const rawWeight = columns.weightKg >= 0 ? number(cell(row, columns.weightKg))
+      : columns.weightLb >= 0 ? number(cell(row, columns.weightLb))
+      : columns.weight >= 0 ? number(cell(row, columns.weight))
+      : null;
+    const rowUnit = columns.weightKg >= 0 ? 'kg'
+      : columns.weightLb >= 0 ? 'lb'
+      : (cell(row, columns.unit) || targetUnit).toLowerCase();
+    const unit = rowUnit === 'lb' || rowUnit === 'lbs' ? 'lbs' : 'kg';
+    let weight = rawWeight;
+    if (weight != null && weight > 0 && unit !== targetUnit) {
+      weight = targetUnit === 'kg' ? weight * 0.45359237 : weight / 0.45359237;
+    }
+
+    const timed = (distance || 0) > 0 || (seconds || 0) > 0;
+    const looksCardio = CARDIO_NAME.test(exercise);
+    const loaded = weight != null && weight > 0;
+    const isCardio = !(reps > 0) && (looksCardio ? timed : (!loaded && (distance || 0) > 0));
+    if (!(reps > 0) && !isCardio) {
+      // A hold/carry is a real set, but openHybrid cannot store it as reps and
+      // guessing a run from it would corrupt distance and pace. Count it so the
+      // preview is honest instead of silently dropping it.
+      if (timed) skippedUnsupported++;
+      else skippedInvalid++;
+      continue;
+    }
 
     const key = `${date}|${start || ''}|${workout}`;
     if (!sessions.has(key)) {
@@ -267,19 +294,6 @@ export function parseWorkoutCsv(text, opts = {}) {
       continue;
     }
 
-    const rawWeight = columns.weightKg >= 0 ? number(cell(row, columns.weightKg))
-      : columns.weightLb >= 0 ? number(cell(row, columns.weightLb))
-      : columns.weight >= 0 ? number(cell(row, columns.weight))
-      : null;
-    const rowUnit = columns.weightKg >= 0 ? 'kg'
-      : columns.weightLb >= 0 ? 'lb'
-      : (cell(row, columns.unit) || targetUnit).toLowerCase();
-    const unit = rowUnit === 'lb' || rowUnit === 'lbs' ? 'lbs' : 'kg';
-    let weight = rawWeight;
-    if (weight != null && weight > 0 && unit !== targetUnit) {
-      weight = targetUnit === 'kg' ? weight * 0.45359237 : weight / 0.45359237;
-    }
-
     if (!session.entries.has(exercise)) session.entries.set(exercise, []);
     const set = {
       w: weight != null && weight > 0 ? String(round2(weight)) : '',
@@ -306,7 +320,7 @@ export function parseWorkoutCsv(text, opts = {}) {
     });
   }
   result.sort((a, b) => a.date.localeCompare(b.date) || (a.start || 0) - (b.start || 0));
-  return { sessions: result, skippedCardio, skippedInvalid, totalSets, cardioRows };
+  return { sessions: result, skippedCardio, skippedInvalid, skippedUnsupported, totalSets, cardioRows };
 }
 
 

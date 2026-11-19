@@ -30,7 +30,9 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   for OpenGym/Strong/Hevy one-row-per-set CSV (no OpenGym code copied). It writes
   archived `arch:import:<id>` weeks with a stable `sessionId`, leaves the active
   program alone, imports strength sets and turns cardio rows into archived runs.
-  It accepts comma/semicolon/tab files and UTF-16 Excel exports. `import-body-csv.js`
+  It accepts comma/semicolon/tab files and UTF-16 Excel exports. Timed holds and
+  loaded carries are counted and skipped because the app has no rep-less set
+  type; they are never guessed into runs. `import-body-csv.js`
   reads the `date,weight_kg` body export into `bodyWeightLog`, skipping existing
   dates. `handleExternalCsvFile` auto-detects the file type, previews it and
   applies it; re-importing the same file is idempotent. Batch FIT imports live in

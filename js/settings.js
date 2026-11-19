@@ -951,6 +951,13 @@ export function triggerExternalCsvImport() {
   document.getElementById('settingsExternalCsvFile')?.click();
 }
 
+/** Close Settings, refresh the live views, and optionally show imported history. */
+function _finishImport({ history = false } = {}) {
+  closeSettings();
+  document.dispatchEvent(new Event('app:storage-loaded'));
+  if (history) document.dispatchEvent(new CustomEvent('app:open-activities'));
+}
+
 export function triggerFitImport() {
   document.getElementById('settingsFitFiles')?.click();
 }
@@ -1054,7 +1061,7 @@ export async function handleFitFiles(fileList) {
     importedRuns ? `${importedRuns} run${importedRuns === 1 ? '' : 's'}` : '',
     importedGym ? `${importedGym} strength activit${importedGym === 1 ? 'y' : 'ies'}` : '',
   ].filter(Boolean).join(' · ')}`);
-  setTimeout(() => location.reload(), 1000);
+  _finishImport({ history: true });
 }
 
 export async function handleExternalCsvFile(file) {
@@ -1105,7 +1112,7 @@ export async function handleExternalCsvFile(file) {
     }
     await saveStateToLocalStorage(false);
     showToast(`Imported ${result.added} weigh-in${result.added === 1 ? '' : 's'}${result.skipped ? ` · ${result.skipped} existing skipped` : ''}`);
-    setTimeout(() => location.reload(), 1000);
+    _finishImport();
     return;
   }
 
@@ -1117,7 +1124,9 @@ export async function handleExternalCsvFile(file) {
     return;
   }
   if (!parsed.sessions.length) {
-    showToast('No importable workouts found in that CSV.', true);
+    showToast(parsed.skippedUnsupported
+      ? 'Only timed holds or carries were found — those cannot be imported as sets yet.'
+      : 'No importable workouts found in that CSV.', true);
     return;
   }
 
@@ -1127,6 +1136,7 @@ export async function handleExternalCsvFile(file) {
       `${parsed.sessions.length} workout${parsed.sessions.length === 1 ? '' : 's'} · ${parsed.totalSets} strength set${parsed.totalSets === 1 ? '' : 's'}`,
       parsed.cardioRows ? `${parsed.cardioRows} cardio row${parsed.cardioRows === 1 ? '' : 's'} will be imported as run data.` : '',
       parsed.skippedInvalid ? `${parsed.skippedInvalid} row${parsed.skippedInvalid === 1 ? '' : 's'} had no usable date, exercise or reps and will be skipped.` : '',
+      parsed.skippedUnsupported ? `${parsed.skippedUnsupported} timed hold/carry row${parsed.skippedUnsupported === 1 ? '' : 's'} without reps will be skipped.` : '',
       '',
       'They are added as archived history. Your current program and active workout are left alone. Re-importing the same file will not duplicate sessions.',
     ].filter(Boolean).join('\n'),
@@ -1148,7 +1158,7 @@ export async function handleExternalCsvFile(file) {
     result.runs ? `${result.runs} run${result.runs === 1 ? '' : 's'}` : '',
   ].filter(Boolean);
   showToast(`Imported ${parts.join(' · ')}`);
-  setTimeout(() => location.reload(), 1000);
+  _finishImport({ history: true });
 }
 
 export function handleImportFile(file) {
