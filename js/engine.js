@@ -496,6 +496,17 @@ function withInheritedProgressionModel(program) {
  */
 export function liftTarget(desc, liftName, weekModifier = {}, ctx) {
   const program = withInheritedProgressionModel(ctx?.program);
+  // Imported plans (e.g. openGym) preserve per-exercise prescriptions without
+  // changing the bare-string day.lifts contract used across the app.
+  const prescribed = program?.prescriptions?.[ctx?.dayKey]?.[liftName];
+  if (prescribed && Number(prescribed.sets) > 0) {
+    return {
+      sets: Number(prescribed.sets),
+      reps: prescribed.reps == null ? '' : String(prescribed.reps),
+      weight: Number.isFinite(Number(prescribed.weight)) && Number(prescribed.weight) > 0 ? Number(prescribed.weight) : null,
+      restSec: Number.isFinite(Number(prescribed.restSec)) && Number(prescribed.restSec) > 0 ? Number(prescribed.restSec) : null,
+    };
+  }
   if (isJtShedProgram(program)) {
     const jt = jtLiftTarget(program, ctx.week, ctx.dayKey, liftName, ctx.opts || {});
     if (jt) return { sets: jt.sets, reps: jt.reps };

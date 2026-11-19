@@ -46,6 +46,21 @@ const planFile = {
 const planPath = path.join(os.tmpdir(), `openhybrid-plan-${process.pid}.json`);
 await writeFile(planPath, JSON.stringify(planFile, null, 2));
 
+const openGymFile = {
+  opengym_plan: 1,
+  exported: '2026-11-20',
+  name: 'Upper / Lower',
+  unit: 'kg',
+  week: { 1: ['upper'], 2: ['lower'] },
+  routines: [
+    { id: 'upper', name: 'Upper A', ex: [{ id: '0289', sets: 3, reps: 12, weight: 30, restSec: 90 }] },
+    { id: 'lower', name: 'Lower A', ex: [{ id: '0043', sets: 3, reps: 6, weight: 112.5, restSec: 240 }] },
+  ],
+  customEx: [],
+};
+const openGymPath = path.join(os.tmpdir(), `opengym-plan-${process.pid}.json`);
+await writeFile(openGymPath, JSON.stringify(openGymFile, null, 2));
+
 const state = {
   schemaVersion: 12, currentWeek: '1', activeProgramId: 'hybrid_engine', activeActivationId: 'act_plan',
   weekStartedAt: '2026-11-16',
@@ -99,6 +114,15 @@ try {
   await page.click('[data-action="open-program-menu"]');
   await page.waitForSelector('.action-menu');
   ok(/Export plan \(.json\)/.test(await page.locator('.action-menu').innerText()), 'program detail offers the portable JSON export');
+
+  await page.click('#activitiesBack').catch(() => {});
+  await page.setInputFiles('#planImportFile', openGymPath);
+  await page.waitForFunction(() => document.querySelector('#progLibraryContent')?.textContent?.includes('Upper / Lower'));
+  const withOpenGym = await page.evaluate((key) => JSON.parse(localStorage.getItem(key) || '{}'), STORAGE_KEY);
+  const importedOpenGym = withOpenGym.customPrograms?.find((program) => program.name === 'Upper / Lower');
+  ok(!!importedOpenGym, 'an openGym plan imports as a custom program');
+  ok(importedOpenGym?.days?.mon?.lifts?.[0] === 'Dumbbell Bench Press', 'the openGym id resolves to a real exercise');
+  ok(importedOpenGym?.prescriptions?.mon?.['Dumbbell Bench Press']?.sets === 3, 'the per-exercise prescription is kept');
   ok(errors.length === 0, `no page errors (${errors.join('; ') || 'none'})`);
   await context.close();
 } finally {

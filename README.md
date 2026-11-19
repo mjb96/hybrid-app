@@ -62,8 +62,11 @@ the same training picture.
   activities into Settings. FIT runs keep date, distance, pace, HR and GPS;
   strength FIT files import time/HR only because the format has no exercise names.
 - **Plans that move** — export any plan as a portable `.json` file and import it
-  on another device. Discover is now one searchable list, while saved, completed
-  and custom/imported plans live together under My Plans.
+  on another device, or import an openGym plan file. openGym routines map to
+  training days, exercise ids resolve through the full catalogue, and each
+  exercise keeps its original sets, reps, starting load and rest. Discover is
+  now one searchable list, while saved, completed and custom/imported plans live
+  together under My Plans.
 - **Correct saved workouts** — History lets you reopen a finished strength
   session or run and fix weights, reps, distance, HR or notes in place without
   changing its date or identity.

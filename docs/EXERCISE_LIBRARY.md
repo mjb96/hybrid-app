@@ -21,9 +21,11 @@ It **excludes**:
 - entries with no `textSource` or no instructions;
 - **all media** — openGym’s stills and animations are licensed to Gym visual and are not AGPL. Nothing under `catalogue/media/` is read or copied.
 
-The generated file also carries `OPEN_GYM_ID_NAMES`, a complete source-id → display-name
-map (including ids whose text entry was merged with a duplicate name). Plan import uses
-this map to resolve openGym plan files.
+The generated file also carries `OPENGYM_ID_NAMES`, a complete source-id → display-name
+map (including ids whose text entry was merged with a duplicate name). The openGym plan
+importer (`js/programs/opengym-plan.js`) uses it to resolve plan exercises; each imported
+exercise keeps its sets, reps, starting weight and rest in the custom program's
+`prescriptions` sidecar, which the cockpit and rest timer read.
 
 The generated file is `js/exercises/opengym-catalogue.js`; do not edit it by hand.
 

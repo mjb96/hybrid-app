@@ -1629,8 +1629,11 @@ testable on its own.
 - **2026-11-20 — Complete openGym catalogue text and plan ID map.**
   - Imported all 5,555 usable openGym catalogue entries: 4,282 openGym-authored
     (AGPL-3.0) plus 1,273 ExerciseDB v1 entries openGym distributes under MIT.
-  - Added `OPEN_GYM_ID_NAMES`, so openGym plan files can resolve exercisedb-era
+  - Added `OPENGYM_ID_NAMES`, so openGym plan files can resolve exercisedb-era
     exercise IDs such as `0289` → Dumbbell Bench Press.
+  - Added an openGym plan importer: weekdays map to program days, and each
+    exercise keeps its sets, reps, starting weight and rest in a `prescriptions`
+    sidecar. The cockpit target/ghost weight and rest timer read it.
   - Media remains excluded; NOTICE.md now carries the ExerciseDB MIT notice.
 - **2026-11-20 — Settings sub-pages, saved-workout edits, simpler Plans and JSON plans.**
   - Settings is split into Profile / Training / Health / Appearance / Data with a

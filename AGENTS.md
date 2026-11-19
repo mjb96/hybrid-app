@@ -67,6 +67,11 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   all expands); saved, completed, custom and imported plans share My Plans.
   `js/programs/program-json.js` exports/imports `openhybrid-plan` JSON; imported
   plans become fresh custom programs and never overwrite a catalog plan.
+  `js/programs/opengym-plan.js` imports openGym plan files: weekdays map to days,
+  exercise ids resolve through `OPENGYM_ID_NAMES`, and per-exercise sets/reps/
+  starting load/rest live in the program's `prescriptions` sidecar. `liftTarget`
+  reads that sidecar, the cockpit ghosts the starting weight and the rest timer
+  honours the prescribed rest; `day.lifts` stays bare strings.
 - Surface customization: `js/ui/customize.js` normalizes `settings.ui.home` /
   `settings.ui.progress`; hidden ids never hide pinned safety/Today/navigation
   surfaces and never block a deep link. v11→v12 seeds the empty preference.
@@ -96,7 +101,7 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   Settings palette buttons persist `settings.palette`.
 - Exercise catalogue: the original 157 are `CORE_EXERCISES`; `js/exercises/opengym-catalogue.js`
   adds ~5,555 openGym catalogue text entries (openGym AGPL-3.0 + ExerciseDB v1 MIT, no media) imported by
-  `scripts/import-opengym-catalogue.mjs`. `OPEN_GYM_ID_NAMES` resolves plan-file ids.
+  `scripts/import-opengym-catalogue.mjs`. `OPENGYM_ID_NAMES` resolves plan-file ids.
   Never include Gym-visual media; see NOTICE.md and docs/EXERCISE_LIBRARY.md.
 - Equipment profiles: `js/equipment-profiles.js` owns
   `settings.equipmentProfiles` (array of

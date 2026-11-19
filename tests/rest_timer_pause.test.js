@@ -137,6 +137,12 @@ test('adjusting while paused keeps it paused', () => {
   dismissRestTimer();
 });
 
+test('an imported plan rest overrides the exercise-type default', () => {
+  triggerRestTimerEngine('Lateral Raise', null, '', 120);
+  assert.equal(nodes.cockpitTimerClock.textContent, '2:00');
+  dismissRestTimer();
+});
+
 test('a finished countdown cannot be paused', () => {
   // Holding a completed timer would display a frozen 0:00 as if rest were still
   // owed. Simulated by adjusting the remaining time down past zero.

@@ -7,6 +7,7 @@ import { initProgramLibrary, updateLibraryState, renderLibrary, handleLibraryAct
 import { handleDetailAction, closeDayPreviewModal } from './programs/detail.js';
 import { copyProgramAsText, handleProgramTextAction } from './programs/copy-program.js';
 import { buildPlanFile, parsePlanFile, createImportedProgram, planFilename } from './programs/program-json.js';
+import { isOpenGymPlan, parseOpenGymPlan, createOpenGymProgram } from './programs/opengym-plan.js';
 import { saveTextExport, exportResultMessage } from './portability/export-service.js';
 import { openActionMenu, closeActionMenu, isActionMenuOpen } from './ui/action-menu.js';
 import { openCompareModal, closeCompareModal, pickCompareB, renderComparePicker, handleCompareSearch } from './programs/compare-ui.js';
@@ -1690,8 +1691,34 @@ async function handlePlanImportFile(file) {
   if (!file) return;
   if (file.size > 2 * 1024 * 1024) { showToast('That plan file is too large.', true); return; }
   try {
-    const plan = parsePlanFile(await file.text());
-    const program = createImportedProgram(plan, (appState.customPrograms || []).map((item) => item.id));
+    const raw = await file.text();
+    let data;
+    try { data = JSON.parse(raw); }
+    catch { throw new Error('That file is not valid JSON.'); }
+    const existingIds = (appState.customPrograms || []).map((item) => item.id);
+    let program;
+    if (isOpenGymPlan(data)) {
+      const parsed = parseOpenGymPlan(raw);
+      if (parsed.unknownIds.length || parsed.unsupported.length) {
+        const skipped = [
+          parsed.unknownIds.length ? `${parsed.unknownIds.length} exercise id${parsed.unknownIds.length === 1 ? '' : 's'} could not be found` : '',
+          parsed.unsupported.length ? `${parsed.unsupported.length} timed/cardio exercise${parsed.unsupported.length === 1 ? '' : 's'} are not supported yet` : '',
+        ].filter(Boolean).join('; ');
+        const ok = await confirmModal({
+          title: 'Import the rest of this plan?',
+          message: `${skipped}. The remaining exercises will be imported with their sets, reps and starting weights.`,
+          confirmLabel: 'Import the rest',
+        });
+        if (!ok) return;
+      }
+      program = createOpenGymProgram(parsed, {
+        unit: appState.settings?.weightUnit === 'lbs' ? 'lbs' : 'kg',
+        existingIds,
+      });
+    } else {
+      const plan = parsePlanFile(raw);
+      program = createImportedProgram(plan, existingIds);
+    }
     if (!Array.isArray(appState.customPrograms)) appState.customPrograms = [];
     appState.customPrograms.push(program);
     await saveStateToLocalStorage(true);

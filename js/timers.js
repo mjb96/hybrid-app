@@ -180,7 +180,7 @@ function _startRestCountdown() {
 // liftName: the exercise name string (e.g. "Back Squat")
 // setRpe:   optional numeric RPE of the completed set
 // setType:  optional set type char — 'W' = warmup, 'F' = AMRAP, '' = working set
-export function triggerRestTimerEngine(liftName, setRpe, setType) {
+export function triggerRestTimerEngine(liftName, setRpe, setType, planRestSec = null) {
   if (!_restTimerEnabled) return; // auto rest timer turned off in Settings
 
   let duration;
@@ -193,6 +193,9 @@ export function triggerRestTimerEngine(liftName, setRpe, setType) {
   } else if (setType === 'F') {
     // AMRAP sets get a fixed 2-minute rest
     duration = 120;
+  } else if (Number(planRestSec) > 0) {
+    // An imported/shared plan's own rest is a prescription, not a guess.
+    duration = Math.round(Number(planRestSec));
   } else if (liftName && _restOverrides[liftName] != null) {
     // A remembered per-exercise adjustment is an explicit choice — use it as-is
     // (no RPE bonus on top, since the user already dialled in this value).
