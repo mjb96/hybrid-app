@@ -1,4 +1,6 @@
-import { spawnSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
+import os from 'node:os';
+import { resolveConcurrency, resolveTimeoutSeconds } from './lib/browser-runner-options.mjs';
 
 const checks = [
   // First: it is the only check that publishes a non-zero safe-area inset, so a
@@ -55,34 +57,130 @@ const checks = [
 //
 // `--bail` restores the old stop-on-first-failure behaviour for a fast local
 // loop when you already know what you are looking for.
-const bail = process.argv.includes('--bail');
+//
+// Checks are independent (each binds port 0 and launches its own Playwright
+// context), so they run through a small worker pool instead of one blocking
+// spawnSync at a time. Output is buffered per check and printed as one block
+// when it finishes: the suite is 34 checks and ~7 minutes serially, mostly
+// browser startup, so overlapping them is the difference between a coffee and
+// a glance. `--serial` restores the sequential loop when debugging.
+const args = process.argv.slice(2);
+const bail = args.includes('--bail');
+
+let concurrency;
+let timeoutSeconds;
+try {
+  concurrency = resolveConcurrency(args, os.availableParallelism?.() ?? os.cpus().length);
+  timeoutSeconds = resolveTimeoutSeconds(args);
+} catch (err) {
+  console.error(`browser:verify — ${err instanceof Error ? err.message : String(err)}`);
+  process.exit(2);
+}
+
 const failed = [];
 let ran = 0;
+let nextIndex = 0;
+let bailing = false;
+const startedAt = Date.now();
+/** @type {Set<import('node:child_process').ChildProcess>} */
+const activeChildren = new Set();
 
-for (const check of checks) {
-  console.log(`\n=== ${check} ===`);
-  const result = spawnSync(process.execPath, [check, '--required'], {
-    cwd: process.cwd(),
-    stdio: 'inherit',
-    env: { ...process.env, HELYX_BROWSER_REQUIRED: '1' },
-  });
-  if (result.error) throw result.error;
-  ran++;
-  if (result.status !== 0) {
-    failed.push({ check, status: result.status || 1 });
-    if (bail) break;
+/** Kill the check and everything it spawned (Chromium lives in that group). */
+function killTree(child) {
+  if (!child.pid) return;
+  try {
+    if (process.platform === 'win32') child.kill('SIGKILL');
+    else process.kill(-child.pid, 'SIGKILL');
+  } catch {
+    try { child.kill('SIGKILL'); } catch { /* already gone */ }
   }
 }
 
+// Ctrl-C must not leave 3 Chromium trees running in the background.
+for (const signal of /** @type {const} */ (['SIGINT', 'SIGTERM'])) {
+  process.on(signal, () => {
+    for (const child of activeChildren) killTree(child);
+    process.exit(signal === 'SIGINT' ? 130 : 143);
+  });
+}
+
+/** @param {number} index */
+function runCheck(index) {
+  const check = checks[index];
+  const started = Date.now();
+  console.log(`▶ ${check}`);
+
+  return new Promise((resolve) => {
+    const child = spawn(process.execPath, [check, '--required'], {
+      cwd: process.cwd(),
+      env: { ...process.env, HELYX_BROWSER_REQUIRED: '1' },
+      stdio: ['ignore', 'pipe', 'pipe'],
+      // A dedicated process group lets one kill take the check's Chromium with it.
+      detached: process.platform !== 'win32',
+    });
+    activeChildren.add(child);
+
+    let output = '';
+    let timedOut = false;
+    let settled = false;
+    /** @type {NodeJS.Timeout|undefined} */
+    let timer;
+
+    const finish = (code) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      activeChildren.delete(child);
+      const status = timedOut ? 124 : (typeof code === 'number' ? code : 1);
+      const seconds = ((Date.now() - started) / 1000).toFixed(1);
+      const verdict = status === 0 ? 'PASS' : timedOut ? 'FAIL (timeout)' : 'FAIL';
+      if (timedOut) output += `\n[runner] ${check} exceeded ${timeoutSeconds}s and was killed.\n`;
+      // One write per check keeps concurrent blocks from interleaving mid-line.
+      process.stdout.write(`\n=== ${check} — ${verdict} (${seconds}s) ===\n${output}${output.endsWith('\n') || !output ? '' : '\n'}`);
+      if (status !== 0) {
+        failed.push({ check, status, index });
+        if (bail) bailing = true;
+      }
+      ran++;
+      resolve(undefined);
+    };
+
+    timer = setTimeout(() => {
+      timedOut = true;
+      killTree(child);
+    }, timeoutSeconds * 1000);
+
+    child.stdout.on('data', (chunk) => { output += chunk.toString(); });
+    child.stderr.on('data', (chunk) => { output += chunk.toString(); });
+    child.on('error', (err) => {
+      output += `${err.stack || err.message}\n`;
+      if (!child.pid) finish(1);
+    });
+    child.on('close', finish);
+  });
+}
+
+async function worker() {
+  while (!bailing) {
+    const index = nextIndex++;
+    if (index >= checks.length) return;
+    await runCheck(index);
+  }
+}
+
+await Promise.all(Array.from({ length: Math.min(concurrency, checks.length) }, () => worker()));
+
+const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);
 if (failed.length) {
   // Counts describe what actually RAN. Reporting "N passed" for checks that were
   // never executed (the --bail case) would be the same kind of false reassurance
   // the stop-on-first-failure behaviour was hiding.
+  failed.sort((a, b) => a.index - b.index);
   const skipped = checks.length - ran;
-  console.error(`\n${failed.length} of ${ran} browser checks run FAILED:`);
+  console.error(`\n${failed.length} of ${ran} browser checks run FAILED (${elapsed}s at concurrency ${concurrency}):`);
   for (const { check, status } of failed) console.error(`  ✗ ${check} (exit ${status})`);
   console.error(`${ran - failed.length} passed${skipped ? `, ${skipped} not run (--bail)` : ''}.`);
-  process.exit(failed[0].status);
+  process.exitCode = failed[0].status;
 }
 
-console.log(`\nAll ${checks.length} required browser checks passed.`);
+console.log(`\nAll ${checks.length} required browser checks passed in ${elapsed}s (concurrency ${concurrency}).`);

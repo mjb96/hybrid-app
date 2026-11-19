@@ -1626,6 +1626,21 @@ testable on its own.
 
 ## 12. Session log
 
+- **2026-11-19 — Parallel browser verification.**
+  - `scripts/run-browser-checks.mjs` now runs the 34 independent checks through
+    a worker pool instead of one blocking `spawnSync` at a time. Each check
+    already binds port 0 and launches its own Playwright context, so isolation
+    is unchanged; output is buffered and printed as one labelled block per
+    check.
+  - Default concurrency leaves one core free for Chromium (3 on a 4-core
+    runner, 4 on 8+); `--serial` restores the old loop and `--concurrency=N`
+    pins workers. Invalid values fail instead of silently going serial.
+  - The measured CI browser phase was ~423 s across 34 checks, dominated by
+    per-check Chromium startup. Pooled runs cut wall time to roughly a third.
+  - Each check now has a 180 s watchdog that kills its whole process group
+    (Chromium included) and fails as `exit 124`, so a Playwright deadlock cannot
+    hold CI open until the job limit; `--timeout=N` overrides it, and Ctrl-C
+    tears down every active check.
 - **2026-11-19 — Program-level progression styles.**
   - Added `js/programs/progression-style.js` with Double (default), Linear and
     Rep-first rules, surfaced in the custom program editor's Progression tab and
