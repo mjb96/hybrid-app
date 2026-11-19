@@ -26,7 +26,7 @@ the same training picture.
   one coach insight and quick actions. Deep charts stay in Progress; the old
   In Focus cards are gone.
 - **Strength logging** — routines, set types, RPE/RIR, rest timers, supersets,
-  exercise swaps, plate math, estimated 1RM and PRs. A 4,400+ exercise catalogue
+  exercise swaps, plate math, estimated 1RM and PRs. A 5,700+ exercise catalogue
   (openGym text, AGPL, no media) backs search and imports. An optional warm-up
   ramp adds editable 40/60/80% sets once you enter the first working weight.
 - **Running** — manual entries, native GPS tracking with a route map, splits,

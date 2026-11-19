@@ -5,21 +5,25 @@ openHybrid has two catalogue layers:
 | Layer | Source | Licence | Media |
 |---|---|---|---|
 | **Core** (`CORE_EXERCISES`) | Original openHybrid text | AGPL-3.0-only | None |
-| **Extended** (`OPENGYM_EXERCISES`) | openGym-authored text | AGPL-3.0 | None |
+| **Extended** (`OPENGYM_EXERCISES`) | openGym catalogue text (openGym + ExerciseDB v1) | AGPL-3.0 / MIT | None |
 
 ## What is imported
 
-`scripts/import-opengym-catalogue.mjs` reads a local openGym checkout and imports only entries that:
+`scripts/import-opengym-catalogue.mjs` reads a local openGym checkout and imports entries that:
 
-- have `textSource: "opengym"`;
+- have `textSource: "opengym"` (openGym-authored, AGPL-3.0) or
+  `textSource: "exercisedb"` (ExerciseDB v1 text distributed by openGym under MIT);
 - have a non-empty name and at least one instruction;
 - map to a real openHybrid muscle/equipment/movement value.
 
 It **excludes**:
 
-- entries with `textSource: "exercisedb"` or no `textSource` (different dataset provenance);
-- entries with no instructions;
+- entries with no `textSource` or no instructions;
 - **all media** — openGym’s stills and animations are licensed to Gym visual and are not AGPL. Nothing under `catalogue/media/` is read or copied.
+
+The generated file also carries `OPEN_GYM_ID_NAMES`, a complete source-id → display-name
+map (including ids whose text entry was merged with a duplicate name). Plan import uses
+this map to resolve openGym plan files.
 
 The generated file is `js/exercises/opengym-catalogue.js`; do not edit it by hand.
 
@@ -34,7 +38,8 @@ npm run precache:gen
 npm test
 ```
 
-The importer reports total entries read, imported count, core duplicates, import duplicates, missing/no-muscle rows, and the output size.
+The importer reports total entries read, imported count, core duplicates, import duplicates,
+missing/no-muscle rows, counts by text source, and the output size.
 
 ## Mapping rules
 
