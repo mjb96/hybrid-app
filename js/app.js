@@ -75,6 +75,8 @@ import {
   saveThresholdPace as saveSettingsThresholdPace,
   exportData, triggerImport, handleImportFile, confirmResetAllData,
   triggerExternalCsvImport, handleExternalCsvFile, toggleModule,
+  selectEquipmentProfile, addEquipmentProfileFromUI, saveEquipmentProfileName,
+  deleteActiveEquipmentProfile,
   applySettingsOnBoot,
   hcToggleConnect, hcSyncNow, saveStepGoal, hcToggleSyncField,
   setFitnessGoal, setWeightGoal, setFitnessLevel, setWeekStartDay, setFastingDefault,
@@ -104,6 +106,10 @@ import { initAutomaticBackups, checkDailyAutomaticBackup } from './portability/a
 
 document.addEventListener('app:modules-changed', () => {
   try { hydrateCurrentView(); } catch (err) { console.warn('Module view refresh failed.', err); }
+});
+
+document.addEventListener('app:equipment-changed', () => {
+  try { hydrateCurrentView(); } catch (err) { console.warn('Equipment view refresh failed.', err); }
 });
 
 document.addEventListener('app:storage-loaded', () => {
@@ -1199,6 +1205,8 @@ document.addEventListener('click', (e) => {
   else if (action === 'export-data') exportData();
   else if (action === 'import-data') triggerImport();
   else if (action === 'import-external-csv') triggerExternalCsvImport();
+  else if (action === 'equipment-profile-add') addEquipmentProfileFromUI();
+  else if (action === 'equipment-profile-delete') deleteActiveEquipmentProfile();
   else if (action === 'auto-backup-folder') selectAutomaticBackupFolder();
   else if (action === 'auto-backup-now') backupNow();
   else if (action === 'auto-backup-disable') turnOffAutomaticBackup();
@@ -1361,6 +1369,8 @@ document.addEventListener('change', (e) => {
   if (target.id === 'settingsNotifWeeklySummary')   { setNotifToggle('weeklySummary', target.checked); return; }
   if (target.id === 'settingsNotifStreak')          { setNotifToggle('streak', target.checked); return; }
   if (target.id === 'settingsNotifMissedWorkout')   { setNotifToggle('missed', target.checked); return; }
+  if (target.id === 'settingsEquipmentProfile')     { selectEquipmentProfile(target.value); return; }
+  if (target.id === 'settingsEquipmentProfileName') { saveEquipmentProfileName(); return; }
   const eqKey = target.getAttribute?.('data-equipment');
   if (eqKey) { toggleEquipment(eqKey, target.checked); return; }
   if (target.id === 'settingsBandLight' || target.id === 'settingsBandMed' || target.id === 'settingsBandHeavy') { saveBandWeights(); return; }

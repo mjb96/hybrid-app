@@ -1626,6 +1626,16 @@ testable on its own.
 
 ## 12. Session log
 
+- **2026-11-19 — Equipment profiles for different gyms.**
+  - Added `js/equipment-profiles.js` (pure model) and a v5→v6 migration that
+    seeds one profile from the existing kit; the legacy `settings.equipment` /
+    `settings.bandWeights` fields stay as the active profile's projection so
+    program fit, swaps and plate paths keep working unchanged.
+  - Settings → Equipment now has a profile selector, editable name, and
+    add/delete actions. Deleting the last profile is refused; deleting the
+    active one falls back to the first.
+  - The browser check seeds a commercial gym and a home profile, switches
+    between them, renames, adds, deletes and verifies persistence.
 - **2026-11-19 — Modules: hide Running, Fasting, Health and Recovery.**
   - Added Settings → Modules switches persisted in `settings.modules`, default on.
   - Home hides the run quick action, run trend card, active fast pill and fasting

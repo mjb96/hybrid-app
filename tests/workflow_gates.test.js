@@ -36,7 +36,9 @@ test('failure injection: a skipped browser installation/check is rejected', () =
 
 test('failure injection: missing Android test, lint, or APK task is rejected', () => {
   for (const task of ['testDebugUnitTest', 'lintDebug', 'assembleDebug']) {
-    const broken = { ...sources, verify: sources.verify.replace(task, '') };
+    // The Android step repeats the task list for its transient-failure retry,
+    // so strip every occurrence to prove the gate requires the command at all.
+    const broken = { ...sources, verify: sources.verify.replaceAll(task, '') };
     assert.notDeepEqual(validateWorkflowSources(broken), [], task);
   }
 });

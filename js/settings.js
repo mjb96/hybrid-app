@@ -11,6 +11,7 @@ import { setRestTiers, setRestTimerEnabled, setRestOverrides, initRestPersistenc
 import { todayKey } from './dates.js';
 import { parseWorkoutCsv, applyWorkoutCsvImport, CSV_IMPORT_LIMITS } from './portability/import-workout-csv.js';
 import { moduleEnabled, setModuleEnabled, applyModuleVisibility } from './modules.js';
+import * as equipmentProfiles from './equipment-profiles.js';
 import { looksLikeBodyCsv, parseBodyCsv, applyBodyweightCsvImport } from './portability/import-body-csv.js';
 import { resolveExercise } from './exercises/catalog.js';
 import { exportResultMessage, saveTextExport } from './portability/export-service.js';
@@ -102,6 +103,28 @@ function _syncSettingsUI() {
     input.checked = moduleEnabled(appState, input.getAttribute('data-module-toggle'));
   });
 
+  // Equipment profiles: the selector and active name reflect the stored
+  // profiles; the checkboxes below edit the active profile's kit.
+  const profiles = equipmentProfiles.ensureEquipmentProfiles(appState);
+  const activeProfile = equipmentProfiles.getActiveEquipmentProfile(appState);
+  const profileSelect = document.getElementById('settingsEquipmentProfile');
+  if (profileSelect) {
+    profileSelect.innerHTML = '';
+    for (const profile of profiles) {
+      const option = document.createElement('option');
+      option.value = profile.id;
+      option.textContent = profile.name;
+      profileSelect.appendChild(option);
+    }
+    profileSelect.value = activeProfile.id;
+  }
+  const profileName = document.getElementById('settingsEquipmentProfileName');
+  if (profileName && document.activeElement !== profileName) {
+    profileName.value = activeProfile.name;
+  }
+  const deleteProfileBtn = document.querySelector('[data-action="equipment-profile-delete"]');
+  if (deleteProfileBtn) deleteProfileBtn.disabled = profiles.length <= 1;
+
   const nameInput = document.getElementById('settingsNameInput');
   if (nameInput) nameInput.value = s.name || '';
 
@@ -137,17 +160,17 @@ function _syncSettingsUI() {
     threshEl.value = Math.floor(total / 60) + ':' + (total % 60).toString().padStart(2, '0');
   }
 
-  // Equipment checkboxes
-  const eq = s.equipment || {};
-  ['barbell','rack','dumbbells','cables','pullupBar','bands','kettlebells','ezBar','treadmill'].forEach(key => {
+  // Equipment checkboxes — active profile.
+  const eq = activeProfile.equipment;
+  equipmentProfiles.EQUIPMENT_KEYS.forEach(key => {
     const el = document.querySelector(`[data-equipment="${key}"]`);
     // ezBar (like bands/kettlebells/treadmill) is opt-in: only checked when the
-    // stored setting is explicitly true, so existing users never own it by default.
-    if (el) el.checked = eq[key] !== false && (eq[key] === true || ['barbell','rack','dumbbells','cables','pullupBar'].includes(key));
+    // active profile explicitly has it.
+    if (el) el.checked = !!eq[key];
   });
 
-  // Resistance band weights (≈ kg used for volume)
-  const bw = s.bandWeights || { L: 10, M: 20, H: 30 };
+  // Resistance band weights (≈ kg used for volume) — active profile.
+  const bw = activeProfile.bandWeights;
   const bl = document.getElementById('settingsBandLight');
   const bm = document.getElementById('settingsBandMed');
   const bh = document.getElementById('settingsBandHeavy');
@@ -528,9 +551,64 @@ export function saveStreakAlertTime() {
 
 export function toggleEquipment(key, enabled) {
   const appState = _ensureSettings();
-  if (!appState.settings.equipment) appState.settings.equipment = {};
-  appState.settings.equipment[key] = enabled;
+  equipmentProfiles.ensureEquipmentProfiles(appState);
+  equipmentProfiles.setActiveEquipmentKey(appState, key, enabled);
   saveStateToLocalStorage(true);
+}
+
+// Switch the active gym/home profile. The legacy projection fields are updated
+// by the model so program fit, swaps and plate hints see the new kit at once.
+export function selectEquipmentProfile(id) {
+  const appState = _ensureSettings();
+  if (!equipmentProfiles.switchEquipmentProfile(appState, id)) return;
+  saveStateToLocalStorage(true);
+  _syncSettingsUI();
+  const active = equipmentProfiles.getActiveEquipmentProfile(appState);
+  showToast(`Equipment profile: ${active.name}`);
+  document.dispatchEvent(new CustomEvent('app:equipment-changed', { detail: { id: active.id } }));
+}
+
+export function addEquipmentProfileFromUI() {
+  const appState = _ensureSettings();
+  const profile = equipmentProfiles.addEquipmentProfile(appState);
+  saveStateToLocalStorage(true);
+  _syncSettingsUI();
+  showToast(`Added ${profile.name}`);
+  document.dispatchEvent(new CustomEvent('app:equipment-changed', { detail: { id: profile.id } }));
+}
+
+export function saveEquipmentProfileName() {
+  const appState = _ensureSettings();
+  const input = document.getElementById('settingsEquipmentProfileName');
+  if (!input) return;
+  const active = equipmentProfiles.getActiveEquipmentProfile(appState);
+  if (!equipmentProfiles.renameEquipmentProfile(appState, active.id, input.value)) {
+    input.value = active.name;
+    return;
+  }
+  saveStateToLocalStorage(true);
+  _syncSettingsUI();
+}
+
+export async function deleteActiveEquipmentProfile() {
+  const appState = _ensureSettings();
+  const active = equipmentProfiles.getActiveEquipmentProfile(appState);
+  const confirmed = await confirmModal({
+    title: 'Delete equipment profile?',
+    message: `"${active.name}" will be removed. Your workouts are not affected.`,
+    confirmLabel: 'Delete',
+    danger: true,
+  });
+  if (!confirmed) return;
+  if (!equipmentProfiles.deleteEquipmentProfile(appState, active.id)) {
+    showToast('Keep at least one equipment profile');
+    return;
+  }
+  saveStateToLocalStorage(true);
+  _syncSettingsUI();
+  const next = equipmentProfiles.getActiveEquipmentProfile(appState);
+  showToast(`Using ${next.name}`);
+  document.dispatchEvent(new CustomEvent('app:equipment-changed', { detail: { id: next.id } }));
 }
 
 // Persist the nominal kg-equivalent for each resistance band. These feed the
@@ -583,11 +661,12 @@ export function saveBandWeights() {
     const v = el ? parseFloat(el.value) : NaN;
     return Number.isFinite(v) && v >= 0 ? v : fallback;
   };
-  appState.settings.bandWeights = {
+  equipmentProfiles.ensureEquipmentProfiles(appState);
+  equipmentProfiles.updateActiveBandWeights(appState, {
     L: read('settingsBandLight', 10),
     M: read('settingsBandMed', 20),
     H: read('settingsBandHeavy', 30),
-  };
+  });
   saveStateToLocalStorage(true);
 }
 
