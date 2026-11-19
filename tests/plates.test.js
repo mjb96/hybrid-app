@@ -54,17 +54,15 @@ test('a profile can use its own bar and plate denominations', () => {
   );
 });
 
-test('plate hint is opt-in in the coach target', () => {
-  const base = {
+test('the coach target provides an empty, hidden plate-hint placeholder', () => {
+  const html = buildExerciseCard({
     displaySafeName: 'Back Squat', safeLiftName: 'Back Squat', isCompleted: false,
     diagnostic: { progression: { weight: 100, reps: 5, rationale: 'Add load.' } },
     blueprintLabel: '3 × 5', historicalLineText: 'Last: 95 × 5', setsMarkup: '',
-  };
-  const off = buildExerciseCard(base);
-  assert.doesNotMatch(off, /data-plate-hint/);
-  const on = buildExerciseCard({ ...base, showPlates: true });
-  assert.match(on, /data-plate-hint/);
-  assert.match(on, /hidden/);
+  });
+  assert.match(html, /data-plate-hint/);
+  assert.match(html, /hidden/);
+  assert.doesNotMatch(html, /20 \+ 20 \/ side/);
 });
 
 test('plate hint text is applied as text, never parsed as HTML', () => {

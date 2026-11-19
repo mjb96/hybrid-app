@@ -139,7 +139,7 @@ export function buildSetRow(sData, sIdx, safeLiftName, historicalSetData = null,
   </div>`;
 }
 
-export function buildExerciseCard({ displaySafeName, safeLiftName, isCompleted, diagnostic, blueprintLabel, targetLabel = '', historicalLineText, historyPanelHTML = '', setsMarkup, groupId = null, ssColor = null, weightUnit = 'kg', showPlates = false }) {
+export function buildExerciseCard({ displaySafeName, safeLiftName, isCompleted, diagnostic, blueprintLabel, targetLabel = '', historicalLineText, historyPanelHTML = '', setsMarkup, groupId = null, ssColor = null, weightUnit = 'kg' }) {
   const stalledBadge = diagnostic.isStalled ? `<span class="badge-stall-indicator">PROGRESS CHECK</span>` : '';
   const targetStyle  = diagnostic.isStalled ? 'color: var(--color-amber); font-weight: 800;' : '';
   const ssBtnClass   = groupId ? 'btn-ss-link ss-active' : 'btn-ss-link';
@@ -165,7 +165,7 @@ export function buildExerciseCard({ displaySafeName, safeLiftName, isCompleted, 
     ${historyPanelHTML || `<span class="cockpit-history-line">${historicalLineText}</span>`}
     ${diagnostic.progression && diagnostic.progression.weight ? `
       <div class="cockpit-coach-target">
-        <span class="cct-text"><small>Suggested next · this program run</small><b>${escapeHtml(String(diagnostic.progression.weight))}${escapeHtml(weightUnit)} × ${escapeHtml(String(diagnostic.progression.reps))} reps</b><em>${escapeHtml(String(diagnostic.progression.rationale || ''))}</em>${showPlates ? '<span class="cct-plates" data-plate-hint hidden></span>' : ''}</span>
+        <span class="cct-text"><small>Suggested next · this program run</small><b>${escapeHtml(String(diagnostic.progression.weight))}${escapeHtml(weightUnit)} × ${escapeHtml(String(diagnostic.progression.reps))} reps</b><em>${escapeHtml(String(diagnostic.progression.rationale || ''))}</em><span class="set-plate-hint" data-plate-hint hidden></span></span>
         ${isCompleted ? '' : `<button class="cct-logall tactile-scale" data-action="log-all-target">Log all →</button>`}
       </div>
     ` : ''}

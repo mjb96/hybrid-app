@@ -434,7 +434,7 @@ function _buildExerciseCardEl(liftName, loggedLiftsData, weekData, wk, selectedD
   } catch (_) {}
 
   try {
-    exCard.innerHTML = buildExerciseCard({ displaySafeName, safeLiftName, isCompleted, diagnostic, blueprintLabel, targetLabel, historicalLineText, historyPanelHTML, setsMarkup, groupId, ssColor, showPlates, weightUnit: wUnit });
+    exCard.innerHTML = buildExerciseCard({ displaySafeName, safeLiftName, isCompleted, diagnostic, blueprintLabel, targetLabel, historicalLineText, historyPanelHTML, setsMarkup, groupId, ssColor, plates, weightUnit: wUnit });
     if (showPlates && plates) applyPlateHint(exCard, plates);
     // Any completed WORKING set means the athlete is past warming up. Kept in
     // sync on tick by refreshContextualRowActions(), since ticking updates the
