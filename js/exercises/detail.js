@@ -32,7 +32,7 @@ export function exerciseDetailHtml(value) {
   ].filter(Boolean);
   const guidance = item.instructions.length
     ? `<ol class="exercise-detail__steps">${item.instructions.map((step) => `<li>${escapeHtml(step)}</li>`).join('')}</ol>`
-    : '<p class="exercise-detail__empty">Technique guidance has not been added for this exercise yet.</p>';
+    : '<p class="exercise-detail__empty">Form guide not reviewed yet.</p>';
   const safety = item.safetyNotes.length
     ? `<ul class="exercise-detail__safety">${item.safetyNotes.map((note) => `<li>${escapeHtml(note)}</li>`).join('')}</ul>`
     : '<p class="exercise-detail__empty">No exercise-specific safety notes are available.</p>';

@@ -9711,20 +9711,3 @@ html[data-theme="dark"] .tl-today__primary {
 }
 .prog-card-bookmark .ic.is-saved { fill: currentColor; }
 .lib-empty-icon { color: var(--text-muted); display: flex; justify-content: center; }
-
-
-/* In-app exercise-data attribution (Settings → Data → App). */
-.settings-licences { margin: 8px 0 4px; border-top: 1px solid var(--border-subtle, rgba(148,163,184,.10)); }
-.settings-licences summary {
-  min-height: 44px; display: flex; align-items: center;
-  color: var(--text-secondary); font-size: .76rem; font-weight: 750;
-  cursor: pointer;
-}
-.settings-licences p { margin: 0 0 8px; color: var(--text-muted); font-size: .7rem; line-height: 1.45; }
-.settings-licences a { color: var(--brand-ice, var(--color-cyan)); }
-.settings-licences pre {
-  max-height: 220px; overflow: auto; margin: 0 0 8px; padding: 10px;
-  border: 1px solid var(--border-subtle, rgba(148,163,184,.10)); border-radius: 10px;
-  background: var(--bg-input); color: var(--text-muted);
-  font-size: .62rem; line-height: 1.45; white-space: pre-wrap;
-}

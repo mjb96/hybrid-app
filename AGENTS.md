@@ -102,7 +102,7 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   Slate/Forest/Ember alternatives. Light keeps its own variable block. The
   Settings palette buttons persist `settings.palette`.
 - Exercise catalogue: the original 157 are `CORE_EXERCISES`; `js/exercises/opengym-catalogue.js`
-  adds ~5,555 openGym catalogue text entries (openGym AGPL-3.0 + ExerciseDB v1 MIT, no media) imported by
+  adds ~5,555 openGym catalogue **metadata** entries (names/ids/muscles/equipment; no imported instructions, descriptions or media) imported by
   `scripts/import-opengym-catalogue.mjs`. `OPENGYM_ID_NAMES` resolves plan-file ids.
   Never include Gym-visual media; see NOTICE.md and docs/EXERCISE_LIBRARY.md.
 - Equipment profiles: `js/equipment-profiles.js` owns
