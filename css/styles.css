@@ -9470,6 +9470,32 @@ html[data-theme="light"] .recap-next__link {
   max-width: 62%;
   flex: 0 1 auto;
 }
+.settings-plate-counts-wrap { margin: 2px 0 8px; }
+.settings-plate-counts {
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+.settings-plate-count {
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: 44px; padding: 4px 8px;
+  border: 1px solid var(--border-light); border-radius: 11px;
+  background: var(--bg-card); color: var(--text-secondary);
+  font-size: .78rem; font-weight: 700;
+}
+.settings-plate-count input {
+  width: 52px; min-height: 44px; padding: 4px 6px;
+  border: 1px solid var(--border-medium); border-radius: 8px;
+  background: var(--overlay-md); color: var(--text-primary);
+  font: inherit; text-align: center;
+}
+.settings-dumbbells, .settings-machine-stacks { margin-top: 4px; }
+.settings-stack-list { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.settings-stack-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  min-height: 44px; padding: 6px 2px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.settings-stack-row span { font-size: .78rem; color: var(--text-secondary); }
+.settings-stack-row strong { color: var(--text-primary); font-size: .8rem; }
 .settings-text-btn {
   background: none;
   border: none;

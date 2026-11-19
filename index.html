@@ -1623,11 +1623,42 @@
               <label class="settings-row-label" for="settingsPlates">Plates</label>
               <input type="text" class="settings-input settings-profile-plates" id="settingsPlates" placeholder="25, 20, 15, 10, 5, 2.5, 1.25" autocomplete="off">
             </div>
+            <div class="settings-plate-counts-wrap">
+              <div class="settings-section-label settings-section-label--sub">Pairs you own</div>
+              <div class="settings-hint">Optional. Leave a size blank for unlimited; enter 0 if you have none.</div>
+              <div class="settings-plate-counts" id="settingsPlateCounts"></div>
+            </div>
             <div class="settings-row">
               <label class="settings-row-label" for="settingsShowPlateHints">Show hints in workouts</label>
               <label class="settings-switch"><input type="checkbox" id="settingsShowPlateHints"><span class="settings-switch-track"></span></label>
             </div>
             <button type="button" class="settings-text-btn" data-action="equipment-plates-reset">Reset to standard plates</button>
+          </div>
+
+          <div class="settings-dumbbells">
+            <div class="settings-section-label settings-section-label--sub">Dumbbells (<span id="settingsDumbbellUnit">kg</span>)</div>
+            <div class="settings-hint">Optional. Suggested loads snap to the nearest weight you own.</div>
+            <div class="settings-row">
+              <label class="settings-row-label" for="settingsDumbbells">Weights</label>
+              <input type="text" class="settings-input settings-profile-plates" id="settingsDumbbells" placeholder="5, 7.5, 10, 12.5" autocomplete="off">
+            </div>
+          </div>
+
+          <div class="settings-machine-stacks">
+            <div class="settings-section-label settings-section-label--sub">Machine stacks</div>
+            <div class="settings-hint">Optional. Record a machine's own weight ladder; suggested loads snap to it.</div>
+            <div class="settings-row">
+              <label class="settings-row-label" for="settingsStackExercise">Exercise</label>
+              <select class="settings-input" id="settingsStackExercise"></select>
+            </div>
+            <div class="settings-row">
+              <label class="settings-row-label" for="settingsStackWeights">Weights</label>
+              <input type="text" class="settings-input settings-profile-plates" id="settingsStackWeights" placeholder="5, 10, 15, 20" autocomplete="off">
+            </div>
+            <div class="settings-profile-actions">
+              <button type="button" class="settings-action-btn" data-action="save-machine-stack">Save stack</button>
+            </div>
+            <div class="settings-stack-list" id="settingsStackList"></div>
           </div>
 
           <!-- These were hidden as a "power-user knob", which left the athlete

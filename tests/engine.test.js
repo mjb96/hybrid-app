@@ -430,6 +430,47 @@ test('computeDiagnosticForLift: carries the program progression style into the s
   assert.equal(linearClean.progression.weight, 82.5);
 });
 
+test('suggested loads snap to the active profile inventory', () => {
+  const profile = {
+    id: 'eqp_default', name: 'Gym',
+    dumbbells: { kg: [10, 12.5, 15, 17.5], lb: [] },
+    machineStacks: { leg_press: { unit: 'kg', weights: [10, 20, 30, 40] } },
+  };
+  const makeState = (liftName, sets) => stampDiagnosticState({
+    currentWeek: '2',
+    settings: { weightUnit: 'kg', progressionIncrement: 1.25, equipmentProfiles: [profile], activeEquipmentProfileId: 'eqp_default' },
+    weeks: {
+      '1': {
+        lifts: { mon: { [liftName]: sets.map((set) => ({ tr: 8, ...set })) } },
+        dates: { mon: '2026-07-07' }, gymRpe: {}, runs: {}, gymStats: {}, notes: {},
+      },
+      '2': { lifts: { mon: { [liftName]: [] } }, dates: {}, gymRpe: {}, runs: {}, gymStats: {}, notes: {} },
+    },
+    streakData: {},
+  });
+
+  const dumbbellState = makeState('Dumbbell Bench Press', [{ w: '12.5', r: '8', c: true, rpe: '7' }]);
+  initEngine(() => dumbbellState, () => DAYS);
+  const dumbbell = computeDiagnosticForLift('2', 'mon', 'Dumbbell Bench Press', 8);
+  assert.equal(dumbbell.progression.action, 'load-up');
+  assert.equal(dumbbell.progression.weight, 15);
+  assert.match(dumbbell.progression.rationale, /Nearest available kg dumbbell weight/);
+
+  const stackState = makeState('Leg Press', [{ w: '20', r: '8', c: true, rpe: '7' }]);
+  initEngine(() => stackState, () => DAYS);
+  const stack = computeDiagnosticForLift('2', 'mon', 'Leg Press', 8);
+  assert.equal(stack.progression.action, 'load-up');
+  assert.equal(stack.progression.weight, 30);
+  assert.match(stack.progression.rationale, /Nearest available kg stack weight/);
+
+  // No inventory means the historical increment-based suggestion is untouched.
+  const bareState = makeState('Dumbbell Bench Press', [{ w: '12.5', r: '8', c: true, rpe: '7' }]);
+  bareState.settings.equipmentProfiles = [{ id: 'eqp_default', name: 'Gym' }];
+  initEngine(() => bareState, () => DAYS);
+  const bare = computeDiagnosticForLift('2', 'mon', 'Dumbbell Bench Press', 8);
+  assert.equal(bare.progression.weight, 13.75);
+});
+
 test('computeDiagnosticForLift: warm-up-only history yields no progression', () => {
   const sets = [{ w: '40', r: '10', c: true, type: 'W' }];
   initEngine(() => makeDiagState(sets), () => DAYS);

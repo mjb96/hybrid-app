@@ -66,6 +66,34 @@ test('legacy (unstamped) state is migrated and stamped to current version', () =
   assert.ok(state.weeks['2']);                          // valid week preserved
 });
 
+test('v7 seeds optional equipment inventory without changing the active kit', () => {
+  const state = {
+    schemaVersion: 6,
+    settings: {
+      equipmentProfiles: [{
+        id: 'eqp_default', name: 'Gym',
+        equipment: { barbell: true, rack: true, dumbbells: true, cables: false, pullupBar: true },
+        bandWeights: { L: 10, M: 20, H: 30 },
+        plateSetup: {
+          kg: { bar: 20, plates: [25, 15] },
+          lb: { bar: 45, plates: [45, 25] },
+        },
+      }],
+      activeEquipmentProfileId: 'eqp_default',
+    },
+  };
+  migrateState(state);
+  const profile = state.settings.equipmentProfiles[0];
+  assert.equal(state.schemaVersion, 7);
+  assert.deepEqual(profile.dumbbells, { kg: [], lb: [] });
+  assert.deepEqual(profile.machineStacks, {});
+  assert.deepEqual(profile.plateSetup.kg.counts, {});
+  assert.deepEqual(profile.plateSetup.lb.counts, {});
+  // The existing bar/plates are untouched: absent counts mean unlimited.
+  assert.equal(profile.plateSetup.kg.bar, 20);
+  assert.deepEqual(profile.plateSetup.kg.plates, [25, 15]);
+});
+
 test('migrateState is idempotent — already-current state is untouched', () => {
   const state = {
     schemaVersion: CURRENT_SCHEMA_VERSION,

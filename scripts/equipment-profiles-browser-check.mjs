@@ -125,6 +125,42 @@ try {
     return home?.plateSetup?.kg?.plates?.length === 3;
   }, STORAGE_KEY);
   ok((await platesInput.inputValue()) === '20, 10, 5', 'editing plates saves the active profile');
+
+  // Optional inventory: counts, dumbbell ladder, machine stack.
+  await page.locator('[data-plate-count="20"]').fill('1');
+  await page.locator('[data-plate-count="20"]').press('Tab');
+  await page.waitForFunction((key) => {
+    const stored = JSON.parse(localStorage.getItem(key) || '{}');
+    const home = stored?.settings?.equipmentProfiles?.find((p) => p.id === 'eqp_home');
+    return home?.plateSetup?.kg?.counts?.['20'] === 1;
+  }, STORAGE_KEY);
+  ok(true, 'plate pair counts save per size');
+
+  await page.locator('#settingsDumbbells').fill('5, 7.5, 10');
+  await page.locator('#settingsDumbbells').press('Tab');
+  await page.waitForFunction((key) => {
+    const stored = JSON.parse(localStorage.getItem(key) || '{}');
+    const home = stored?.settings?.equipmentProfiles?.find((p) => p.id === 'eqp_home');
+    return home?.dumbbells?.kg?.length === 3;
+  }, STORAGE_KEY);
+  ok((await page.locator('#settingsDumbbells').inputValue()) === '5, 7.5, 10', 'dumbbell ladder saves');
+
+  await page.selectOption('#settingsStackExercise', 'leg_press');
+  await page.locator('#settingsStackWeights').fill('10, 20, 30');
+  await page.click('[data-action="save-machine-stack"]');
+  await page.waitForFunction((key) => {
+    const stored = JSON.parse(localStorage.getItem(key) || '{}');
+    const home = stored?.settings?.equipmentProfiles?.find((p) => p.id === 'eqp_home');
+    return home?.machineStacks?.leg_press?.weights?.length === 3;
+  }, STORAGE_KEY);
+  ok((await page.locator('#settingsStackList').textContent()).includes('Leg Press'), 'machine stack saves and lists');
+  await page.click('[data-action="remove-machine-stack"]');
+  await page.waitForFunction((key) => {
+    const stored = JSON.parse(localStorage.getItem(key) || '{}');
+    const home = stored?.settings?.equipmentProfiles?.find((p) => p.id === 'eqp_home');
+    return !home?.machineStacks?.leg_press;
+  }, STORAGE_KEY);
+  ok(!(await page.locator('#settingsStackList').textContent()).includes('Leg Press'), 'machine stack can be removed');
   const hintRow = page.locator('.settings-row', { has: plateHints });
   await hintRow.locator('.settings-switch').click();
   await page.waitForFunction((key) => JSON.parse(localStorage.getItem(key) || '{}')?.settings?.showPlateHints === true, STORAGE_KEY);

@@ -13,6 +13,7 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
 - `npm test` — node --test suite
 - `npm run typecheck` — tsc over jsconfig
 - `npm run smoke` — scripts/smoke.mjs (jsdom import + home render)
+- `npm run icons:gen` — regenerate PWA/Android icons from `assets/brand/icon.svg`
 - `npm run browser:verify` — 34 real-Chromium product checks through a parallel
   worker pool (3 workers by default; `-- --serial` for one-at-a-time debugging,
   `-- --concurrency=N` to pin workers, `-- --timeout=N` for the 180 s per-check
@@ -61,12 +62,16 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   `activeEquipmentProfileId`. `settings.equipment` / `settings.bandWeights` are
   the active profile's projection and remain the fields every other caller
   reads; always update through the helpers rather than writing them directly.
-  `plateSetup` stores `{ kg: { bar, plates[] }, lb: { bar, plates[] } }` per
-  profile. `getActivePlateSetup(state, unit)` feeds `plateHint(total, unit, setup)`;
-  the logger only renders the per-side line when `settings.showPlateHints` is on
-  (default off, preserving the earlier target-line simplification). Settings →
-  Equipment switches, adds, renames and deletes profiles (the last profile cannot
-  be deleted). v5→v6 seeds one profile from the legacy kit.
+  `plateSetup` stores `{ kg: { bar, plates[], counts{} }, lb: { … } }` per
+  profile. `counts` is optional pairs per size; absent means unlimited.
+  `getActivePlateSetup(state, unit)` feeds `plateHint(total, unit, setup)`, which
+  reports a shortfall instead of inventing plates. `dumbbells` is a per-unit
+  ladder and `machineStacks` a per-exercise ladder; `computeDiagnosticForLift`
+  snaps suggested loads to them when configured. The logger only renders the
+  per-side line when `settings.showPlateHints` is on (default off). Settings →
+  Equipment switches, adds, renames and deletes profiles (the last cannot be
+  deleted). v6→v7 seeds the optional inventory shape; v5→v6 seeded the first
+  profile from the legacy kit.
 - Home decision surface: `index.html` keeps one Today card (`#homeTodayCard`),
   a generated week strip (`js/home/week-strip.js` → `#homeWeekDays`), one coach
   insight from `model.topInsight`, and a 2×2 quick-action grid. The In Focus
