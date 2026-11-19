@@ -5,6 +5,7 @@ import {
   parseCsv,
   parseWorkoutCsv,
   applyWorkoutCsvImport,
+  decodeCsvBytes,
 } from '../js/portability/import-workout-csv.js';
 
 const openGymCsv = `date,start_time,end_time,workout,workout_note,exercise,exercise_id,set,set_type,weight,unit,reps,rpe,rir,distance_km,seconds
@@ -30,8 +31,8 @@ test('parseCsv handles quotes, doubled quotes and CRLF', () => {
 
 test('parses OpenGym rows into sessions, warm-ups and effort', () => {
   const parsed = parseWorkoutCsv(openGymCsv, { unit: 'kg' });
-  assert.equal(parsed.sessions.length, 1);
-  assert.equal(parsed.skippedCardio, 1);
+  assert.equal(parsed.sessions.length, 2);
+  assert.equal(parsed.cardioRows, 1);
   assert.equal(parsed.totalSets, 3);
 
   const push = parsed.sessions[0];
@@ -44,6 +45,9 @@ test('parses OpenGym rows into sessions, warm-ups and effort', () => {
   assert.equal(push.entries['Bench Press'][1].rpe, 8);
   assert.equal(push.entries['Bench Press'][1].rir, 2);
   assert.deepEqual(Object.keys(push.entries), ['Bench Press', 'Row, Seated']);
+  assert.equal(parsed.sessions[1].cardio[0].name, 'Treadmill');
+  assert.equal(parsed.sessions[1].cardio[0].distanceKm, 2.5);
+  assert.equal(parsed.sessions[1].cardio[0].seconds, 1500);
 });
 
 test('accepts Strong and Hevy headers', () => {
@@ -88,8 +92,9 @@ test('applies an import into archived weeks and is idempotent', () => {
     resolveName: (name) => (name === 'Bench Press' ? 'Barbell Bench Press' : null),
   };
   const first = applyWorkoutCsvImport(state, parsed, options);
-  assert.equal(first.added.length, 1);
+  assert.equal(first.added.length, 2);
   assert.equal(first.sets, 3);
+  assert.equal(first.runs, 1);
   assert.equal(state.currentWeek, '1');
   assert.ok(!state.weeks['1']);
 
@@ -103,8 +108,25 @@ test('applies an import into archived weeks and is idempotent', () => {
   assert.ok(week.lifts.mon['Row, Seated']);
   assert.ok(state.customExercises.includes('Row, Seated'));
 
+  const cardioWeek = state.weeks[first.added[1]];
+  assert.equal(cardioWeek.runSessions.mon.length, 1);
+  assert.equal(cardioWeek.runs.mon.dist, '2.50');
+  assert.equal(cardioWeek.runs.mon.time, '25:00');
+  assert.equal(cardioWeek.runs.mon.pace, '10:00');
+  assert.equal(cardioWeek.gymStats.mon.time, undefined);
+
   const second = applyWorkoutCsvImport(state, parsed, options);
   assert.equal(second.added.length, 0);
-  assert.equal(second.skipped.length, 1);
+  assert.equal(second.skipped.length, 2);
   assert.equal(second.sets, 0);
+});
+
+test('reads UTF-16 Excel exports and semicolon-delimited files', () => {
+  const text = 'date;exercise;weight;unit;reps\r\n2026-11-02;Bench;100;kg;5\r\n';
+  const parsed = parseWorkoutCsv(text, { unit: 'kg' });
+  assert.equal(parsed.sessions.length, 1);
+  assert.equal(parsed.sessions[0].entries.Bench[0].w, '100');
+
+  const utf16 = new Uint8Array([0xFF, 0xFE, ...Array.from(text, (ch) => ch.charCodeAt(0)).flatMap((code) => [code & 0xFF, code >> 8])]);
+  assert.match(decodeCsvBytes(utf16), /^date;exercise;weight/);
 });

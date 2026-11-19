@@ -76,7 +76,7 @@ import {
   setProgressionIncrement, setDistanceUnit, setTheme, setPalette, stepCurrentWeek, setAutoAdvanceWeek,
   saveThresholdPace as saveSettingsThresholdPace,
   exportData, triggerImport, handleImportFile, confirmResetAllData,
-  triggerExternalCsvImport, handleExternalCsvFile, toggleModule,
+  triggerExternalCsvImport, handleExternalCsvFile, triggerFitImport, handleFitFiles, toggleModule,
   selectEquipmentProfile, addEquipmentProfileFromUI, saveEquipmentProfileName,
   deleteActiveEquipmentProfile,
   applySettingsOnBoot,
@@ -1210,6 +1210,7 @@ document.addEventListener('click', (e) => {
   else if (action === 'export-data') exportData();
   else if (action === 'import-data') triggerImport();
   else if (action === 'import-external-csv') triggerExternalCsvImport();
+  else if (action === 'import-fit-files') triggerFitImport();
   else if (action === 'equipment-profile-add') addEquipmentProfileFromUI();
   else if (action === 'equipment-profile-delete') deleteActiveEquipmentProfile();
   else if (action === 'equipment-plates-reset') resetPlateSetup();
@@ -1366,6 +1367,11 @@ document.addEventListener('change', (e) => {
   }
   if (target.id === 'settingsExternalCsvFile') {
     handleExternalCsvFile(target.files?.[0]);
+    target.value = '';
+    return;
+  }
+  if (target.id === 'settingsFitFiles') {
+    handleFitFiles(target.files);
     target.value = '';
     return;
   }

@@ -1786,7 +1786,9 @@
           <input type="file" id="settingsImportFile" aria-label="Choose backup file to import" accept=".json" class="hidden-input">
           <button class="settings-action-btn" data-action="import-external-csv">Import from Another App (CSV)</button>
           <input type="file" id="settingsExternalCsvFile" aria-label="Choose a workout CSV from OpenGym, Strong or Hevy" accept=".csv,text/csv" class="hidden-input">
-          <p class="settings-hint">OpenGym, Strong or Hevy workout or bodyweight export. Strength sets and weigh-ins import; cardio rows are skipped for now.</p>
+          <button class="settings-action-btn" data-action="import-fit-files">Import Garmin/Wahoo FIT Files</button>
+          <input type="file" id="settingsFitFiles" aria-label="Choose FIT activity files from Garmin, Wahoo, Coros or Zwift" accept=".fit" multiple class="hidden-input">
+          <p class="settings-hint">OpenGym, Strong or Hevy workout or bodyweight export. Strength sets, cardio runs and weigh-ins import. FIT files add dated runs; strength FIT files add time and heart rate only because the format carries no exercise names.</p>
           <p class="settings-hint">Your GPS run routes stay on this device. The JSON export is your route backup: it includes every route, so use it to move your data (routes included) to a new device.</p>
           <button class="settings-action-btn settings-action-btn-danger" data-action="reset-all-data">Reset All Data</button>
         </div>

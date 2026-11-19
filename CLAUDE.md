@@ -14,7 +14,7 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
 - `npm run typecheck` — tsc over jsconfig
 - `npm run smoke` — scripts/smoke.mjs (jsdom import + home render)
 - `npm run icons:gen` — regenerate PWA/Android icons from `assets/brand/icon.svg`
-- `npm run browser:verify` — 36 real-Chromium product checks through a parallel
+- `npm run browser:verify` — 37 real-Chromium product checks through a parallel
   worker pool (3 workers by default; `-- --serial` for one-at-a-time debugging,
   `-- --concurrency=N` to pin workers, `-- --timeout=N` for the 180 s per-check
   kill, `-- --retries=N` for the default single retry after a timeout)
@@ -29,11 +29,14 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
 - History import: `js/portability/import-workout-csv.js` is a clean-room reader
   for OpenGym/Strong/Hevy one-row-per-set CSV (no OpenGym code copied). It writes
   archived `arch:import:<id>` weeks with a stable `sessionId`, leaves the active
-  program alone, and imports strength sets only; cardio rows are counted and
-  skipped (no cardio import is planned right now). `import-body-csv.js` reads the
-  `date,weight_kg` body export into `bodyWeightLog`, skipping existing dates.
-  `handleExternalCsvFile` auto-detects the file type, previews it and applies it;
-  re-importing the same file is idempotent.
+  program alone, imports strength sets and turns cardio rows into archived runs.
+  It accepts comma/semicolon/tab files and UTF-16 Excel exports. `import-body-csv.js`
+  reads the `date,weight_kg` body export into `bodyWeightLog`, skipping existing
+  dates. `handleExternalCsvFile` auto-detects the file type, previews it and
+  applies it; re-importing the same file is idempotent. Batch FIT imports live in
+  `js/portability/import-fit.js`, parsed lazily by `parseFitBuffer` in
+  `js/garmin.js`; runs keep date/distance/pace/HR/GPS, strength FIT files keep
+  time/HR only because FIT has no exercise names.
 - Program-run isolation: every program run has a stable `state.activeActivationId`
   (`js/state/activation-identity.js`) and each week is stamped `week.activationId`. A
   switch/restart calls `startProgramActivation` (state.js) → `beginActivation` +
