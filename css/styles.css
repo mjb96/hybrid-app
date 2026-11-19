@@ -2062,7 +2062,7 @@ body.sheet-scroll-locked {
 
 .home-quick-actions {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
   gap: 6px;
   margin: 0 0 18px;
 }
@@ -9422,4 +9422,12 @@ html[data-theme="light"] .summary-highlights {
 }
 html[data-theme="light"] .recap-next__link {
   background: rgba(0,0,0,.02); border-color: rgba(0,0,0,.08);
+}
+
+/* Module toggles: entry points disappear, data is never deleted. */
+html[data-module-running="off"] [data-module="running"],
+html[data-module-fasting="off"] [data-module="fasting"],
+html[data-module-health="off"] [data-module="health"],
+html[data-module-recovery="off"] [data-module="recovery"] {
+  display: none !important;
 }

@@ -8,6 +8,7 @@ const checks = [
   'scripts/home-today-browser-check.mjs',
   'scripts/home-attribution-check.mjs',
   'scripts/progress-hub-browser-check.mjs',
+  'scripts/module-toggles-browser-check.mjs',
   'scripts/volume-guide-browser-check.mjs',
   'scripts/strength-volume-browser-check.mjs',
   'scripts/train-landing-browser-check.mjs',

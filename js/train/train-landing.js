@@ -23,6 +23,7 @@
 
 import { buildTodayCardModel } from '../home/today-card.js';
 import { buildActivityHistory } from '../activities/model.js';
+import { moduleEnabled } from '../modules.js';
 
 /**
  * The things a user can start from Train right now. Mirrors the quick-start
@@ -78,7 +79,12 @@ export function buildTrainLanding(options) {
     now = new Date(), tz = undefined, offline = false, recentLimit = 3 } = options || {};
 
   const today = buildTodayCardModel({ state, program, model, briefing, score, now, offline, tz });
-  const recent = recentActivities(state, recentLimit);
+  const recent = recentActivities(state, recentLimit)
+    .filter((row) => !['run', 'walk', 'ride'].includes(row.kind) || moduleEnabled(state, 'running'));
+  const quickStart = QUICK_START_ACTIONS.filter((item) =>
+    item.id === 'run' || item.id === 'walk' ? moduleEnabled(state, 'running')
+      : item.id === 'fast' ? moduleEnabled(state, 'fasting')
+        : true);
 
   // A session already under way is the one thing that must not be buried
   // behind a landing — the user's unsaved intent outranks browsing.
@@ -87,7 +93,7 @@ export function buildTrainLanding(options) {
   return {
     today,
     resumable,
-    quickStart: QUICK_START_ACTIONS,
+    quickStart,
     recent,
     hasHistory: recent.length > 0,
   };

@@ -39,6 +39,7 @@ import { confirmModal } from './ui/confirm-modal.js';
 import { paintIcons, icon as svgIcon } from './ui/icons.js';
 import { closeManagedModal, initModalStack, openManagedModal, requestCloseTopModal } from './ui/modal-stack.js';
 import { initSentry } from './monitoring/sentry.js';
+import { applyModuleVisibility } from './modules.js';
 import { SENTRY_DSN, SENTRY_RELEASE } from './monitoring/sentry-config.js';
 
 import { initEngine, shouldSuggestDeload, paceSecondsPerKm } from './engine.js';
@@ -73,7 +74,7 @@ import {
   setProgressionIncrement, setDistanceUnit, setTheme, stepCurrentWeek, setAutoAdvanceWeek,
   saveThresholdPace as saveSettingsThresholdPace,
   exportData, triggerImport, handleImportFile, confirmResetAllData,
-  triggerExternalCsvImport, handleExternalCsvFile,
+  triggerExternalCsvImport, handleExternalCsvFile, toggleModule,
   applySettingsOnBoot,
   hcToggleConnect, hcSyncNow, saveStepGoal, hcToggleSyncField,
   setFitnessGoal, setWeightGoal, setFitnessLevel, setWeekStartDay, setFastingDefault,
@@ -100,6 +101,10 @@ import {
   clearActiveOneOffSession, createOneOffStrengthSession,
 } from './workout/one-off-session.js';
 import { initAutomaticBackups, checkDailyAutomaticBackup } from './portability/auto-backup.js';
+
+document.addEventListener('app:modules-changed', () => {
+  try { hydrateCurrentView(); } catch (err) { console.warn('Module view refresh failed.', err); }
+});
 
 document.addEventListener('app:storage-loaded', () => {
   try {
@@ -1331,6 +1336,10 @@ document.addEventListener('change', (e) => {
     }
     return;
   }
+  if (target.matches('[data-module-toggle]')) {
+    toggleModule(target.getAttribute('data-module-toggle'), target.checked);
+    return;
+  }
   if (target.id === 'settingsExternalCsvFile') {
     handleExternalCsvFile(target.files?.[0]);
     target.value = '';
@@ -1805,6 +1814,7 @@ async function bootstrapApp() {
     checkActiveTimerOnLoad(activeWorkoutTimerKey());
     window._hybridGetProgram = () => getProgramById(appState.activeProgramId);
     applySettingsOnBoot(appState);
+    applyModuleVisibility(appState);
     checkForAutomaticWeekAdvance();
     initNotifications(() => appState);
     checkMissedWorkout();

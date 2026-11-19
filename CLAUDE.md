@@ -33,6 +33,13 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   numeric keys, so a past run never appears in the active workout). This is what stops a
   previous program's completed lifts leaking into a new program's day — do NOT reintroduce
   same-slot reuse across programs. v3 migration adopts legacy weeks into one activation.
+- Modules: `js/modules.js` owns the Running, Fasting, Health and Recovery
+  switches in `settings.modules` (default on). `applyModuleVisibility` publishes
+  `<html data-module-*="on|off">`; CSS hides `[data-module="…"]` entry points.
+  Train quick starts/recent runs, Progress domains and Home insight/running cards
+  filter through `moduleEnabled`; analytics sections carry `data-module` hooks so a
+  deep link cannot reopen a hidden module. Settings must reflect the switches. Data is
+  never deleted, and stored history remains readable.
 - Home decision surface: `index.html` keeps one Today card (`#homeTodayCard`),
   a generated week strip (`js/home/week-strip.js` → `#homeWeekDays`), one coach
   insight from `model.topInsight`, and a 2×2 quick-action grid. The In Focus
