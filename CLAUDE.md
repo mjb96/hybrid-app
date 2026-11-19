@@ -1,7 +1,7 @@
 # Helyx — Claude Code Working Brief
 
-Helyx is a hybrid strength + running PWA (~28k lines vanilla JS ES modules, no
-framework; ~12k CSS; service-worker PWA). This file is auto-loaded every session.
+Helyx is a hybrid strength + running PWA (~56k lines vanilla JS ES modules, no
+framework; ~16k CSS; service-worker PWA). This file is auto-loaded every session.
 
 ## Commands (keep all green before every commit)
 - `npm test` — node --test suite
