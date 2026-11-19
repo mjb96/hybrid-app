@@ -29,6 +29,7 @@ import { activeSessionLiftNames, applyExerciseSwap, neighborDay, pickInheritedSe
 import { getSubstitutions } from './workout/substitutions.js';
 import { plateHint } from './workout/plates.js';
 import { getActivePlateSetup } from './equipment-profiles.js';
+import { resolveExercise } from './exercises/catalog.js';
 import { deleteMapFromDB } from './db.js';
 import { hapticTick, hapticSuccess } from './haptics.js';
 import { dateKey } from './dates.js';
@@ -421,8 +422,11 @@ function _buildExerciseCardEl(liftName, loggedLiftsData, weekData, wk, selectedD
   let plates = '';
   const showPlates = appState.settings?.showPlateHints === true;
   try {
+    // Plate math is only honest for a standard barbell. Dumbbell, EZ-bar,
+    // machine and custom lifts have a different bar (or no bar at all).
+    const isBarbellLift = resolveExercise(displayLiftName)?.equipment?.includes('barbell') === true;
     const tw = diagnostic.progression && diagnostic.progression.weight;
-    if (showPlates && tw && !isNaN(Number(tw)) && Number(tw) > 0) {
+    if (showPlates && isBarbellLift && tw && !isNaN(Number(tw)) && Number(tw) > 0) {
       const unit = appState.settings?.weightUnit || 'kg';
       plates = plateHint(Number(tw), unit, getActivePlateSetup(appState, unit));
     }
