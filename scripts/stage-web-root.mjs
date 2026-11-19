@@ -30,7 +30,7 @@ export const WEB_ROOT_ALLOWLIST = [
 // Things that must NEVER be present in the staged root even if a stray copy
 // tried to include them (assertion targets for the test).
 export const WEB_ROOT_FORBIDDEN = [
-  'docs', 'supabase', 'scripts', 'tests', 'android', '.git', '.github',
+  'docs', 'scripts', 'tests', 'android', '.git', '.github',
   'node_modules', 'package.json', 'package-lock.json', 'jsconfig.json',
   'PROGRESS.md', 'PRODUCT_PROGRESS.md', 'CLAUDE.md',
 ];

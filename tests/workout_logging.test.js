@@ -47,7 +47,7 @@ before(async () => {
     querySelector: () => null, querySelectorAll: () => [], createElement: () => makeEl(),
     dispatchEvent: noop, readyState: 'complete', body: makeEl('body'), documentElement: makeEl('html'),
   };
-  globalThis.window = { addEventListener: noop, removeEventListener: noop, supabase: undefined,
+  globalThis.window = { addEventListener: noop, removeEventListener: noop,
     location: { reload: noop, href: '' }, matchMedia: () => ({ matches: false, addEventListener: noop }),
     // Complete the browser-API surface the render path touches — a missing
     // scrollTo used to throw a swallowed "window.scrollTo is not a function"
@@ -184,7 +184,7 @@ test('removeCustomSetRow deletes the set and prunes empty lift from liftOrder', 
 
 test('render guard: a stray lift_* key never surfaces as an exercise name', () => {
   initWith(freshState());
-  // Simulate an un-migrated key arriving (e.g. from an old device's cloud blob)
+  // Simulate an un-migrated key arriving from an older device
   // directly in the day the cockpit is about to render.
   state.weeks['1'].lifts.mon['lift_abcd12'] = [
     { w: '120', r: '5', c: true }, { w: '120', r: '5', c: true },

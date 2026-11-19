@@ -12,8 +12,8 @@ screenshot or short screen recording for any failure.
 
 - Fresh install: complete every onboarding step; confirm goal/program cards, unit toggles,
   Back, Skip, and Continue respond without precision tapping or horizontal scrolling.
-- Onboarding sign-in: open **Already have an account? Sign in**, type in both fields,
-  switch **Sign In / Create Account**, then **Continue Offline**; confirm focus/input works
+- Onboarding restore: open **Restore backup file**, cancel the file picker, then start
+  a new profile; confirm focus/input works
   and onboarding is still present afterward.
 - Home: tap the profile avatar, primary workout action, Activity History, and every bottom
   navigation item, including the centre Start action.

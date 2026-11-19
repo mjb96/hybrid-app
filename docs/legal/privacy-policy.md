@@ -25,8 +25,8 @@ choose to.
 ---
 
 ## 1. Summary (the short version)
-- Your training data lives **on your device** first. It is only sent to the
-  cloud if you **create an account and sign in**.
+- Your training data lives **on your device**. There is no account system and
+  no cloud sync; Helyx does not receive your training history.
 - We do **not** sell your data, show ads, or use advertising/behavioural analytics.
 - Health and location data are treated as **sensitive**. We minimise what we
   collect and never use it for advertising.
@@ -45,8 +45,8 @@ choose to.
 If you connect **Health Connect** (Android, optional), Helyx reads only the
 supported fields you select: daily steps, sleep duration, resting heart rate,
 and heart-rate variability (HRV). This data powers your in-app recovery and
-training views. It is included in cloud sync only when you sign in. You can
-turn individual fields off in Helyx and revoke permission in Health Connect.
+training views and stays on the device. You can turn individual fields off in
+Helyx and revoke permission in Health Connect.
 
 ### 2.3 Location data (sensitive)
 If you use **GPS run tracking**, Helyx uses your device location **while a run
@@ -56,9 +56,9 @@ you end the run. Location is **not** collected in the background outside of an
 active run, and is never used for advertising. Your saved routes are stored
 with the rest of your training data.
 
-### 2.4 Account data
-If you create an account, our authentication provider (Supabase) stores your
-**email address** and a securely hashed password.
+### 2.4 No account data
+Helyx has no account system. It does not ask for your name, email address or a
+password, and it operates without a backend.
 
 ### 2.5 Diagnostics (crash reports)
 We use **Sentry** to receive error and crash reports so we can fix bugs. This
@@ -75,18 +75,18 @@ choose as an avatar.
 
 ## 3. How your data is stored and synced
 - **On your device:** your training data is saved locally so the app works
-  offline.
-- **Cloud sync (only if signed in):** your training data is stored as your own
-  private record in our database (Supabase). Access is restricted so that **only
-  your account** can read or write your record (enforced by row-level security).
-- Data in transit is protected with HTTPS/TLS.
+  offline. On Android it is also mirrored into the app's private storage so a
+  WebView storage eviction does not lose it.
+- **No cloud copy:** Helyx does not send your training, health or route data to
+  a server. Moving devices is a deliberate JSON export/import or Android
+  automatic backup.
+- Diagnostics sent to Sentry use HTTPS/TLS.
 
 ## 4. Third parties that may process data
 We use a small number of service providers strictly to run the app:
 
 | Provider | Purpose | Data they may see |
 |---|---|---|
-| Supabase | Account + cloud sync | Email, hashed password, your synced training data |
 | Sentry | Error/crash reporting | Scrubbed crash diagnostics; network metadata such as IP may be processed by the service |
 | OpenStreetMap tile service | Run-map tiles | IP address and the map-tile area requested when a map is viewed |
 | Google Fonts | App font files | IP address and basic request metadata |
@@ -95,10 +95,9 @@ These providers process data on our behalf or as independent controllers for
 the limited purpose above. We do not sell data to anyone.
 
 ## 5. Legal bases (GDPR/UK GDPR)
-- **Contract:** to provide the app and sync your account data.
 - **Consent:** for optional features you switch on — Health Connect access, GPS
-  tracking, notifications, and cloud sync. You can withdraw permission or stop
-  using the feature; deleting synced data is described below.
+  tracking and notifications. You can withdraw permission or stop using the
+  feature; local data deletion is described below.
 - **Legitimate interests:** keeping the app secure and fixing crashes through
   the limited, scrubbed diagnostics described above. {{LEGAL REVIEW: confirm
   the appropriate basis in every launch region.}}
@@ -108,7 +107,7 @@ processed only with your explicit consent (by enabling the relevant feature).
 
 ## 6. Data retention
 - Local data stays until you delete it or uninstall the app.
-- Cloud data stays until you delete your account or ask us to delete it.
+- Helyx holds no cloud copy of your training data.
 - Crash reports are retained for {{SENTRY_RETENTION_PERIOD}} and then deleted.
 
 ## 7. Your rights
@@ -116,31 +115,25 @@ Depending on where you live (e.g. EEA/UK), you have the right to access,
 correct, export (portability), delete, or restrict processing of your data, and
 to withdraw consent. Helyx lets you:
 - **Export** your full data as a file (Settings → Export).
-- **Delete** local data by clearing app data or uninstalling.
-- **Delete your signed-in account and data in the app:** Settings → Account →
-  Delete Account & Data.
+- **Delete** local data in Settings → Reset All Data, or by clearing app data /
+  uninstalling.
 
 To exercise any right, contact {{CONTACT_EMAIL}}. You also have the right to
 complain to your local data-protection authority.
 
-## 8. Account and data deletion requests
-If you cannot access the app, request deletion by emailing
-**{{CONTACT_EMAIL}}** with the subject **Helyx account deletion request** from
-the email address used for your Helyx account. We will verify the request,
-delete the authentication account and associated synced training data, and
-confirm completion within {{DELETION_RESPONSE_PERIOD}}. Local-only data stays
-on a device we cannot access; uninstall Helyx or clear its app storage to remove
-that copy.
-
-Direct deletion-request link: {{PUBLIC_PRIVACY_URL}}#account-and-data-deletion-requests
+## 8. Deleting your data
+Helyx has no account to delete. Local data is removed by Settings → Reset All
+Data, by clearing the app's storage, or by uninstalling. Android automatic
+backup files remain in the folder you chose until you delete them. If you have a
+privacy question about a crash report, contact **{{CONTACT_EMAIL}}**.
 
 ## 9. Children
 Helyx is not directed to children under {{MIN_AGE, e.g. 16}} and we do not
 knowingly collect their data.
 
 ## 10. International transfers
-Your data may be processed on servers located outside your country (e.g. by the
-providers above). Where required, appropriate safeguards apply.
+Crash diagnostics and map/font requests may be processed on servers outside your
+country by the limited providers above. Your training data is not transferred.
 
 ## 11. Changes to this policy
 We will update this policy as the app evolves and revise the "Last updated"

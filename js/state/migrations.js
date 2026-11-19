@@ -259,7 +259,7 @@ const MIGRATIONS = [
   // v4 → v5: resistance-band load is a fixed product convention, not a user
   // preference. An earlier settings screen allowed the nominal kg values to be
   // edited; that control has since been retired, but its old values can remain
-  // in local/cloud state forever and make assisted-load calculations wrong.
+  // in local state forever and make assisted-load calculations wrong.
   // Canonicalise every existing account to Light 10 kg, Medium 20 kg, Heavy
   // 30 kg. Logged sets keep their band identity and workout history untouched.
   (state) => {

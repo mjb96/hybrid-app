@@ -87,7 +87,6 @@ test('full-screen surfaces that hold content clear the top inset', () => {
   for (const [css, selector, label] of [
     [STYLES, '.modal-overlay', '.modal-overlay (generic/confirm dialogs)'],
     [STYLES, '.ob-step', '.ob-step (first-run onboarding)'],
-    [STYLES, '.auth-overlay', '.auth-overlay (sign in)'],
     [STYLES, '.migration-recovery', '.migration-recovery (data recovery)'],
   ]) {
     assert.match(

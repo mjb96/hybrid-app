@@ -1,5 +1,5 @@
 // @ts-check
-// Prevent a fresh, empty device from writing to an authenticated cloud account
+// Prevent a fresh, empty device from overwriting a real local profile
 // until it has either restored existing data or deliberately finished setup.
 
 // State modules are also imported by non-boot test/tooling paths. The real app
@@ -10,8 +10,8 @@ export function beginRecoveryGate() {
   pending = true;
 }
 
-export function reconcileRecoveryGate({ hadLocalState = false, loadedCloudState = false, onboardingComplete = false } = {}) {
-  pending = !(hadLocalState || loadedCloudState || onboardingComplete);
+export function reconcileRecoveryGate({ hadLocalState = false, onboardingComplete = false } = {}) {
+  pending = !(hadLocalState || onboardingComplete);
   return pending;
 }
 

@@ -13,9 +13,9 @@
   <meta name="theme-color" content="#070a12">
 
   <!-- Content-Security-Policy — hardens the privileged Android WebView (and the
-       PWA) against arbitrary remote code. script-src is 'self' ONLY: every
-       runtime library (Supabase, Sentry) is vendored into the signed bundle
-       under js/vendor/, so no remote executable code can reach this privileged
+       PWA) against arbitrary remote code. script-src is 'self' ONLY: the
+       runtime library (Sentry) is vendored into the signed bundle under
+       js/vendor/, so no remote executable code can reach this privileged
        origin and an offline launch makes zero remote-JS requests. Regenerate the
        vendored files with `node scripts/vendor-runtime.mjs`. object/base/frame
        directives shut down injection and clickjacking. Inline styles are
@@ -28,7 +28,7 @@
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
     font-src 'self' https://fonts.gstatic.com;
     img-src 'self' data: blob: https://*.tile.openstreetmap.org https://*.basemaps.cartocdn.com;
-    connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.sentry.io https://*.ingest.sentry.io;
+    connect-src 'self' https://*.sentry.io https://*.ingest.sentry.io;
     worker-src 'self' blob:;
     manifest-src 'self';
     object-src 'none';
@@ -68,16 +68,11 @@
   </noscript>
   <script src="./js/font-css.js"></script>
 
-  <!-- Supabase client — VENDORED (js/vendor/supabase-js-2.45.4.umd.js), served
-       from 'self' so no CDN sits in the privileged origin. The bytes are the
-       exact npm UMD build (its SHA-384 matches the former CDN SRI pin; see
-       scripts/vendor-runtime.mjs). -->
-  <script src="./js/vendor/supabase-js-2.45.4.umd.js" defer></script>
-  <!-- Crash reporting — VENDORED (js/vendor/sentry-browser-8.55.0.min.js), built
+  <!-- Crash reporting — VENDORED (js/vendor/sentry-browser-8.55.2.min.js), built
        from the pinned @sentry/browser via scripts/vendor-runtime.mjs. Exposes
        window.Sentry (init + captureException); stays inert until a DSN is
        configured in js/monitoring/sentry-config.js (see initSentry). -->
-  <script src="./js/vendor/sentry-browser-8.55.0.min.js" defer></script>
+  <script src="./js/vendor/sentry-browser-8.55.2.min.js" defer></script>
 
   <link rel="stylesheet" href="./css/styles.css">
   <link rel="stylesheet" href="./css/programs.css">
@@ -416,61 +411,6 @@
 </head>
 <body>
 
-  <div id="authOverlay" class="auth-overlay" style="display:none;"
-       data-modal-root data-modal-dialog=".auth-card"
-       data-modal-close-action="close-auth" data-modal-open-style="true"
-       inert aria-hidden="true">
-    <div class="auth-card" role="dialog" aria-labelledby="authDialogTitle">
-      <div class="auth-brand">
-        <div class="auth-brand-icon">⚡</div>
-        <div class="auth-brand-name" id="authDialogTitle">Helyx</div>
-        <div class="auth-brand-sub">Train smarter. Track everything.</div>
-      </div>
-
-      <div class="auth-tabs">
-        <button class="auth-tab auth-tab--active" data-auth-tab="signin">Sign In</button>
-        <button class="auth-tab" data-auth-tab="signup">Create Account</button>
-      </div>
-
-      <div class="auth-panel" id="authPanelSignin">
-        <div class="auth-field">
-          <label class="auth-label">Email</label>
-          <input type="email" id="loginEmail" aria-label="Email" class="auth-input" placeholder="you@example.com" autocomplete="email">
-        </div>
-        <div class="auth-field">
-          <label class="auth-label">Password</label>
-          <input type="password" id="loginPassword" aria-label="Password" class="auth-input" placeholder="••••••••" autocomplete="current-password">
-        </div>
-        <div class="auth-error" id="authSigninError" style="display:none"></div>
-        <button class="auth-submit" data-action="login-supabase" id="authSigninBtn">
-          <span class="auth-submit-text">Sign In &amp; Sync</span>
-          <span class="auth-submit-spinner" style="display:none">⟳</span>
-        </button>
-      </div>
-
-      <div class="auth-panel" id="authPanelSignup" style="display:none">
-        <div class="auth-field">
-          <label class="auth-label">Email</label>
-          <input type="email" id="signupEmail" aria-label="Email" class="auth-input" placeholder="you@example.com" autocomplete="email">
-        </div>
-        <div class="auth-field">
-          <label class="auth-label">Password</label>
-          <input type="password" id="signupPassword" aria-label="Password (minimum 8 characters)" class="auth-input" placeholder="Min. 8 characters" autocomplete="new-password">
-        </div>
-        <div class="auth-error" id="authSignupError" style="display:none"></div>
-        <div class="auth-success" id="authSignupSuccess" style="display:none">
-          Check your inbox to confirm your email, then sign in.
-        </div>
-        <button class="auth-submit" data-action="signup-supabase" id="authSignupBtn">
-          <span class="auth-submit-text">Create Account</span>
-          <span class="auth-submit-spinner" style="display:none">⟳</span>
-        </button>
-      </div>
-
-      <button class="auth-offline-btn" data-action="close-auth">Continue Offline</button>
-    </div>
-  </div>
-  
   <div class="toast-system" id="sysToast" role="alert" aria-live="assertive">Session Saved ✓</div>
 
   <!-- Persistent offline indicator — reassures that logging still works and data
@@ -1313,10 +1253,6 @@
           <div class="ob-returning-card" aria-labelledby="obReturningTitle">
             <h2 id="obReturningTitle">Already trained with Helyx?</h2>
             <p>Recover your existing profile instead of setting up again.</p>
-            <button class="ob-recovery-action" data-action="open-auth">
-              <span class="ob-recovery-action__icon" aria-hidden="true">☁</span>
-              <span><strong>Sign in and restore</strong><small>Load your cloud backup · internet required</small></span>
-            </button>
             <button class="ob-recovery-action ob-recovery-action--backup" data-action="ob-import-backup">
               <span class="ob-recovery-action__icon" aria-hidden="true">↥</span>
               <span><strong>Restore backup file</strong><small>Import your Helyx JSON · works offline</small></span>
@@ -1728,15 +1664,11 @@
           <button class="settings-action-btn" id="settingsAutoBackupNowBtn" data-action="auto-backup-now" style="display:none;">Back Up Now</button>
           <button class="settings-action-btn settings-action-btn-muted" id="settingsAutoBackupDisableBtn" data-action="auto-backup-disable" style="display:none;">Turn Off Automatic Backups</button>
           <p class="settings-hint">Android automatic backups are complete portable JSON files, including GPS routes. They are stored unencrypted in the folder you choose. Pick a private device folder for offline-only storage; a cloud-backed folder may be synced by its provider.</p>
-          <button class="settings-action-btn settings-action-btn-recover" id="settingsRecoverSnapshotBtn" data-action="recover-presync-snapshot" style="display:none;">↩︎ Recover this device’s data</button>
-          <div class="settings-hint" id="settingsRecoverSnapshotHint" style="display:none;">A newer cloud backup replaced this device’s data on sign-in. Restore what was on this device before that.</div>
-          <button class="settings-action-btn settings-action-btn-recover" id="settingsRecoverCloudOverwriteBtn" data-action="recover-preoverwrite-cloud" style="display:none;">↩︎ Recover protected cloud data</button>
-          <div class="settings-hint" id="settingsRecoverCloudOverwriteHint" style="display:none;">Protected before this device replaced newer cloud data.</div>
           <button class="settings-action-btn" data-action="export-data">Export Training Data (JSON)</button>
           <button class="settings-action-btn" data-action="export-csv">Export Spreadsheet (CSV)</button>
           <button class="settings-action-btn" data-action="import-data">Import Backup File</button>
           <input type="file" id="settingsImportFile" aria-label="Choose backup file to import" accept=".json" class="hidden-input">
-          <p class="settings-hint">Your GPS run routes stay on this device — they are <strong>not</strong> uploaded to the cloud. The JSON export is your route backup: it includes every route, so use it to move your data (routes included) to a new device.</p>
+          <p class="settings-hint">Your GPS run routes stay on this device. The JSON export is your route backup: it includes every route, so use it to move your data (routes included) to a new device.</p>
           <button class="settings-action-btn settings-action-btn-danger" data-action="reset-all-data">Reset All Data</button>
         </div>
 
@@ -1771,18 +1703,6 @@
 
           <button class="settings-action-btn" id="hcSyncNowBtn" data-action="hc-sync-now" style="display:none;">Sync Now</button>
           <p class="hc-note" id="hcNote">Requires Helyx Android app with Health Connect permission granted.</p>
-        </div>
-
-        <!-- Account -->
-        <div class="settings-section">
-          <div class="settings-section-label">Account</div>
-          <div class="settings-row settings-row-info">
-            <span class="settings-row-label">Cloud Sync</span>
-            <span class="text-xs text-muted" id="settingsAccountEmail">Checking…</span>
-          </div>
-          <button class="settings-action-btn" id="settingsSignInBtn" data-action="open-auth" style="display:none;">Sign in to back up &amp; sync</button>
-          <button class="settings-action-btn settings-action-btn-danger" id="settingsSignOutBtn" data-action="sign-out" style="display:none;">Sign Out</button>
-          <button class="settings-action-btn settings-action-btn-danger" id="settingsDeleteAccountBtn" data-action="delete-account" style="display:none;">Delete Account &amp; Data</button>
         </div>
 
         <!-- App Info -->

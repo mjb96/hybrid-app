@@ -9,10 +9,10 @@
   Vanilla JavaScript PWA with a custom Android WebView shell.
 </p>
 
-> **Status: pre-release.** The hosted PWA is not currently deployed and the
-> Supabase backend is not provisioned, so sign-in and cloud sync are unavailable
-> in this snapshot. The app runs in local-only mode. This repository is public
-> for review and portfolio purposes and is not accepting contributions.
+> **Status: pre-release, local-only.** There is no account system and no cloud
+> sync: training data stays on the device, with JSON/CSV export and Android
+> automatic backups for moving it. The hosted PWA is a preview of the same
+> local-only app.
 
 ## What it does
 
@@ -32,7 +32,8 @@ the same training picture.
 - **Programs** — a catalogue of strength, hypertrophy, running and hybrid
   programmes, plus a program builder.
 - **Offline-first** — the PWA precaches its runtime and keeps training data on
-  the device; an optional Supabase account adds cross-device sync.
+  the device. There is no account, server or cloud sync; JSON/CSV export and
+  Android automatic backups move data deliberately.
 - **Durable on Android** — the shell mirrors the same state into app-private
   storage, so WebView eviction or a full localStorage quota does not lose the
   last change; a failed write is reported instead of silently claiming success.
@@ -47,7 +48,6 @@ the same training picture.
 | Styling | Plain CSS with a shared visual system |
 | Offline | Service worker + generated precache manifest |
 | Local data | `localStorage` for app state, IndexedDB for GPS routes; Android adds an app-private atomic file mirror |
-| Cloud (optional) | Supabase Auth + one `user_data` row per user, protected by RLS |
 | Native | Kotlin Android WebView shell, `minSdk 26`, `targetSdk 36` |
 | Verification | `node --test`, TypeScript checking of JSDoc-annotated JS, 32 Playwright browser checks |
 | Runtime | Node.js 20+ for tooling |
@@ -59,7 +59,6 @@ flowchart LR
   UI["PWA UI<br/>vanilla JS modules"] --> LS[("localStorage<br/>app state")]
   UI --> IDB[("IndexedDB<br/>GPS routes")]
   UI --> SW["Service worker<br/>precache + offline"]
-  UI -. optional .-> SB[("Supabase<br/>auth + user_data + RLS")]
   AND["Android WebView shell"] --> UI
   AND --> HC["Health Connect bridge"]
   AND --> GPS["Foreground GPS service"]
@@ -88,9 +87,9 @@ python3 -m http.server 8770 --bind 127.0.0.1
 
 Open <http://127.0.0.1:8770/>.
 
-The first launch runs onboarding. No account is required; without one, data
-stays in the browser. The cloud UI is present but the backend must be
-provisioned before sign-in works.
+The first launch runs onboarding. No account is required and no data leaves
+the device. Use **Restore backup file** to bring in a JSON export; all logging
+works offline.
 
 ## Verification
 
@@ -132,7 +131,6 @@ gradle testDebugUnitTest lintDebug assembleDebug
 | `scripts/` | Precache generation, browser checks, staging, vendor scripts |
 | `tests/` | Node unit and contract tests |
 | `android/` | Kotlin WebView shell, native bridges and JVM tests |
-| `supabase/` | RLS SQL, `updated_at` trigger and the account-deletion function |
 | `docs/` | Architecture decisions, roadmap, security notes and legal drafts |
 
 ## Documentation
@@ -141,14 +139,13 @@ gradle testDebugUnitTest lintDebug assembleDebug
 - [Architecture decisions](docs/ARCHITECTURE_DECISIONS.md) — WebView and Android data-safety ADRs
 - [WebView threat model](docs/security/webview-threat-model.md) — trust boundaries and bridge hardening
 - [Versioning and toolchain](docs/versioning.md) — supported versions and release inputs
-- [Supabase setup](supabase/README.md) — RLS and the adversarial isolation proof
 
 ## Security and privacy
 
-Helyx handles health and location data. The app is local-first: data is only
-sent to Supabase when the user signs in, and crash reporting is error-only and
-scrubbed. The Android shell disables platform backups and keeps the privileged
-WebView on a single bundled origin.
+Helyx handles health and location data. The app is local-only: training data
+stays on the device, and exports/backups are the deliberate way to move it.
+Crash reporting is error-only and scrubbed. The Android shell disables platform
+backups and keeps the privileged WebView on a single bundled origin.
 
 If you find a security issue, please follow [SECURITY.md](SECURITY.md). Do not
 open a public issue containing exploit details, credentials or personal health
@@ -156,11 +153,10 @@ data.
 
 ## Known limitations
 
-- The hosted PWA and Supabase backend are not provisioned in this snapshot.
-- Cloud sync stores one JSON blob per user with last-write-wins and a conflict
-  prompt, not field-level merging.
+- The hosted PWA is a preview; Android is the primary offline target.
+- There is no account system and no cloud sync. Moving data between devices is
+  a JSON export/import or the Android automatic-backup folder.
 - There is no iOS project; iOS and billing are out of scope.
-- Email/password auth exists, but there is no password-reset flow yet.
 - The legal documents in `docs/legal/` are drafts with placeholders and are not
   legal advice.
 - Helyx provides general fitness information, not medical advice.

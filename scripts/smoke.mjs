@@ -32,7 +32,7 @@ globalThis.document = { addEventListener: noop, removeEventListener: noop,
   getElementById: (id) => { if (!store.has(id)) store.set(id, makeEl(id)); return store.get(id); },
   querySelector: () => null, querySelectorAll: () => [], createElement: () => makeEl(), dispatchEvent: noop,
   readyState: 'complete', body: makeEl('body'), documentElement: makeEl('html') };
-globalThis.window = { addEventListener: noop, removeEventListener: noop, supabase: undefined,
+globalThis.window = { addEventListener: noop, removeEventListener: noop,
   location: { reload: noop, href: '' }, scrollTo: noop, matchMedia: () => ({ matches: false, addEventListener: noop }) };
 globalThis.localStorage = { s: {}, getItem(k){ return this.s[k] ?? null; }, setItem(k,v){ this.s[k] = String(v); }, removeItem(k){ delete this.s[k]; } };
 Object.defineProperty(globalThis, 'navigator', { value: { serviceWorker: { register: () => Promise.reject(new Error('no sw')), addEventListener: noop, removeEventListener: noop }, vibrate: noop }, configurable: true });
@@ -43,9 +43,8 @@ globalThis.L = { map: () => ({ remove: noop, fitBounds: noop }), tileLayer: () =
 // exception — a test that "passes" while the app logs runtime errors (the class
 // of bug this audit calls out, e.g. `window.scrollTo is not a function`) is a
 // false green. A short allowlist covers messages that are expected under the DOM
-// mock (no Supabase global, no real service worker).
+// mock (no real service worker).
 const ALLOWED_ERROR_PATTERNS = [
-  /Supabase global not found/i,
   /Service worker registration failed/i,
   /\bno sw\b/i,
 ];

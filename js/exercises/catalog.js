@@ -3,7 +3,7 @@
 //
 // Stored workouts intentionally keep their original display-name keys. This
 // catalogue resolves those keys at read time so aliases share history without
-// a destructive migration of the local/Supabase state blob.
+// a destructive migration of the local state blob.
 
 export const MUSCLES = Object.freeze([
   'chest', 'upper_chest', 'lats', 'upper_back', 'traps', 'erectors',

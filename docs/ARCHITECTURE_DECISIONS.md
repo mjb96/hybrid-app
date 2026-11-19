@@ -40,8 +40,7 @@ health/location data off-device with no explicit user action.
 
 **Decision.** Set `allowBackup="false"` and `fullBackupContent="false"`, and add
 `res/xml/data_extraction_rules.xml` excluding every domain from both `cloud-backup` and
-`device-transfer`. Users move data deliberately via in-app export and optional Supabase
-sync.
+`device-transfer`. Users move data deliberately via in-app export and Android automatic backups.
 
 **Alternatives considered.** *Selective backup rules* (keep backup, exclude the
 sensitive stores) — rejected because the app has no data we actively want backed up by

@@ -1,7 +1,7 @@
 # Helyx — Codex Working Brief
 
-Helyx is a hybrid strength + running PWA (~56k lines vanilla JS ES modules, no
-framework; ~16k CSS; service-worker PWA). This file is auto-loaded every session.
+Helyx is a hybrid strength + running PWA (~55k lines vanilla JS ES modules, no
+framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session.
 
 ## Commands (keep all green before every commit)
 - `npm test` — node --test suite
@@ -9,13 +9,12 @@ framework; ~16k CSS; service-worker PWA). This file is auto-loaded every session
 - `npm run smoke` — scripts/smoke.mjs (jsdom import + home render)
 
 ## Architecture facts (verify before relying on them)
-- State: one big `appState` object → localStorage (source of truth) + Supabase table
-  `user_data` as a single JSON blob per user, written via `upsert` in `js/state.js`.
-  Still blob-level last-write-wins (no field merge), but no longer *silent*: a
-  server-managed `updated_at` (`supabase/migration_user_data_updated_at.sql`) +
-  `js/state/sync-guard.js` detect when another device wrote since this one loaded and
-  raise a warn-and-choose modal (`js/state/sync-conflict-ui.js`) instead of clobbering.
-  A pre-cloud-pull local snapshot (`snapshotLocalBeforeCloudPull`) is also kept.
+- State: one big `appState` object → localStorage (source of truth) in the browser;
+  the Android shell also writes an app-private atomic mirror via
+  `StateMirrorBridge`/`StateMirrorSafe` + `js/state/mirror.js`. There is **no
+  account system, backend or cloud sync**: local data, JSON/CSV export and Android
+  automatic backups are the whole persistence story. Do not reintroduce a server
+  client without a new product decision.
 - Program-run isolation: every program run has a stable `state.activeActivationId`
   (`js/state/activation-identity.js`) and each week is stamped `week.activationId`. A
   switch/restart calls `startProgramActivation` (state.js) → `beginActivation` +
@@ -26,10 +25,6 @@ framework; ~16k CSS; service-worker PWA). This file is auto-loaded every session
   numeric keys, so a past run never appears in the active workout). This is what stops a
   previous program's completed lifts leaking into a new program's day — do NOT reintroduce
   same-slot reuse across programs. v3 migration adopts legacy weeks into one activation.
-- Auth/sync: `js/state/auth.js`, `js/state/supabase.js`. Anon key is hardcoded (public
-  by design — safe ONLY if Supabase RLS is enforced). RLS (`supabase/rls_user_data.sql`)
-  is **applied + proven** — the adversarial check (`scripts/rls-adversarial-check.mjs`)
-  passed against the live DB (2026-07-02): user A cannot read/write user B's row.
 - Weekly analytics attribution: `state.currentWeek` is a PROGRAM-week counter that only
   advances on an explicit step / confirmed auto-advance — it is NOT the calendar week.
   So "this week" analytics must NOT read `weeks[currentWeek]` directly (that leaked a
@@ -49,7 +44,7 @@ framework; ~16k CSS; service-worker PWA). This file is auto-loaded every session
   present and otherwise the PROGRAM DAY — matching on "no sessionId" alone made
   every programmed slot on a date one duplicate family and silently discarded the
   smaller session (17 sets shown for a 33-set day). Same program day under two
-  week keys IS a duplicate (cloud copy / re-activation reusing week numbers) and
+  week keys IS a duplicate (copied week / re-activation reusing week numbers) and
   still collapses to one. Downstream,
   `collectCalendarWeek` must MERGE every field, never assign: it merges `lifts`,
   concatenates `runSessions` and re-summarises them through `runDaySummary`
@@ -316,9 +311,9 @@ checklist trackers.
 - Git: short-lived feature branch per phase (e.g. `phase1-security`). Commit in logical
   units. Do NOT push to the default branch or open PRs without asking. No force-push of
   shared branches.
-- `[You]` tasks are the human's (accounts, applying SQL in Supabase, device testing,
+- `[You]` tasks are the human's (device testing, accounts for external services,
   screenshots/art, legal review, store submission). For each, produce the exact
-  artifact needed (SQL, checklist, copy, config) and STOP — never simulate it as done.
+  artifact needed (checklist, copy, config) and STOP — never simulate it as done.
 - Ask before anything irreversible or outward-facing (pushing, deleting data, external
   calls). One clear question at a time.
 - No fabricated secrets, keys, or model identifiers in committed files.
