@@ -92,7 +92,13 @@ try {
   const copy = await modal.innerText();
   ok(/2 workouts · 2 strength sets/.test(copy), 'CSV preview counts the dated sessions');
   ok(/1 cardio row will be imported as run data/.test(copy), 'CSV preview admits cardio as runs');
-  await page.click('.cmodal [data-cm="ok"]');
+  // The importer saves, then reloads after a short delay. Wait for that reload
+  // explicitly. Checking localStorage alone can match the old page just before
+  // it navigates away, which made the History click race the reload in CI.
+  await Promise.all([
+    page.waitForNavigation({ waitUntil: 'networkidle', timeout: 20000 }),
+    page.click('.cmodal [data-cm="ok"]'),
+  ]);
 
   await page.waitForFunction((key) => {
     const saved = JSON.parse(localStorage.getItem(key) || '{}');
