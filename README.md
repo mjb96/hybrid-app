@@ -19,6 +19,9 @@ Helyx is a training app for people who lift and run. It keeps the fast logging
 workflow of a strength app while treating running, recovery and load as part of
 the same training picture.
 
+- **Decision-first Home** — one Today card for Start/Resume/Review, a seven-day
+  training strip, one coach insight and quick actions. Deep charts stay in
+  Progress and the secondary In Focus section.
 - **Strength logging** — routines, set types, RPE/RIR, rest timers, supersets,
   exercise swaps, plate math, estimated 1RM and PRs.
 - **Running** — manual entries, native GPS tracking with a route map, splits,

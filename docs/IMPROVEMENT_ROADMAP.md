@@ -1626,6 +1626,17 @@ testable on its own.
 
 ## 12. Session log
 
+- **2026-11-19 — Home rebuilt as a decision surface.**
+  - Home now reads: greeting/date → Today card → safety flags → seven-day week
+    strip → one coach insight → quick actions. The In Focus charts remain as a
+    secondary section below the fold for their existing attribution and deep-link
+    contracts.
+  - The week strip is a pure model (`js/home/week-strip.js`) with done / today /
+    missed / planned / rest states and opens Activities for a recorded date.
+  - Quick actions cover bodyweight, quick workout, run logging and Activities.
+  - Tests cover week-strip states, week-start rotation, run completion and a
+    rest-only week. Existing Home Today, attribution, running and touch-target
+    browser contracts are preserved.
 - **2026-11-19 — OpenGym/Strong/Hevy workout CSV import.**
   - Added a clean-room CSV reader (`js/portability/import-workout-csv.js`) for
     the public one-row-per-set export shape used by OpenGym, Strong and Hevy.

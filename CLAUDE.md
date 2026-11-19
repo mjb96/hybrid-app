@@ -31,6 +31,13 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   numeric keys, so a past run never appears in the active workout). This is what stops a
   previous program's completed lifts leaking into a new program's day — do NOT reintroduce
   same-slot reuse across programs. v3 migration adopts legacy weeks into one activation.
+- Home decision surface: `index.html` keeps one Today card (`#homeTodayCard`),
+  a generated week strip (`js/home/week-strip.js` → `#homeWeekDays`), one coach
+  insight from `model.topInsight`, and a 2×2 quick-action grid. The In Focus
+  charts remain below the decision surface for existing deep-link/attribution
+  contracts; do not move them above Today. Week-strip cells are 44px minimum and
+  open Activities for the selected date. Keep `#homePrimaryCta`, `.btn-history-link`
+  and `.log-run-fab` in the Home DOM — browser checks measure them.
 - Weekly analytics attribution: `state.currentWeek` is a PROGRAM-week counter that only
   advances on an explicit step / confirmed auto-advance — it is NOT the calendar week.
   So "this week" analytics must NOT read `weeks[currentWeek]` directly (that leaked a
