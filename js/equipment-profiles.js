@@ -14,6 +14,8 @@
 // Pure module — no DOM, no storage. Unit-tested in tests/equipment_profiles.test.js.
 // =============================================================================
 
+import { KG_BAR, LB_BAR, KG_PLATES, LB_PLATES } from './workout/plates.js';
+
 export const EQUIPMENT_KEYS = Object.freeze([
   'barbell', 'rack', 'dumbbells', 'cables', 'pullupBar',
   'bands', 'kettlebells', 'ezBar', 'treadmill',
@@ -27,6 +29,13 @@ export const CORE_EQUIPMENT_KEYS = Object.freeze([
 export const DEFAULT_BAND_WEIGHTS = Object.freeze({ L: 10, M: 20, H: 30 });
 export const DEFAULT_PROFILE_ID = 'eqp_default';
 export const MAX_PROFILE_NAME = 32;
+export const PLATE_UNITS = Object.freeze(['kg', 'lb']);
+
+/** Standard bar/plate sets, used when a profile has no override. */
+export const STANDARD_PLATE_SETUP = Object.freeze({
+  kg: Object.freeze({ bar: KG_BAR, plates: Object.freeze([...KG_PLATES]) }),
+  lb: Object.freeze({ bar: LB_BAR, plates: Object.freeze([...LB_PLATES]) }),
+});
 
 const CORE = new Set(CORE_EQUIPMENT_KEYS);
 
@@ -69,6 +78,56 @@ export function normalizeBandWeights(raw) {
 }
 
 /**
+ * Parse a plate list from UI text ("25, 20, 10") or an array. Positive finite
+ * values only, deduped and sorted heaviest first.
+ * @param {unknown} value
+ * @returns {number[]}
+ */
+export function parsePlateList(value) {
+  const parts = Array.isArray(value)
+    ? value
+    : String(value == null ? '' : value).split(/[,;\s]+/);
+  const seen = new Set();
+  const out = [];
+  for (const part of parts) {
+    const n = parseFloat(part);
+    if (!Number.isFinite(n) || n <= 0) continue;
+    const key = String(n);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(n);
+  }
+  return out.sort((a, b) => b - a);
+}
+
+/**
+ * @param {any} raw
+ * @param {'kg'|'lb'} unit
+ */
+function normalizePlateUnit(raw, unit) {
+  const source = raw && typeof raw === 'object' ? raw : {};
+  const standard = STANDARD_PLATE_SETUP[unit];
+  const bar = parseFloat(source.bar);
+  const plates = parsePlateList(source.plates);
+  return {
+    bar: Number.isFinite(bar) && bar > 0 ? bar : standard.bar,
+    plates: plates.length ? plates : [...standard.plates],
+  };
+}
+
+/**
+ * @param {any} raw
+ * @returns {{ kg: { bar: number, plates: number[] }, lb: { bar: number, plates: number[] } }}
+ */
+export function normalizePlateSetup(raw) {
+  const source = raw && typeof raw === 'object' ? raw : {};
+  return {
+    kg: normalizePlateUnit(source.kg, 'kg'),
+    lb: normalizePlateUnit(source.lb, 'lb'),
+  };
+}
+
+/**
  * @param {any} profile
  * @param {string} fallbackId
  */
@@ -79,6 +138,7 @@ function normalizeProfile(profile, fallbackId) {
     name: cleanName(source.name) || 'My gym',
     equipment: normalizeEquipment(source.equipment),
     bandWeights: normalizeBandWeights(source.bandWeights),
+    plateSetup: normalizePlateSetup(source.plateSetup),
   };
 }
 
@@ -96,7 +156,7 @@ function ensureSettings(state) {
  * `settings.bandWeights` so existing accounts keep their kit.
  * Mutates `state.settings`; returns the normalized profile list.
  * @param {any} state
- * @returns {Array<{ id: string, name: string, equipment: Record<string, boolean>, bandWeights: { L: number, M: number, H: number } }>}
+ * @returns {Array<{ id: string, name: string, equipment: Record<string, boolean>, bandWeights: { L: number, M: number, H: number }, plateSetup: { kg: { bar: number, plates: number[] }, lb: { bar: number, plates: number[] } } }>}
  */
 export function ensureEquipmentProfiles(state) {
   const settings = ensureSettings(state);
@@ -122,6 +182,7 @@ export function ensureEquipmentProfiles(state) {
       name: 'My gym',
       equipment: normalizeEquipment(settings.equipment),
       bandWeights: normalizeBandWeights(settings.bandWeights),
+      plateSetup: normalizePlateSetup(null),
     });
   }
 
@@ -134,7 +195,7 @@ export function ensureEquipmentProfiles(state) {
 
 /**
  * @param {any} state
- * @returns {{ id: string, name: string, equipment: Record<string, boolean>, bandWeights: { L: number, M: number, H: number } }}
+ * @returns {{ id: string, name: string, equipment: Record<string, boolean>, bandWeights: { L: number, M: number, H: number }, plateSetup: { kg: { bar: number, plates: number[] }, lb: { bar: number, plates: number[] } } }}
  */
 export function getActiveEquipmentProfile(state) {
   const profiles = ensureEquipmentProfiles(state);
@@ -197,6 +258,52 @@ export function updateActiveBandWeights(state, weights) {
   return profile.bandWeights;
 }
 
+/** Settings stores 'kg'|'lbs'; plate setup keys are 'kg'|'lb'. */
+function plateUnitKey(unit) {
+  return unit === 'lb' || unit === 'lbs' ? 'lb' : 'kg';
+}
+
+/**
+ * The active profile's bar/plates for one unit. Always returns a copy so callers
+ * cannot mutate stored state.
+ * @param {any} state
+ * @param {'kg'|'lb'|'lbs'|string} [unit]
+ * @returns {{ bar: number, plates: number[] }}
+ */
+export function getActivePlateSetup(state, unit = 'kg') {
+  const key = plateUnitKey(unit);
+  const profile = getActiveEquipmentProfile(state);
+  const setup = normalizePlateUnit(profile.plateSetup?.[key], key);
+  return { bar: setup.bar, plates: [...setup.plates] };
+}
+
+/**
+ * Replace the active profile's bar/plates for one unit.
+ * @param {any} state
+ * @param {'kg'|'lb'|'lbs'|string} unit
+ * @param {{ bar?: number|string, plates?: unknown }} setup
+ */
+export function setActivePlateSetup(state, unit, setup) {
+  const key = plateUnitKey(unit);
+  const profile = getActiveEquipmentProfile(state);
+  profile.plateSetup = {
+    ...normalizePlateSetup(profile.plateSetup),
+    [key]: normalizePlateUnit(setup, key),
+  };
+  return { bar: profile.plateSetup[key].bar, plates: [...profile.plateSetup[key].plates] };
+}
+
+/**
+ * Restore the standard bar/plates for one unit on the active profile.
+ * @param {any} state
+ * @param {'kg'|'lb'|'lbs'|string} unit
+ */
+export function resetActivePlateSetup(state, unit) {
+  const key = plateUnitKey(unit);
+  const standard = STANDARD_PLATE_SETUP[key];
+  return setActivePlateSetup(state, key, { bar: standard.bar, plates: [...standard.plates] });
+}
+
 /** @param {Array<{ id: string }>} profiles */
 function nextProfileId(profiles) {
   const ids = new Set(profiles.map((profile) => profile.id));
@@ -229,6 +336,7 @@ export function addEquipmentProfile(state, name) {
     name: cleanName(name) || nextProfileName(profiles),
     equipment: { ...current.equipment },
     bandWeights: { ...current.bandWeights },
+    plateSetup: normalizePlateSetup(current.plateSetup),
   };
   profiles.push(profile);
   const settings = ensureSettings(state);

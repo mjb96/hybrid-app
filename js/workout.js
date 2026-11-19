@@ -28,6 +28,7 @@ import { buildSessionReview } from './workout/session-review.js';
 import { activeSessionLiftNames, applyExerciseSwap, neighborDay, pickInheritedSet } from './workout-order.js';
 import { getSubstitutions } from './workout/substitutions.js';
 import { plateHint } from './workout/plates.js';
+import { getActivePlateSetup } from './equipment-profiles.js';
 import { deleteMapFromDB } from './db.js';
 import { hapticTick, hapticSuccess } from './haptics.js';
 import { dateKey } from './dates.js';
@@ -414,18 +415,21 @@ function _buildExerciseCardEl(liftName, loggedLiftsData, weekData, wk, selectedD
     );
   }).join('');
 
-  // C4b — per-side plate math for the coach's target weight (barbell lifts only:
-  // skip when there's no numeric target). Bodyweight/accessory targets yield '' .
+  // C4b — per-side plate math for the coach's target weight, opt-in from
+  // Settings so the default target line stays uncluttered. Uses the active
+  // equipment profile's bar/plates.
   let plates = '';
+  const showPlates = appState.settings?.showPlateHints === true;
   try {
     const tw = diagnostic.progression && diagnostic.progression.weight;
-    if (tw && !isNaN(Number(tw)) && Number(tw) > 0) {
-      plates = plateHint(Number(tw), appState.settings?.weightUnit || 'kg');
+    if (showPlates && tw && !isNaN(Number(tw)) && Number(tw) > 0) {
+      const unit = appState.settings?.weightUnit || 'kg';
+      plates = plateHint(Number(tw), unit, getActivePlateSetup(appState, unit));
     }
   } catch (_) {}
 
   try {
-    exCard.innerHTML = buildExerciseCard({ displaySafeName, safeLiftName, isCompleted, diagnostic, blueprintLabel, targetLabel, historicalLineText, historyPanelHTML, setsMarkup, groupId, ssColor, plates, weightUnit: wUnit });
+    exCard.innerHTML = buildExerciseCard({ displaySafeName, safeLiftName, isCompleted, diagnostic, blueprintLabel, targetLabel, historicalLineText, historyPanelHTML, setsMarkup, groupId, ssColor, plates, showPlates, weightUnit: wUnit });
     // Any completed WORKING set means the athlete is past warming up. Kept in
     // sync on tick by refreshContextualRowActions(), since ticking updates the
     // DOM without re-rendering this card.

@@ -45,8 +45,14 @@ const state = {
     equipment: { ...gymEquipment },
     bandWeights: { L: 10, M: 20, H: 30 },
     equipmentProfiles: [
-      { id: 'eqp_gym', name: 'Commercial gym', equipment: { ...gymEquipment }, bandWeights: { L: 10, M: 20, H: 30 } },
-      { id: 'eqp_home', name: 'Home', equipment: { ...homeEquipment }, bandWeights: { L: 5, M: 15, H: 25 } },
+      {
+        id: 'eqp_gym', name: 'Commercial gym', equipment: { ...gymEquipment }, bandWeights: { L: 10, M: 20, H: 30 },
+        plateSetup: { kg: { bar: 20, plates: [25, 20, 15, 10, 5, 2.5, 1.25] }, lb: { bar: 45, plates: [45, 35, 25, 10, 5, 2.5] } },
+      },
+      {
+        id: 'eqp_home', name: 'Home', equipment: { ...homeEquipment }, bandWeights: { L: 5, M: 15, H: 25 },
+        plateSetup: { kg: { bar: 15, plates: [20, 10, 5, 2.5] }, lb: { bar: 35, plates: [45, 25, 10] } },
+      },
     ],
     activeEquipmentProfileId: 'eqp_gym',
   },
@@ -82,12 +88,18 @@ try {
   const nameInput = page.locator('#settingsEquipmentProfileName');
   const cables = page.locator('[data-equipment="cables"]');
   const bands = page.locator('[data-equipment="bands"]');
+  const plateBar = page.locator('#settingsPlateBar');
+  const platesInput = page.locator('#settingsPlates');
+  const plateHints = page.locator('#settingsShowPlateHints');
 
   ok((await select.locator('option').allTextContents()).join('|') === 'Commercial gym|Home', 'both profiles are listed');
   ok((await select.inputValue()) === 'eqp_gym', 'the stored active profile is selected');
   ok((await nameInput.inputValue()) === 'Commercial gym', 'the name field shows the active profile');
   ok(await cables.isChecked(), 'commercial gym has cables checked');
   ok(!(await bands.isChecked()), 'commercial gym has bands unchecked');
+  ok((await plateBar.inputValue()) === '20', 'the gym bar weight is shown');
+  ok((await platesInput.inputValue()) === '25, 20, 15, 10, 5, 2.5, 1.25', 'the gym plate set is shown');
+  ok(!(await plateHints.isChecked()), 'plate hints are off by default');
 
   await select.selectOption('eqp_home');
   await page.waitForFunction(() => document.getElementById('settingsEquipmentProfileName')?.value === 'Home');
@@ -95,6 +107,28 @@ try {
   ok(!(await cables.isChecked()), 'home profile hides cables');
   ok(await bands.isChecked(), 'home profile shows bands');
   ok((await page.locator('#settingsBandMed').inputValue()) === '15', 'home band weights replace the gym values');
+  ok((await plateBar.inputValue()) === '15', 'switching profiles loads that gym bar weight');
+  ok((await platesInput.inputValue()) === '20, 10, 5, 2.5', 'switching profiles loads that gym plate set');
+
+  await page.click('#unitLbsBtn');
+  await page.waitForFunction(() => document.getElementById('settingsPlateBar')?.value === '35');
+  ok((await platesInput.inputValue()) === '45, 25, 10', 'the lb setup is stored separately');
+  await page.click('#unitKgBtn');
+  await page.waitForFunction(() => document.getElementById('settingsPlateBar')?.value === '15');
+  ok((await platesInput.inputValue()) === '20, 10, 5, 2.5', 'switching back restores the kg setup');
+
+  await platesInput.fill('20, 10, 5');
+  await platesInput.press('Tab');
+  await page.waitForFunction((key) => {
+    const stored = JSON.parse(localStorage.getItem(key) || '{}');
+    const home = stored?.settings?.equipmentProfiles?.find((p) => p.id === 'eqp_home');
+    return home?.plateSetup?.kg?.plates?.length === 3;
+  }, STORAGE_KEY);
+  ok((await platesInput.inputValue()) === '20, 10, 5', 'editing plates saves the active profile');
+  const hintRow = page.locator('.settings-row', { has: plateHints });
+  await hintRow.locator('.settings-switch').click();
+  await page.waitForFunction((key) => JSON.parse(localStorage.getItem(key) || '{}')?.settings?.showPlateHints === true, STORAGE_KEY);
+  ok(await plateHints.isChecked(), 'plate hints can be enabled');
 
   await nameInput.fill('Garage');
   await nameInput.press('Tab');
@@ -106,6 +140,8 @@ try {
   ok((await page.locator('#settingsEquipmentProfile option').count()) === 3, 'adding a profile appends one option');
   ok((await nameInput.inputValue()).startsWith('Gym '), 'the new profile gets a usable default name');
   ok(await bands.isChecked(), 'the new profile starts from the active kit');
+  ok((await plateBar.inputValue()) === '15', 'the new profile starts from the active bar weight');
+  ok((await platesInput.inputValue()) === '20, 10, 5', 'the new profile starts from the active plate set');
 
   await page.click('[data-action="equipment-profile-delete"]');
   await page.waitForSelector('.cmodal [data-cm="ok"]');
@@ -113,11 +149,15 @@ try {
   await page.waitForFunction(() => document.querySelectorAll('#settingsEquipmentProfile option').length === 2);
   ok((await page.locator('#settingsEquipmentProfile option').count()) === 2, 'deleting removes the active profile');
   ok((await nameInput.inputValue()) === 'Commercial gym', 'deleting the active profile falls back to the first one');
+  ok((await plateBar.inputValue()) === '20', 'the fallback profile restores its own bar weight');
 
   const stored = await page.evaluate((key) => JSON.parse(localStorage.getItem(key) || '{}'), STORAGE_KEY);
   ok(stored?.settings?.equipmentProfiles?.length === 2, 'profile changes are persisted');
   ok(stored?.settings?.equipmentProfiles?.some((p) => p.name === 'Garage'), 'the rename is persisted');
   ok(stored?.settings?.equipment?.cables === true, 'the active kit is projected into the legacy equipment field');
+  ok(stored?.settings?.showPlateHints === true, 'the plate-hint preference is persisted');
+  const garage = stored?.settings?.equipmentProfiles?.find((p) => p.name === 'Garage');
+  ok(garage?.plateSetup?.kg?.plates?.length === 3, 'the edited plate set is persisted');
 
   ok(errors.length === 0, `no page errors (${errors.join('; ') || 'none'})`);
   await context.close();

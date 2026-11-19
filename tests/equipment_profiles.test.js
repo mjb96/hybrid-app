@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   EQUIPMENT_KEYS,
   DEFAULT_PROFILE_ID,
+  STANDARD_PLATE_SETUP,
   ensureEquipmentProfiles,
   getActiveEquipmentProfile,
   projectActiveEquipmentProfile,
@@ -15,6 +16,11 @@ import {
   deleteEquipmentProfile,
   normalizeEquipment,
   normalizeBandWeights,
+  normalizePlateSetup,
+  parsePlateList,
+  getActivePlateSetup,
+  setActivePlateSetup,
+  resetActivePlateSetup,
 } from '../js/equipment-profiles.js';
 import { migrateState, CURRENT_SCHEMA_VERSION } from '../js/state/migrations.js';
 
@@ -33,6 +39,10 @@ test('ensure seeds one profile from the legacy kit', () => {
   assert.equal(state.settings.activeEquipmentProfileId, DEFAULT_PROFILE_ID);
   assert.equal(profiles[0].equipment.bands, false);
   assert.deepEqual(profiles[0].bandWeights, { L: 10, M: 20, H: 30 });
+  assert.deepEqual(profiles[0].plateSetup, {
+    kg: { bar: STANDARD_PLATE_SETUP.kg.bar, plates: [...STANDARD_PLATE_SETUP.kg.plates] },
+    lb: { bar: STANDARD_PLATE_SETUP.lb.bar, plates: [...STANDARD_PLATE_SETUP.lb.plates] },
+  });
 });
 
 test('switching profiles projects its equipment and band weights', () => {
@@ -78,6 +88,7 @@ test('adding a profile copies the active kit, becomes active and uses a unique i
   const state = baseState();
   ensureEquipmentProfiles(state);
   setActiveEquipmentKey(state, 'bands', true);
+  setActivePlateSetup(state, 'kg', { bar: 15, plates: [20, 10, 5, 2.5] });
 
   const first = addEquipmentProfile(state);
   const second = addEquipmentProfile(state);
@@ -87,6 +98,7 @@ test('adding a profile copies the active kit, becomes active and uses a unique i
   assert.equal(state.settings.activeEquipmentProfileId, second.id);
   assert.equal(second.equipment.bands, true);
   assert.equal(second.bandWeights.L, 10);
+  assert.deepEqual(second.plateSetup.kg, { bar: 15, plates: [20, 10, 5, 2.5] });
 });
 
 test('renaming rejects blank names and trims real ones', () => {
@@ -117,6 +129,46 @@ test('normalizers fill the core kit and clamp band weights', () => {
   assert.equal(equipment.bands, true);
   assert.equal(equipment.cables, false);
   assert.deepEqual(normalizeBandWeights({ L: -2, M: '15', H: null }), { L: 10, M: 15, H: 30 });
+});
+
+test('plate setup is per profile and per unit', () => {
+  const state = baseState();
+  ensureEquipmentProfiles(state);
+  setActivePlateSetup(state, 'kg', { bar: 15, plates: '25, 20, 20, 10, 5' });
+  assert.deepEqual(getActivePlateSetup(state, 'kg'), { bar: 15, plates: [25, 20, 10, 5] });
+  assert.deepEqual(getActivePlateSetup(state, 'lb'), {
+    bar: STANDARD_PLATE_SETUP.lb.bar,
+    plates: [...STANDARD_PLATE_SETUP.lb.plates],
+  });
+
+  setActivePlateSetup(state, 'lb', { bar: 35, plates: [45, 25, 10] });
+  assert.deepEqual(getActivePlateSetup(state, 'kg'), { bar: 15, plates: [25, 20, 10, 5] });
+  assert.deepEqual(getActivePlateSetup(state, 'lb'), { bar: 35, plates: [45, 25, 10] });
+  // Settings stores 'lbs'; both spellings resolve to the lb setup.
+  assert.deepEqual(getActivePlateSetup(state, 'lbs'), { bar: 35, plates: [45, 25, 10] });
+
+  addEquipmentProfile(state, 'Home');
+  setActivePlateSetup(state, 'kg', { bar: 10, plates: [10, 5, 2.5] });
+  switchEquipmentProfile(state, DEFAULT_PROFILE_ID);
+  assert.deepEqual(getActivePlateSetup(state, 'kg'), { bar: 15, plates: [25, 20, 10, 5] });
+});
+
+test('plate setup validates and resets without inventing a plate', () => {
+  const state = baseState();
+  ensureEquipmentProfiles(state);
+  assert.deepEqual(parsePlateList('25, 20 15; 10,25'), [25, 20, 15, 10]);
+  assert.deepEqual(parsePlateList(['5', '2.5', 'oops', '-1', '0']), [5, 2.5]);
+  assert.deepEqual(normalizePlateSetup({ kg: { bar: -1, plates: [] } }).kg, {
+    bar: STANDARD_PLATE_SETUP.kg.bar,
+    plates: [...STANDARD_PLATE_SETUP.kg.plates],
+  });
+
+  setActivePlateSetup(state, 'kg', { bar: 15, plates: [20, 10] });
+  resetActivePlateSetup(state, 'kg');
+  assert.deepEqual(getActivePlateSetup(state, 'kg'), {
+    bar: STANDARD_PLATE_SETUP.kg.bar,
+    plates: [...STANDARD_PLATE_SETUP.kg.plates],
+  });
 });
 
 test('an imported profile projection is repaired on demand', () => {

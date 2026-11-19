@@ -1634,8 +1634,13 @@ testable on its own.
   - Settings → Equipment now has a profile selector, editable name, and
     add/delete actions. Deleting the last profile is refused; deleting the
     active one falls back to the first.
+  - Each profile also carries its own kg/lb bar weight and plate denominations;
+    `plateHint` uses the active profile. The per-side line in the workout logger
+    is opt-in (`settings.showPlateHints`, default off) so the earlier
+    target-line simplification stays intact by default.
   - The browser check seeds a commercial gym and a home profile, switches
-    between them, renames, adds, deletes and verifies persistence.
+    between them, edits plates, toggles hints, renames, adds, deletes and
+    verifies persistence.
 - **2026-11-19 — Modules: hide Running, Fasting, Health and Recovery.**
   - Added Settings → Modules switches persisted in `settings.modules`, default on.
   - Home hides the run quick action, run trend card, active fast pill and fasting

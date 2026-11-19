@@ -39,8 +39,9 @@ the same training picture.
 - **Modules** — hide Running & GPS, Fasting, Health Connect or Recovery & Load
   from Settings → Modules. Hiding a module never deletes its data.
 - **Equipment profiles** — keep separate kits for home and the commercial gym.
-  The active profile drives program fit, exercise swaps and equipment-aware
-  recommendations; switching takes one tap in Settings.
+  Each profile stores its own bar weight and plate denominations; the active
+  profile drives program fit, exercise swaps and optional per-side plate hints
+  in the workout logger. Switching takes one tap in Settings.
 - **Import your history** — bring workout history and bodyweight from OpenGym,
   Strong or Hevy CSV exports. Strength sets and weigh-ins import directly; cardio
   rows are skipped for now. No account or server involved.

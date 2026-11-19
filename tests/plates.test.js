@@ -36,6 +36,34 @@ test('flags a load the standard plates cannot hit exactly', () => {
 test('lb bar and plates', () => {
   // 135lb on a 45lb bar → 45 per side → one 45
   assert.equal(plateHint(135, 'lb'), '45 / side');
+  // Settings stores the unit as 'lbs'; it must not fall back to kg plates.
+  assert.equal(plateHint(135, 'lbs'), '45 / side');
+});
+
+test('a profile can use its own bar and plate denominations', () => {
+  // 100kg on a 15kg bar → 42.5 per side → 20 + 20 + 2.5
+  assert.equal(
+    plateHint(100, 'kg', { bar: 15, plates: [20, 10, 5, 2.5] }),
+    '20 + 20 + 2.5 / side',
+  );
+  // A home set without 25s cannot pretend a 25 is available.
+  assert.equal(
+    plateHint(120, 'kg', { bar: 20, plates: [20, 10, 5] }),
+    '20 + 20 + 10 / side',
+  );
+});
+
+test('plate hint is opt-in in the coach target', () => {
+  const base = {
+    displaySafeName: 'Back Squat', safeLiftName: 'Back Squat', isCompleted: false,
+    diagnostic: { progression: { weight: 100, reps: 5, rationale: 'Add load.' } },
+    blueprintLabel: '3 × 5', historicalLineText: 'Last: 95 × 5', setsMarkup: '',
+  };
+  const off = buildExerciseCard({ ...base, plates: '20 + 20 / side' });
+  assert.doesNotMatch(off, /20 \+ 20 \/ side/);
+  const on = buildExerciseCard({ ...base, plates: '20 + 20 / side', showPlates: true });
+  assert.match(on, /cct-plates/);
+  assert.match(on, /20 \+ 20 \/ side/);
 });
 
 test('per-side plate breakdown is not rendered in the workout logger', () => {
