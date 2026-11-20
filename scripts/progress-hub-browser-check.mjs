@@ -119,6 +119,9 @@ try {
         says: cards.map((card) => card.querySelector('.ph-card__say')?.textContent?.trim() || ''),
         secondary: [...section.querySelectorAll('.hub-link--quiet')].map((link) => link.getAttribute('data-context')),
         hasMethod: !!section.querySelector('.an-method'),
+        hasWeekHero: !!section.querySelector('.ph-week'),
+        weekHeroText: section.querySelector('.ph-week')?.textContent?.trim() || '',
+        weekBars: section.querySelectorAll('.ph-weeks__bar').length,
         // The week label must name the real Monday–Sunday range, not a program week.
         sub: section.querySelector('.hub-sub')?.textContent?.trim() || '',
         overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
@@ -140,6 +143,9 @@ try {
     if (seen.secondary.includes('hybrid-score')) failures.push(`${width}px: Hybrid Score must not appear as a secondary destination`);
     if (seen.secondary.includes('fasting')) failures.push(`${width}px: Fasting must not appear for a profile with no fasting history`);
     if (!seen.hasMethod) failures.push(`${width}px: missing "how this is calculated" disclosure`);
+    if (!seen.hasWeekHero) failures.push(`${width}px: missing the this-week overview`);
+    if (!/session/i.test(seen.weekHeroText)) failures.push(`${width}px: week overview does not name sessions`);
+    if (seen.weekBars !== 12) failures.push(`${width}px: recent-weeks strip should have 12 bars (got ${seen.weekBars})`);
     if (!/\d{4}-\d{2}-\d{2} to \d{4}-\d{2}-\d{2}/.test(seen.sub)) failures.push(`${width}px: hub subtitle does not name a real calendar week range`);
     if (seen.overflow) failures.push(`${width}px: page-level horizontal overflow`);
     if (seen.smallControls) failures.push(`${width}px: ${seen.smallControls} controls below the 44px target`);
@@ -149,6 +155,24 @@ try {
     await page.waitForSelector('#analytics-strength.active', { timeout: 4000 }).catch(() => {
       failures.push(`${width}px: Strength domain card did not open the Strength screen`);
     });
+
+    // Review → Stats must show a twelve-week calendar log, not a program-week
+    // grid that hides imported/archived sessions.
+    await openHub(page);
+    await page.click('.ph-card[data-context="weekly-review"]');
+    await page.waitForSelector('#analytics-weekly-review.active', { timeout: 4000 }).catch(() => {
+      failures.push(`${width}px: Review domain card did not open the Review screen`);
+    });
+    await page.click('#analytics-weekly-review [data-an-tab="stats"]');
+    await page.waitForSelector('#analyticsTimelineTableBody tr', { timeout: 4000 }).catch(() => {});
+    const reviewStats = await page.$eval('#analytics-weekly-review', (section) => ({
+      rows: section.querySelectorAll('#analyticsTimelineTableBody tr').length,
+      calendarCells: section.querySelectorAll('#streakHeatmapContainer rect').length,
+      firstRow: section.querySelector('#analyticsTimelineTableBody tr')?.textContent?.trim() || '',
+    }));
+    if (reviewStats.rows !== 12) failures.push(`${width}px: Review log should have 12 calendar weeks (got ${reviewStats.rows})`);
+    if (reviewStats.calendarCells < 2) failures.push(`${width}px: Review training calendar is empty`);
+    if (!/[A-Za-z]{3}/.test(reviewStats.firstRow)) failures.push(`${width}px: Review log does not label calendar weeks`);
 
     if (errors.length) failures.push(`${width}px: browser errors: ${errors.join(' | ')}`);
     await context.close();
@@ -168,12 +192,14 @@ try {
     await page.waitForSelector('#analytics-hub.active .ph-card');
     const empty = await page.$eval('#analytics-hub', (section) => ({
       hasEmptyLead: !!section.querySelector('.ph-empty'),
+      hasWeekHero: !!section.querySelector('.ph-week'),
       cards: section.querySelectorAll('.ph-card').length,
       // No fabricated comparison may survive an empty week.
       deltas: section.querySelectorAll('.ph-card__delta').length,
     }));
     console.log('Progress hub empty profile:', JSON.stringify(empty));
     if (!empty.hasEmptyLead) failures.push('empty profile: missing the single leading empty state');
+    if (empty.hasWeekHero) failures.push('empty profile: rendered a this-week hero with no data');
     if (empty.cards !== 4) failures.push('empty profile: expected all four domains to still render');
     if (empty.deltas !== 0) failures.push('empty profile: rendered a comparison with nothing to compare');
     await context.close();

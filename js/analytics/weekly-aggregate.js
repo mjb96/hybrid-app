@@ -203,7 +203,18 @@ export function loggedSessionsByDate(state, opts = {}) {
   const index = opts.index || indexSlotsByDate(state, { tz: opts.tz });
   const counts = new Map();
   for (const [date, slots] of index.allByDate) {
-    if (slots.length) counts.set(date, slots.length);
+    // One stored slot can hold a strength session AND one or more run sessions.
+    // Counting slots reported a strength+run day as one session (the hub showed
+    // "2 of 6" while the this-week tile correctly showed 3).
+    const sessions = slots.reduce((total, slot) => {
+      const strength = ((slot.stats?.workingSets || 0) > 0
+        || String(slot.gymStats?.time || '').trim() !== '') ? 1 : 0;
+      const runs = Array.isArray(slot.runSessions)
+        ? slot.runSessions.length
+        : (slot.run && ((parseFloat(slot.run.dist) || 0) > 0 || String(slot.run.time || '').trim()) ? 1 : 0);
+      return total + strength + runs;
+    }, 0);
+    if (sessions) counts.set(date, sessions);
   }
   return { counts, dates: new Set(counts.keys()) };
 }

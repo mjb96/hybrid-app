@@ -1807,6 +1807,24 @@ testable on its own.
     completed working sets (warm-ups and unticked rows excluded), normalises to
     the hardest-trained muscle and maps it onto the body regions. The chips are
     the accessible text equivalent.
+- **2026-11-20 — Progress overview: week hero, recent weeks, calendar heatmaps.**
+  - The hub now leads with a this-week summary (sessions / planned, volume,
+    distance, PRs, adherence bar) and a 12-week session strip, then the four
+    domain cards. Both read the same date-strict index as History.
+  - `loggedSessionsByDate` now counts sessions inside a slot (strength + each
+    run), not slots. A strength+run day no longer showed “2 of 6” in the
+    Consistency card while the hero showed 3.
+  - Training Calendar in both Strength Stats and Review Stats is calendar-week
+    based (`buildCalendarTrainingWeeks`), so imported/archived weeks appear in
+    the weeks they happened. The Review Consistency Log is a 12-week calendar
+    table (Sessions / Volume / Distance), not a program-week W1..Wn log.
+  - Muscle Load no longer says “0 of 0 focus muscles in range” when no focus
+    muscles are chosen; Bodyweight distinguishes “no recent weigh-ins” from
+    “no weigh-ins at all”.
+  - Validation: 1,936 node tests, typecheck, smoke, progress-hub browser check
+    (hero, 12 bars, Review Stats calendar/log), strength-volume check.
+  - Next: Projections calendar source, load-model unification, exercise
+    drilldown and the monthly/year review surfaces.
 - **2026-11-20 — History overhaul: calendar-first imported history.**
   - Activities is presented as **History** and now has List | Calendar views.
     Calendar cells group the same row model History renders, so a day with two

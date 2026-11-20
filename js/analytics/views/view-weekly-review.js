@@ -64,7 +64,7 @@ export function renderReview(data, getState, getDays) {
       <article class="card-dark p-3 mb-4">
         <div class="table-wrapper">
           <table aria-label="Training History">
-            <thead><tr><th scope="col">Wk</th><th scope="col">Lift Vol</th><th scope="col">Run Dist</th><th scope="col">Avg Pace</th><th scope="col">Avg RPE</th></tr></thead>
+            <thead><tr><th scope="col">Week</th><th scope="col">Sessions</th><th scope="col">Volume</th><th scope="col">Distance</th></tr></thead>
             <tbody id="analyticsTimelineTableBody"></tbody>
           </table>
         </div>

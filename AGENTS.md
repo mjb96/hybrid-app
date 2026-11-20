@@ -102,6 +102,14 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
 - Muscle load: `js/analytics/muscle-load.js` reuses the Volume Guide's per-muscle
   weekly credits and adds last-trained recovery labels; the view is
   `js/analytics/views/view-muscle-load.js`, reached from Progress.
+- Progress overview: `buildProgressLanding` returns `weekSummary`, `units` and
+  `recentWeeks`; `buildRecentWeekSeries` and `buildCalendarTrainingWeeks`
+  (`js/analytics/training-calendar.js`) are date-strict, so imported/archived
+  sessions appear in the real week. The hub leads with a this-week hero and a
+  12-week strip before the domain cards. Review Stats' Training Calendar and
+  Consistency Log use the same calendar weeks (no `W1..Wn` program grid).
+  `loggedSessionsByDate` counts sessions inside a slot — strength plus every
+  run — not slots, so a strength+run day is two sessions.
 - Progression styles: `js/programs/progression-style.js` defines `double`
   (default), `linear` and `rep-first`. Custom programs store `progressionStyle`;
   `computeDiagnosticForLift(..., { progressionStyle })` forwards it to

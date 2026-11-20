@@ -25,7 +25,9 @@
 // program-week counter that only advances on an explicit step).
 // =============================================================================
 
-import { weekStartOf, localDayKey, addDaysISO, DAY_KEYS, loggedSessionsByDate } from './weekly-aggregate.js';
+import {
+  weekStartOf, localDayKey, addDaysISO, DAY_KEYS, loggedSessionsByDate, indexSlotsByDate,
+} from './weekly-aggregate.js';
 import { comparePeriodValues } from './period-comparison.js';
 import { calendarStrengthSummary, calendarWeekE1rmSeriesForLift } from './strength-calendar.js';
 import { weightUnitOf } from './utils.js';
@@ -381,6 +383,49 @@ export function fastingIsEnabled(state) {
   return Array.isArray(session?.history) && session.history.length > 0;
 }
 
+function slotSessionCount(slot) {
+  const strength = (slot?.stats?.workingSets > 0 || String(slot?.gymStats?.time || '').trim()) ? 1 : 0;
+  const runs = Array.isArray(slot?.runSessions) ? slot.runSessions.length : 0;
+  return strength + runs;
+}
+
+function slotDistanceKm(slot) {
+  if (Array.isArray(slot?.runSessions) && slot.runSessions.length) {
+    return slot.runSessions.reduce((sum, run) => sum + (parseFloat(run?.dist) || 0), 0);
+  }
+  return parseFloat(slot?.run?.dist) || 0;
+}
+
+/**
+ * The last N calendar weeks, oldest → newest. One pass over the canonical date
+ * index so the hub's recent-weeks strip and the History calendar cannot disagree.
+ */
+export function buildRecentWeekSeries(state, weekStart, weeks = 12, index = null) {
+  const idx = index || indexSlotsByDate(state);
+  const earliest = /** @type {string} */ (addDaysISO(weekStart, -(weeks - 1) * 7));
+  const byWeek = new Map();
+  for (let i = 0; i < weeks; i++) {
+    const key = /** @type {string} */ (addDaysISO(earliest, i * 7));
+    byWeek.set(key, { weekStart: key, sessions: 0, volumeKg: 0, distanceKm: 0 });
+  }
+  for (const [date, slots] of idx.allByDate) {
+    if (date < earliest || date > addDaysISO(weekStart, 6)) continue;
+    const key = weekStartOf(date);
+    const entry = byWeek.get(key);
+    if (!entry) continue;
+    for (const slot of slots) {
+      entry.sessions += slotSessionCount(slot);
+      entry.volumeKg += slot.stats?.volumeKg || 0;
+      entry.distanceKm += slotDistanceKm(slot);
+    }
+  }
+  return [...byWeek.values()].map((entry) => ({
+    ...entry,
+    volumeKg: Math.round(entry.volumeKg),
+    distanceKm: Math.round(entry.distanceKm * 10) / 10,
+  }));
+}
+
 /**
  * Build the whole Progress landing model.
  *
@@ -410,6 +455,15 @@ export function buildProgressLanding(state, opts = {}) {
     ...(moduleEnabled(state, 'recovery') ? [recoveryDomain(opts.readiness)] : []),
   ];
 
+  const index = indexSlotsByDate(state);
+  const recentWeeks = buildRecentWeekSeries(state, weekStart, 12, index);
+  const currentWeek = recentWeeks[recentWeeks.length - 1];
+  const plannedSessions = plannedTrainingDays(opts.program);
+  const adherencePct = plannedSessions
+    ? Math.min(100, Math.round((currentWeek.sessions / plannedSessions) * 100))
+    : null;
+  const prCount = calendarStrengthSummary(state, { weekStart, today: todayISO }).prCount;
+
   return {
     weekStart,
     weekEnd,
@@ -417,6 +471,20 @@ export function buildProgressLanding(state, opts = {}) {
     periodLabel: isCurrentWeek ? 'This week so far' : `Week of ${weekStart}`,
     domains,
     secondary: secondaryDestinations(state),
+    units: {
+      weight: unit,
+      distance: state?.settings?.distanceUnit === 'mi' ? 'mi' : 'km',
+    },
+    weekSummary: {
+      sessions: currentWeek.sessions,
+      planned: plannedSessions,
+      adherencePct,
+      volumeKg: currentWeek.volumeKg,
+      distanceKm: currentWeek.distanceKm,
+      prCount,
+      hasData: currentWeek.sessions > 0 || currentWeek.volumeKg > 0 || currentWeek.distanceKm > 0,
+    },
+    recentWeeks,
     // True when nothing at all has been logged — the hub then leads with a
     // single honest empty state instead of four separate dashes.
     allEmpty: domains.every((entry) => entry.empty),
