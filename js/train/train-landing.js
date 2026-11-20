@@ -2,36 +2,37 @@
 // =============================================================================
 // TRAIN LANDING MODEL (js/train/train-landing.js) — roadmap Phase 0/2
 //
-// Train used to open straight into the workout cockpit: a day-selector bar and
-// an exercise list, with no answer to "what am I doing today, and what else can
-// I start?". Quick start was hidden behind a sheet and recent activity was not
-// on the screen at all.
-//
-// This models the landing that now sits in front of the cockpit:
-//
-//   1. Today   — the planned session and ONE primary action
-//   2. Quick start — the other things you can begin right now
-//   3. Recent  — what you last did, as a way back into it
+// Train is a SESSION PREVIEW, not a second Home. The card carries the actual
+// exercises and targets so the athlete can see the work before starting; Start
+// then goes straight into the cockpit (there is no separate preview route).
 //
 // Today comes from `buildTodayCardModel`, the SAME model Home renders, so Train
 // and Home can never disagree about what today's session is or whether it is
-// finished. This module adds no second opinion — it only decides what Train
-// shows around it.
+// finished. The week rail uses `buildHomeWeekStrip`, so the two surfaces read
+// the same week.
+//
+// Quick start is deliberately only the UNPLANNED activities: Run / Walk / Fast.
+// Today's session is the primary action; a different or empty session is
+// "Choose another workout". There is no second "Workout" entry.
 //
 // PURE. No DOM, no state mutation.
 // =============================================================================
 
 import { buildTodayCardModel } from '../home/today-card.js';
+import { buildHomeWeekStrip } from '../home/week-strip.js';
 import { buildActivityHistory } from '../activities/model.js';
 import { moduleEnabled } from '../modules.js';
+import { localDayKey } from '../dates.js';
+import { getWeekModifier } from '../schema.js';
+import { liftTarget } from '../engine.js';
+
+const DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 
 /**
- * The things a user can start from Train right now. Mirrors the quick-start
- * sheet's actions so both entry points do exactly the same thing — the sheet
- * remains for the cockpit header; the landing surfaces them without a tap.
+ * The unplanned activities a user can start from Train. Today's session is the
+ * primary action; a different or empty workout is the secondary picker.
  */
 export const QUICK_START_ACTIONS = Object.freeze([
-  { id: 'workout', action: 'qs-workout', label: 'Workout', icon: 'dumbbell', hint: "Open today's session" },
   { id: 'run', action: 'qs-run', label: 'Run', icon: 'run', hint: 'Track a run with GPS' },
   { id: 'walk', action: 'qs-walk', label: 'Walk', icon: 'activity', hint: 'Track a walk' },
   { id: 'fast', action: 'qs-fast', label: 'Fast', icon: 'clock', hint: 'Start a fasting timer' },
@@ -59,11 +60,38 @@ export function recentActivities(state, limit = 3) {
       kind: row.kind,
       kindLabel: KIND_LABEL[row.kind] || 'Activity',
       date: row.localDate,
-      // The history model already owns both of these; recomputing them here
-      // would be a second opinion about the same row.
       dateLabel: row.dateLabel || row.localDate,
       subtitle: row.subtitle || '',
     }));
+}
+
+/**
+ * The day's exercises and targets, resolved by the SAME `liftTarget` the
+ * cockpit uses. That keeps the preview and the logger from promising different
+ * prescriptions.
+ *
+ * @param {any} state
+ * @param {any} program
+ * @param {string} day
+ * @returns {Array<{ name: string, sets: number, reps: string, weight: number|null }>}
+ */
+export function sessionExercisePreview(state, program, day) {
+  const blueprint = program?.days?.[day];
+  const lifts = Array.isArray(blueprint?.lifts) ? blueprint.lifts : [];
+  if (!lifts.length) return [];
+  const week = String(state?.currentWeek || '1');
+  const modifier = getWeekModifier(program, week);
+  return lifts.map((name) => {
+    const target = liftTarget(blueprint?.desc, name, modifier, { program, week, dayKey: day });
+    return {
+      name: String(name),
+      sets: Number(target?.sets) || 0,
+      reps: target?.reps == null ? '' : String(target.reps),
+      weight: Number.isFinite(Number(target?.weight)) && Number(target.weight) > 0
+        ? Number(target.weight)
+        : null,
+    };
+  });
 }
 
 /**
@@ -72,13 +100,17 @@ export function recentActivities(state, limit = 3) {
  * @param {{
  *   state: any, program?: any, model?: any, briefing?: any, score?: any,
  *   now?: Date, tz?: string, offline?: boolean, recentLimit?: number,
+ *   days?: string[],
  * }} options
  */
 export function buildTrainLanding(options) {
   const { state, program = null, model = null, briefing = null, score = null,
-    now = new Date(), tz = undefined, offline = false, recentLimit = 3 } = options || {};
+    now = new Date(), tz = undefined, offline = false, recentLimit = 3,
+    days = DAY_KEYS } = options || {};
 
   const today = buildTodayCardModel({ state, program, model, briefing, score, now, offline, tz });
+  const todayISO = localDayKey(now, tz);
+  const week = buildHomeWeekStrip({ state, program, days, today: todayISO });
   const recent = recentActivities(state, recentLimit)
     .filter((row) => !['run', 'walk', 'ride'].includes(row.kind) || moduleEnabled(state, 'running'));
   const quickStart = QUICK_START_ACTIONS.filter((item) =>
@@ -89,9 +121,12 @@ export function buildTrainLanding(options) {
   // A session already under way is the one thing that must not be buried
   // behind a landing — the user's unsaved intent outranks browsing.
   const resumable = today.state === 'in_progress' || today.state === 'unresolved';
+  const exercises = sessionExercisePreview(state, program, today.day);
 
   return {
     today,
+    week,
+    exercises,
     resumable,
     quickStart,
     recent,

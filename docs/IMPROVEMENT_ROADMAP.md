@@ -228,7 +228,7 @@ surfaces, not implementation-file ownership.
 | Surface | Current user job and entry | Important states/actions | Product owner |
 | --- | --- | --- | --- |
 | **Home** | Open app and decide what matters today | One week surface: the seven-day rail plus a state-aware Today decision that collapses to one compact row on a fresh day; alerts, Activities; sparse-data, rest-day, completed, active-fast, warning, and offline states | **Home**. Today owns the first decision and never hides its primary action; the rail is optional, Today is pinned. Progress owns deeper interpretation. |
-| **Train** (`workout` route retained) | Start/resume a planned or one-off session and log strength/running | Day selector, schedule context, session timer, GPS/manual run, exercise/set logger, advanced set options, swap/add/reorder/superset/plate math, finish, clear; rest, empty one-off, in-progress, completed, GPS wait/failure and invalid-input states | **Train**. The new shell owns both the old Workout destination and Quick Start. A true Train landing remains future work. |
+| **Train** (`workout` route retained) | See the planned session, start/resume it, or start an unplanned activity | Week rail, session preview with exercises and `liftTarget` targets, one Start/Resume, Quick start (Run/Walk/Fast), one recent row; cockpit day selector, schedule context, session timer, GPS/manual run, exercise/set logger, advanced set options, swap/add/reorder/superset/plate math, finish, clear; rest, empty one-off, in-progress, completed, GPS wait/failure and invalid-input states | **Train**. The landing is a session preview, not a second Home. Start opens the cockpit directly; an active session is Resume. |
 | **Progress hub** (`analytics` route retained) | Understand training history and choose a domain | Hybrid Score, Strength, Running, Recovery & Load, Review, optional Fasting, Body Weight, Projections | **Progress**. The old visible “Insights” label is retired; internal context IDs remain compatible. |
 | **Progress details** | Explain a metric and expose evidence | Strength overview/stats, weekly volume, Gym Performance, exercise/muscle/metric drilldowns; Running overview/stats/performance/metric; Recovery overview/stats/performance; Review week/month; Hybrid Score; activity calendar; fasting/bodyweight/projections | **Progress**. Origin-aware Back returns to Home or Progress; entity drilldowns return to their parent and preserve calendar week. |
 | **Plans library** (`program` route retained) | Continue, discover, save, compare, or create a plan | Active-plan banner, Discover/Saved/Completed, search, 16 category filters, five level filters, recommendations, collections and empty results | **Plans**. Phase 4 will lead with fit/recommendations before catalogue controls. |
@@ -1747,6 +1747,16 @@ testable on its own.
 
 ## 12. Session log
 
+- **2026-11-20 — Train is a session preview, not a second Home.**
+  - The landing now shows the week rail and today's card with the actual
+    exercises and `liftTarget` targets, then one Start/Resume. The card is the
+    preview; Start opens the cockpit directly, with no extra route.
+  - Quick start is only Run / Walk / Fast. The duplicate "Workout" entry is
+    gone; a different or empty workout is "Choose another workout".
+  - Recent is one row (hidden when empty); the four-card "Start something else"
+    grid is gone.
+  - The train-landing browser check now asserts the exercise preview, targets,
+    seven-day rail, no duplicate Workout quick start, and the Resume state.
 - **2026-11-20 — Logger L0: the prescription stopped impersonating history.**
   - A first-ever set row showed `Last 112.5kg × 6` whenever a coaching/target
     ghost existed, while the card said "First time logging this". `buildSetRow`

@@ -23,13 +23,13 @@ const state = (modules = {}) => ({
 
 test('Train quick start follows the running and fasting modules', () => {
   const all = buildTrainLanding({ state: state(), program });
-  assert.deepEqual(all.quickStart.map((a) => a.id), ['workout', 'run', 'walk', 'fast']);
+  assert.deepEqual(all.quickStart.map((a) => a.id), ['run', 'walk', 'fast']);
 
   const noRun = buildTrainLanding({ state: state({ running: false }), program });
-  assert.deepEqual(noRun.quickStart.map((a) => a.id), ['workout', 'fast']);
+  assert.deepEqual(noRun.quickStart.map((a) => a.id), ['fast']);
 
   const noRunNoFast = buildTrainLanding({ state: state({ running: false, fasting: false }), program });
-  assert.deepEqual(noRunNoFast.quickStart.map((a) => a.id), ['workout']);
+  assert.deepEqual(noRunNoFast.quickStart.map((a) => a.id), []);
 
   // Dummy cardio data: the run is visible while Running is on and filtered out
   // when the module is off.
@@ -47,4 +47,12 @@ test('Progress drops hidden domains and destinations', () => {
   assert.ok(!hidden.domains.some((d) => d.id === 'running'));
   assert.ok(!hidden.domains.some((d) => d.id === 'recovery'));
   assert.ok(!hidden.secondary.some((d) => d.id === 'fasting' || d.id === 'projections'));
+});
+
+test('Train previews the day exercises through the same liftTarget', () => {
+  const landing = buildTrainLanding({ state: state(), program });
+  assert.deepEqual(landing.exercises.map((e) => e.name), ['Back Squat']);
+  assert.ok(landing.exercises[0].sets > 0);
+  assert.ok(String(landing.exercises[0].reps).length > 0);
+  assert.equal(landing.week.days.length, 7);
 });

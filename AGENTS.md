@@ -145,6 +145,12 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   actions and navigation stay pinned. Keep `#homePrimaryCta`,
   `.btn-history-link` and the Run quick action in the Home DOM — browser checks
   measure them.
+- Train landing: `js/train/train-landing.js` + `view-train-landing.js` render a
+  SESSION PREVIEW, not a second Home: week rail, today's card with the day's
+  `liftTarget` prescriptions, one Start/Resume, Quick start limited to
+  Run/Walk/Fast, and one recent row. Do not add a "Workout" quick start — it
+  duplicates Start; a different or empty workout belongs to "Choose another
+  workout". Start opens the cockpit directly; an active session is Resume.
 - Weekly analytics attribution: `state.currentWeek` is a PROGRAM-week counter that only
   advances on an explicit step / confirmed auto-advance — it is NOT the calendar week.
   So "this week" analytics must NOT read `weeks[currentWeek]` directly (that leaked a
