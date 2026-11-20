@@ -21,6 +21,7 @@
 // reviewToText() renders the same review as share/notification copy.
 // =============================================================================
 import { computeDashboardModel } from '../home/dashboard-model.js';
+import { plannedTrainingDays } from '../analytics/progress-landing.js';
 import { bestE1rmByLiftForWeek, liftE1rmByCalendarWeek } from '../analytics/strength-calendar.js';
 import { collectCalendarWeek, weekStartOf, addDaysISO, localDayKey, DAY_KEYS } from '../analytics/weekly-aggregate.js';
 import { isE1rmPr } from '../strength/e1rm.js';
@@ -180,9 +181,18 @@ export function buildWeeklyReview(state, days, program, opts = {}) {
   const arc = scoreArc(state);
   const isCurrentWeek = weekStart === weekStartOf(today);
 
+  // Adherence is a SESSION comparison, the same unit the Progress hub shows.
+  // The old model used prescribed-vs-completed SETS, so a normal part-finished
+  // week rendered as “6% · 5/81” while the hub said “4 of 4 planned”. Planned
+  // sessions stay program-week based (that is what a plan is).
+  const plannedSessions = plannedTrainingDays(program);
+  const sessionAdherencePct = plannedSessions
+    ? Math.min(100, Math.round((current.sessions / plannedSessions) * 100))
+    : null;
+
   const focus = pickWeeklyFocus({
-    consistencyPct: model.week.consistencyPct,
-    hasPlan: model.week.consistencyTotal > 0,
+    consistencyPct: sessionAdherencePct ?? 100,
+    hasPlan: plannedSessions != null,
     acwr: model.load.hasData ? model.load.acwr : 0,
     distance: current.distanceKm,
     volumeDeltaPct,
@@ -205,9 +215,10 @@ export function buildWeeklyReview(state, days, program, opts = {}) {
     },
     deltas: { volumePct: volumeDeltaPct, distancePct: distanceDeltaPct },
     consistency: {
-      done: model.week.consistencyDone,
-      total: model.week.consistencyTotal,
-      pct: model.week.consistencyPct,
+      done: current.sessions,
+      total: plannedSessions,
+      pct: sessionAdherencePct,
+      unit: 'sessions',
     },
     prs,
     arc,

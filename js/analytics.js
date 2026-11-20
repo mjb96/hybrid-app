@@ -10,7 +10,6 @@ import { renderRunningAnalytics, setRunningTab } from './analytics/views/view-ru
 import { renderRecoveryLoad, setRecoveryTab } from './analytics/views/view-recovery.js';
 import { renderBodyWeightAnalytics, setBodyweightRange } from './analytics/views/view-bodyweight.js';
 import { renderMuscleLoad } from './analytics/views/view-muscle-load.js';
-import { renderActivityCalendar } from './home.js';
 import { initWeekNav, updateWeekNavDisplay, resetWeekNav, getSelectedWeekStart } from './analytics/week-nav.js';
 import { renderFastingAnalytics } from './analytics/views/view-fasting.js';
 import { computeDashboardModel } from './home/dashboard-model.js';
@@ -545,10 +544,6 @@ export function renderAnalytics() {
       setRunningTab('stats');
       document.getElementById('analytics-running').classList.add('active');
       renderRunningAnalytics(data, _getState, _getDays);
-      break;
-    case 'activity':
-      document.getElementById('analytics-activity').classList.add('active');
-      renderActivityCalendar(_getState(), 'analyticsCalendarContainer');
       break;
     case 'fasting':
       document.getElementById('analytics-fasting').classList.add('active');

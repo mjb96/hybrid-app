@@ -3,8 +3,11 @@
 // ACTIVITIES — full-screen history and exact activity detail/deletion.
 // =============================================================================
 import {
-  activityDestinationForDate, buildActivityHistory, filterActivityHistory,
+  activityDestinationForDate, buildActivityHistory, filterActivityHistory, searchActivityHistory,
 } from './activities/model.js';
+import {
+  MONTH_NAMES, buildActivityCalendar, latestActivityMonth, shiftCalendarMonth,
+} from './activities/calendar.js';
 import {
   deleteRunActivity, deleteStrengthActivity,
   restoreRunActivity, restoreStrengthActivity,
@@ -27,6 +30,9 @@ let _activationFilter = null;
 let _activationLabel = null;
 let _selected = null;
 let _detailTab = 'summary';
+let _view = 'list';
+let _search = '';
+let _calendar = null;
 
 function esc(value) {
   return String(value ?? '').replace(/[&<>"']/g, (c) => ({
@@ -66,6 +72,28 @@ function replacementPrescription(state, weekKey, day) {
 export function initActivities(getStateFn, saveStateFn) {
   _getState = getStateFn;
   _saveState = saveStateFn;
+
+  // Search is client-side and instant. Re-render preserves the caret so typing
+  // never jumps to the end or loses focus.
+  document.addEventListener('input', (event) => {
+    const input = /** @type {HTMLInputElement|null} */ (event.target);
+    if (!input || input.id !== 'historySearchInput') return;
+    _search = input.value;
+    renderList();
+    const next = /** @type {HTMLInputElement|null} */ (document.getElementById('historySearchInput'));
+    if (next) {
+      next.focus();
+      const end = next.value.length;
+      try { next.setSelectionRange(end, end); } catch { /* some input types */ }
+    }
+  });
+}
+
+// One row source for the list, detail lookup and date deep links. The program
+// lookup resolves a programmed week's day title (Home's title) instead of the
+// generic "Strength Workout".
+function activityRows(state = _getState?.()) {
+  return buildActivityHistory(state, { programLookup: getProgramById });
 }
 
 export function isActivitiesOpen() {
@@ -82,9 +110,17 @@ export function openActivities(options = {}) {
   _activationFilter = options.activationId || null;
   _activationLabel = options.label || null;
   _filter = options.filter || 'all';
-  if (options.directIfSingle && _dateFilter) {
-    _selected = activityDestinationForDate(buildActivityHistory(_getState()), _dateFilter).activity;
+  _view = options.view === 'calendar' ? 'calendar' : 'list';
+  _search = '';
+  _calendar = null;
+  if (_dateFilter) {
+    const [year, month] = _dateFilter.split('-').map(Number);
+    if (year && month) _calendar = { year, month: month - 1 };
   }
+  if (options.directIfSingle && _dateFilter) {
+    _selected = activityDestinationForDate(activityRows(), _dateFilter).activity;
+  }
+  screen.setAttribute('aria-label', 'History');
   screen.style.display = 'block';
   screen.scrollTop = 0;
   renderActivities();
@@ -101,16 +137,90 @@ export function closeActivities() {
 }
 
 function renderRow(row) {
+  const showBadge = row.provenance && row.provenance !== row.subtitle;
   return `<button class="activity-history-row activity-history-row--${row.kind}" data-action="open-activity-detail" data-activity-id="${esc(row.id)}">
     <span class="activity-history-icon" aria-hidden="true">${activityIcon(row.kind)}</span>
     <span class="activity-history-main">
-      <span class="activity-history-title">${esc(row.title)}</span>
+      <span class="activity-history-title">${esc(row.title)}${showBadge ? ` <span class="activity-source-badge">${esc(row.provenance)}</span>` : ''}</span>
       <span class="activity-history-sub">${esc(row.subtitle || row.dateLabel)}</span>
       <span class="activity-history-date">${esc(row.dateLabel)}</span>
     </span>
     <span class="activity-history-metrics">${row.metrics.map((metric) => `<span>${esc(metric)}</span>`).join('')}</span>
     <span class="activity-history-chevron" aria-hidden="true">›</span>
   </button>`;
+}
+
+function monthLabel(monthKey) {
+  const [year, month] = String(monthKey || '').split('-').map(Number);
+  if (!year || !month || month < 1 || month > 12) return 'Undated';
+  return `${MONTH_NAMES[month - 1]} ${year}`;
+}
+
+function todayISO() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}
+
+function historyViewToggle() {
+  const button = (value, label) => `<button type="button" class="history-view-btn${_view === value ? ' is-active' : ''}" data-action="set-history-view" data-view="${value}" aria-pressed="${_view === value}">${label}</button>`;
+  return `<div class="history-view-toggle" role="group" aria-label="History view">${button('list', 'List')}${button('calendar', 'Calendar')}</div>`;
+}
+
+function historyCalendarHTML(state, rows) {
+  if (!_calendar) _calendar = latestActivityMonth(rows);
+  const cal = buildActivityCalendar(rows, _calendar.year, _calendar.month, state?.settings?.weekStartDay);
+  const sunStart = cal.weekStartDay === 'sun';
+  const headers = sunStart ? ['S', 'M', 'T', 'W', 'T', 'F', 'S'] : ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+  const today = todayISO();
+  const cells = cal.cells.map((cell) => {
+    if (!cell.date) return '<div class="cal-cell" aria-hidden="true"></div>';
+    const dots = [
+      cell.strength ? '<span class="cal-dot cal-dot-gym"></span>' : '',
+      cell.runs ? '<span class="cal-dot cal-dot-run"></span>' : '',
+    ].join('');
+    const count = cell.rows.length;
+    const classes = ['cal-cell'];
+    if (cell.date === today) classes.push('cal-today');
+    if (count) classes.push('cal-has-activity');
+    return `<button type="button" class="${classes.join(' ')}" data-action="history-calendar-day" data-date="${cell.date}" aria-label="${esc(`${cell.date}: ${count} ${count === 1 ? 'activity' : 'activities'}`)}">
+      <span class="cal-num">${cell.day}</span>${dots ? `<div class="cal-dots">${dots}</div>` : ''}
+    </button>`;
+  }).join('');
+  return `<div class="history-calendar">
+    <div class="history-calendar-head">
+      <button type="button" class="history-calendar-nav" data-action="history-calendar-prev" aria-label="Previous month">‹</button>
+      <strong>${esc(cal.label)}</strong>
+      <button type="button" class="history-calendar-nav" data-action="history-calendar-next" aria-label="Next month">›</button>
+    </div>
+    <div class="cal-grid history-calendar-grid">
+      ${headers.map((label) => `<div class="cal-hdr">${label}</div>`).join('')}
+      ${cells}
+    </div>
+    ${cal.hasActivity ? '' : '<p class="history-calendar-empty">No training logged in this month.</p>'}
+    <p class="history-calendar-hint">Tap a day to see its sessions.</p>
+  </div>`;
+}
+
+function historyRowsHTML(rows) {
+  let lastMonth = '';
+  return rows.map((row) => {
+    const month = row.localDate ? row.localDate.slice(0, 7) : '';
+    const header = month && month !== lastMonth
+      ? `<div class="activity-month-header">${esc(monthLabel(month))}</div>`
+      : '';
+    lastMonth = month || lastMonth;
+    return header + renderRow(row);
+  }).join('');
+}
+
+function historyEmptyHTML() {
+  if (_search) {
+    return `<div class="activity-history-empty"><span>○</span><strong>No matching training</strong><p>Nothing matches “${esc(_search)}”. Try a workout, run or exercise name.</p></div>`;
+  }
+  if (_dateFilter) {
+    return `<div class="activity-history-empty"><span>○</span><strong>No training on this date</strong><p>Pick another day or clear the date filter.</p></div>`;
+  }
+  return `<div class="activity-history-empty"><span>○</span><strong>No training logged here</strong><p>Completed strength workouts and runs will appear as separate activities.</p></div>`;
 }
 
 function renderList() {
@@ -120,34 +230,51 @@ function renderList() {
   const back = document.getElementById('activitiesBack');
   const actions = document.getElementById('activitiesHeaderActions');
   if (!state || !content) return;
-  if (title) title.textContent = 'Activities';
+  if (title) title.textContent = 'History';
   if (back) back.textContent = '← Done';
   if (actions) actions.innerHTML = '';
 
-  const all = buildActivityHistory(state);
-  const rows = filterActivityHistory(all, _filter, _dateFilter, _activationFilter);
-  const filterLabel = _dateFilter ? dateHeading(_dateFilter)
-    : _activationFilter ? (_activationLabel || 'Previous program run')
-      : 'All training history';
+  const all = activityRows(state);
+  const typed = filterActivityHistory(all, _filter, _view === 'list' ? _dateFilter : null, _activationFilter);
+  const rows = _view === 'list' ? searchActivityHistory(typed, _search) : typed;
+  const filterLabel = _view === 'calendar' ? 'All training history'
+    : _search ? 'Search results'
+      : _dateFilter ? dateHeading(_dateFilter)
+        : _activationFilter ? (_activationLabel || 'Previous program run')
+          : 'All training history';
+
+  const filters = `<div class="activity-filter-bar" role="group" aria-label="Activity type">
+    ${[['all', 'All'], ['strength', 'Strength'], ['run', 'Runs']].map(([value, label]) =>
+      `<button class="activity-filter${_filter === value ? ' activity-filter--active' : ''}" data-action="filter-activities" data-filter="${value}" aria-pressed="${_filter === value}">${label}</button>`
+    ).join('')}
+  </div>`;
+
+  const search = `<label class="history-search">
+    <span aria-hidden="true">⌕</span>
+    <input id="historySearchInput" type="search" value="${esc(_search)}" placeholder="Search workouts, runs, exercises" autocomplete="off">
+  </label>`;
+
+  const body = _view === 'calendar'
+    ? historyCalendarHTML(state, typed)
+    : `${filters}${search}<div class="activity-history-list">${rows.length ? historyRowsHTML(rows) : historyEmptyHTML()}</div>`;
+
   content.innerHTML = `
     <div class="activity-history-hero">
-      <span class="activity-history-eyebrow">Training history</span>
-      <h2>${esc(filterLabel)}</h2>
-      <p>${rows.length} ${rows.length === 1 ? 'activity' : 'activities'}</p>
-      ${_dateFilter || _activationFilter ? '<button class="activity-date-clear" data-action="clear-activity-date">View all activities</button>' : ''}
+      <div class="activity-history-hero-top">
+        <div>
+          <span class="activity-history-eyebrow">Training history</span>
+          <h2>${esc(filterLabel)}</h2>
+          <p>${rows.length} ${rows.length === 1 ? 'activity' : 'activities'}</p>
+        </div>
+        ${historyViewToggle()}
+      </div>
+      ${_dateFilter || _activationFilter ? '<button class="activity-date-clear" data-action="clear-activity-date">View all history</button>' : ''}
     </div>
-    <div class="activity-filter-bar" role="group" aria-label="Activity type">
-      ${[['all', 'All'], ['strength', 'Strength'], ['run', 'Runs']].map(([value, label]) =>
-        `<button class="activity-filter${_filter === value ? ' activity-filter--active' : ''}" data-action="filter-activities" data-filter="${value}" aria-pressed="${_filter === value}">${label}</button>`
-      ).join('')}
-    </div>
-    <div class="activity-history-list">
-      ${rows.length ? rows.map(renderRow).join('') : `<div class="activity-history-empty"><span>○</span><strong>No activities here</strong><p>Completed strength workouts and runs will appear as separate activities.</p></div>`}
-    </div>`;
+    ${body}`;
 }
 
 function findSelected(activityId) {
-  return buildActivityHistory(_getState?.()).find((row) => row.id === activityId) || null;
+  return activityRows().find((row) => row.id === activityId) || null;
 }
 
 function paintDetail() {
@@ -158,7 +285,7 @@ function paintDetail() {
   const actions = document.getElementById('activitiesHeaderActions');
   if (!state || !_selected || !content) return;
   if (title) title.textContent = _selected.title;
-  if (back) back.textContent = '← Activities';
+  if (back) back.textContent = '← History';
   if (actions) actions.innerHTML = `<button class="activity-menu-btn" data-action="toggle-activity-menu" aria-label="Activity actions" aria-expanded="false">•••</button>`;
 
   const recap = buildSessionRecap(
@@ -166,19 +293,22 @@ function paintDetail() {
     _selected.kind === 'run' ? _selected.sessionId : null,
     _selected.kind,
   );
+  const provenance = _selected.provenance
+    ? `<div class="activity-detail-source">${esc(_selected.provenance)}</div>`
+    : '';
   content.innerHTML = `
     <div class="activity-action-menu" id="activityActionMenu" hidden>
       <button data-action="edit-activity">Edit ${_selected.kind === 'run' ? 'run' : 'strength workout'}</button>
       <button data-action="delete-activity" class="activity-action-delete">Delete ${_selected.kind === 'run' ? _selected.title.toLowerCase() : 'strength workout'}</button>
     </div>
-    <div class="activity-detail-shell">${renderSessionRecapHTML(recap, [], state.thresholdPaceSeconds || null, _detailTab)}</div>`;
+    <div class="activity-detail-shell">${provenance}${renderSessionRecapHTML(recap, [], state.thresholdPaceSeconds || null, _detailTab)}</div>`;
   content.querySelectorAll('[data-recap-tab]').forEach((button) => {
     button.addEventListener('click', () => {
       _detailTab = button.getAttribute('data-recap-tab') || 'summary';
       paintDetail();
     });
   });
-  if (_detailTab === 'summary' && recap.run?.distKm > 0) {
+  if (_detailTab === 'summary' && recap.run?.distKm > 0 && (recap.run.splits?.length || recap.run.gpsQuality)) {
     renderRunMap(_selected.week, _selected.day, recap.run.distKm, {
       containerId: 'recapMapContainer',
       splits: recap.run.splits,
@@ -223,7 +353,12 @@ async function deleteSelectedActivity() {
     confirmLabel: `Delete ${activity.kind === 'run' ? activity.title.toLowerCase() : 'workout'}`,
     danger: true,
   });
-  if (!confirmed) return;
+  if (!confirmed) {
+    const menu = document.getElementById('activityActionMenu');
+    if (menu) menu.hidden = true;
+    document.querySelector('[data-action="toggle-activity-menu"]')?.setAttribute('aria-expanded', 'false');
+    return;
+  }
 
   const activationId = week.activationId || state.activeActivationId;
   if (activity.kind === 'run') {
@@ -261,6 +396,29 @@ export function handleActivityAction(action, element) {
     _filter = element.getAttribute('data-filter') || 'all';
     renderList(); return true;
   }
+  if (action === 'set-history-view') {
+    _view = element.getAttribute('data-view') === 'calendar' ? 'calendar' : 'list';
+    if (_view === 'calendar') {
+      _search = '';
+      _calendar = _calendar || latestActivityMonth(activityRows());
+    }
+    renderList(); return true;
+  }
+  if (action === 'history-calendar-prev' || action === 'history-calendar-next') {
+    if (!_calendar) _calendar = latestActivityMonth(activityRows());
+    _calendar = shiftCalendarMonth(_calendar.year, _calendar.month, action === 'history-calendar-next' ? 1 : -1);
+    renderList(); return true;
+  }
+  if (action === 'history-calendar-day') {
+    const date = element.getAttribute('data-date');
+    if (date) {
+      _dateFilter = date;
+      _search = '';
+      _view = 'list';
+      renderList();
+    }
+    return true;
+  }
   if (action === 'clear-activity-date') {
     _dateFilter = null; _activationFilter = null; _activationLabel = null;
     renderList(); return true;
@@ -277,7 +435,7 @@ export function handleActivityAction(action, element) {
   if (action === 'open-session-detail') {
     const week = element.getAttribute('data-week');
     const day = element.getAttribute('data-day');
-    const found = buildActivityHistory(_getState?.()).find((row) =>
+    const found = activityRows().find((row) =>
       row.kind === 'strength' && String(row.week) === String(week) && row.day === day
     );
     if (found) {

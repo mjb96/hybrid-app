@@ -84,7 +84,7 @@ function recentHTML(recent) {
   return `<section class="tl-section tl-recent-section" aria-labelledby="trainRecentTitle">
     <div class="tl-section__head">
       <h3 id="trainRecentTitle" class="tl-section__title">Recent</h3>
-      <button type="button" class="tl-section__more" data-action="open-analytics" data-context="activity">All activity →</button>
+      <button type="button" class="tl-section__more" data-action="open-activities">History →</button>
     </div>
     <button type="button" class="tl-recent__row" data-action="open-activity-detail" data-activity-id="${esc(row.id)}">
       <span class="tl-recent__body">

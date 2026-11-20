@@ -80,6 +80,14 @@ test('buildWeeklyReview: calendar totals, PR detection, score arc', () => {
   assert.equal(r.label, 'This week');
 });
 
+test('adherence is judged in sessions, the same unit as the Progress hub', () => {
+  const r = buildWeeklyReview(makeState(), DAYS, PROGRAM, { today: TODAY });
+  assert.equal(r.consistency.unit, 'sessions');
+  assert.equal(r.consistency.total, 2, 'the program plans two sessions');
+  assert.equal(r.consistency.done, 2);
+  assert.equal(r.consistency.pct, 100);
+});
+
 test('buildWeeklyReview: imported archived weeks are this week when their DATE says so', () => {
   const state = {
     currentWeek: '1',

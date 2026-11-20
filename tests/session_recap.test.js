@@ -136,6 +136,18 @@ test('FIT strength is a real recap even with no exercise names', () => {
   assert.match(html, /Calories/);
 });
 
+test('a run without a GPS route says so instead of rendering an empty map', () => {
+  const wd = {
+    dates: { tue: '2026-07-03' },
+    lifts: {},
+    runs: { tue: { dist: 5, time: '25:00', rpe: '6', type: 'run' } },
+  };
+  const r = buildSessionRecap(stateWith(wd), '1', 'tue');
+  const html = renderSessionRecapHTML(r);
+  assert.match(html, /No GPS route recorded/);
+  assert.doesNotMatch(html, /id="recapMapContainer"/);
+});
+
 test('recap labels weights and distances in the athlete’s units', () => {
   const state = {
     settings: { weightUnit: 'lbs', distanceUnit: 'mi' },

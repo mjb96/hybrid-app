@@ -8,10 +8,15 @@ export function analyticsBackDestination(context, origin = 'insights', parentCon
     const labels = {
       'weekly-volume': 'Volume', 'strength-volume': 'Volume', 'strength-volume-trends': 'Volume', 'gym-performance': 'Volume',
       strength: 'Strength', strength_pr: 'Strength', running: 'Running', recovery: 'Recovery',
+      review: 'Review', 'weekly-review': 'Review', consistency: 'Review', 'monthly-report': 'Review',
+      bodyweight: 'Progress', 'muscle-load': 'Progress', projections: 'Progress',
+      activity: 'History', history: 'History',
     };
     return {
       action: 'open-analytics', context: parentContext,
-      label: `← Back to ${labels[parentContext] || 'Insights'}`, preserveWeek: true,
+      // Unknown parents still belong to Progress; "Insights" was internal
+      // vocabulary that leaked onto every Review leaf.
+      label: `← Back to ${labels[parentContext] || 'Progress'}`, preserveWeek: true,
       ...(returnParentContext ? { parentContext: returnParentContext } : {}),
       ...(returnOrigin ? { origin: returnOrigin } : {}),
     };

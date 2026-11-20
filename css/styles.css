@@ -8920,6 +8920,20 @@ input[type="text"],
 }
 .activity-history-hero h2 { margin: 6px 0 3px; color: var(--text-primary); font-size: 1.45rem; line-height: 1.15; }
 .activity-history-hero p { margin: 0; color: var(--text-muted); font-size: 0.8rem; }
+.activity-history-hero-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.history-view-toggle { display: flex; flex-shrink: 0; gap: 3px; padding: 3px; border: 1px solid var(--border, #23272e); border-radius: 11px; background: var(--overlay-sm); }
+.history-view-btn { min-height: 44px; padding: 0 12px; border: 0; border-radius: 8px; background: transparent; color: var(--text-muted); font-size: 0.72rem; font-weight: 800; }
+.history-view-btn.is-active { background: var(--bg-card, #161b22); color: var(--text-primary); box-shadow: 0 1px 2px rgba(0,0,0,0.25); }
+.history-search { display: flex; align-items: center; gap: 8px; margin: 12px 0 4px; padding: 0 12px; border: 1px solid var(--border, #23272e); border-radius: 12px; background: var(--bg-card, #161b22); color: var(--text-muted); }
+.history-search input { width: 100%; min-height: 44px; border: 0; outline: 0; background: transparent; color: var(--text-primary); font: inherit; font-size: 0.85rem; }
+.activity-month-header { position: sticky; top: 0; z-index: 2; margin: 8px 0 2px; padding: 7px 2px 6px; background: var(--bg-app, #0b0f14); color: var(--text-muted); font-size: 0.66rem; font-weight: 850; letter-spacing: 0.08em; text-transform: uppercase; }
+.history-calendar { margin-top: 12px; }
+.history-calendar-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.history-calendar-head strong { font-size: 0.92rem; color: var(--text-primary); }
+.history-calendar-nav { width: 44px; height: 44px; border: 1px solid var(--border, #23272e); border-radius: 10px; background: var(--bg-card, #161b22); color: var(--text-primary); font-size: 1.25rem; line-height: 1; }
+.history-calendar-grid .cal-cell { min-height: 44px; }
+.history-calendar-empty, .history-calendar-hint { margin: 12px 0 0; color: var(--text-muted); font-size: 0.75rem; text-align: center; }
+.activity-detail-source { display: inline-block; margin: 0 0 8px; padding: 3px 9px; border: 1px solid rgba(34, 211, 238, 0.32); border-radius: 999px; color: var(--color-cyan); font-size: 0.66rem; font-weight: 800; }
 .activity-date-clear {
   min-height: 44px;
   margin-top: 12px;
@@ -8979,6 +8993,7 @@ input[type="text"],
 .activity-history-row--run .activity-history-icon { background: rgba(34, 211, 238, 0.12); }
 .activity-history-main, .activity-history-title, .activity-history-sub, .activity-history-date { display: block; min-width: 0; }
 .activity-history-title { font-size: 0.9rem; font-weight: 800; color: var(--text-primary); }
+.activity-source-badge { display: inline-block; margin-left: 6px; padding: 1px 6px; border: 1px solid rgba(34, 211, 238, 0.32); border-radius: 999px; color: var(--color-cyan); font-size: 0.58rem; font-weight: 750; letter-spacing: 0.02em; vertical-align: 1px; }
 .activity-history-sub { margin-top: 3px; overflow: hidden; color: var(--text-secondary); font-size: 0.72rem; text-overflow: ellipsis; white-space: nowrap; }
 .activity-history-date { margin-top: 3px; color: var(--text-faint); font-size: 0.66rem; }
 .activity-history-metrics { display: flex; flex-direction: column; gap: 3px; text-align: right; color: var(--text-secondary); font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
@@ -9084,6 +9099,7 @@ html[data-theme="light"] .activity-filter--active { color: #07566b; }
 .recap-split { display: flex; justify-content: space-between; font-size: 0.82rem; color: var(--text-secondary, #cbd5e1); padding: 6px 0; border-bottom: 1px solid var(--border, #1f242c); }
 .recap-empty { text-align: center; color: var(--text-muted, #94a3b8); padding: 60px 20px; }
 .recap-map { height: 220px; border-radius: 12px; overflow: hidden; margin: 12px 0 4px; border: 1px solid var(--border, #23272e); }
+.recap-no-route { margin: 12px 0 4px; padding: 14px 16px; border: 1px dashed var(--border, #23272e); border-radius: 12px; color: var(--text-muted, #a8b1bd); font-size: 0.8rem; text-align: center; }
 .recap-map .leaflet-container { height: 100%; width: 100%; background: #0b0f14; }
 
 /* ── Session recap: Summary | Breakdown (V2) ── */

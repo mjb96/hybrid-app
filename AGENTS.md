@@ -14,7 +14,7 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
 - `npm run typecheck` — tsc over jsconfig
 - `npm run smoke` — scripts/smoke.mjs (jsdom import + home render)
 - `npm run icons:gen` — regenerate PWA/Android icons from `assets/brand/icon.svg`
-- `npm run browser:verify` — 42 real-Chromium product checks through a parallel
+- `npm run browser:verify` — 43 real-Chromium product checks through a parallel
   worker pool (3 workers by default; `-- --serial` for one-at-a-time debugging,
   `-- --concurrency=N` to pin workers, `-- --timeout=N` for the 180 s per-check
   kill, `-- --retries=N` for the default single retry after a timeout)
@@ -65,6 +65,16 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
 - Saved activity editing: `js/workout/edit-saved.js` edits a finished strength
   workout's stored weights/reps/notes or a run's distance/time/HR/notes. It keeps
   the session id, date and route; exercise add/remove is deliberately out of scope.
+- History (formerly Activities): `js/activities.js` + `js/activities/model.js` +
+  `js/activities/calendar.js` own the record/action destination — Calendar | List,
+  search, month headers, provenance, exact detail, edit/delete with Undo. The
+  calendar is built from the same `buildActivityHistory` rows the list renders, so
+  imported/archived and same-day sessions cannot disagree with the list. Programmed
+  titles resolve through `getProgramById(activation.programId)`; imported titles
+  keep `sessionTitle` and a source badge. Deleting strength clears and restores
+  `sessionStatus`/`sessionSummary` with the set snapshot. Train and Progress link
+  here; they do not keep a competing calendar. The old
+  `js/home/activity-calendar.js` was removed.
 - Plans library: Discover is one searchable all-programs list (12 initial, Show
   all expands); saved, completed, custom and imported plans share My Plans.
   `js/programs/program-json.js` exports/imports `openhybrid-plan` JSON; imported
@@ -137,7 +147,7 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   A date cell NEVER navigates: today shows the Today decision/summary; a
   completed date selects in place and renders `dayRecapHTML` (stats, heat map,
   muscles) with Back to week/today. Only the explicit "Open full activity"
-  opens Activities. `buildDayRecap`/`summariseSlots` resolve the stored
+  opens History. `buildDayRecap`/`summariseSlots` resolve the stored
   program-day title. The card deliberately omits the state pill, score row and
   evidence drawer. Below it sit the compact
   bodyweight card (`js/home/bodyweight-card.js` → `#homeBodyweightCard`) with

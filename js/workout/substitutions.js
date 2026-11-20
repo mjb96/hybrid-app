@@ -13,6 +13,17 @@ const PATTERN_BY_MOVEMENT = Object.freeze({
 
 function patternFor(item) {
   if (!item) return null;
+  // Hip thrusts/bridges are technically hinges, but a deadlift is not a
+  // substitute an athlete expects under "same movement". Split the glute-
+  // dominant, low-erector hinge out before the broad movement map.
+  const gluteDominantHinge = item.movement === 'hinge'
+    && (item.muscles?.glutes || 0) >= 1
+    && (item.muscles?.erectors || 0) === 0
+    && (item.muscles?.hamstrings || 0) <= 0.25;
+  const hingeOrLungeName = /deadlift|clean|snatch|swing|high pull|lunge/i.test(item.name || '');
+  if (!hingeOrLungeName && (gluteDominantHinge || /hip thrust|glute bridge/i.test(item.name || ''))) {
+    return 'hip_extension';
+  }
   if (item.movement === 'shoulder_isolation') {
     if (item.muscles?.rear_delts) return 'hpull';
     if (item.muscles?.side_delts) return 'lateral';

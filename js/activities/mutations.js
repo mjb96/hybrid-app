@@ -40,6 +40,11 @@ export function snapshotStrengthActivity(week, day) {
     notes: week.notes?.[day] || '',
     gymRpe: week.gymRpe?.[day] || '',
     gymStats: week.gymStats?.[day] || {},
+    // Lifecycle sidecars are part of the session, not scaffolding. Deleting
+    // without these left a finished workout "finished" for Home/adherence, and
+    // Undo could not bring the lifecycle back.
+    sessionStatus: week.sessionStatus?.[day] ?? null,
+    sessionSummary: week.sessionSummary?.[day] ?? null,
   });
 }
 
@@ -58,6 +63,8 @@ export function deleteStrengthActivity(week, day, replacement = {}) {
   week.notes[day] = '';
   week.gymRpe[day] = '';
   week.gymStats[day] = { time: '', avgHR: '', maxHR: '', cals: '' };
+  if (week.sessionStatus) delete week.sessionStatus[day];
+  if (week.sessionSummary) delete week.sessionSummary[day];
   return snapshot;
 }
 
@@ -75,5 +82,17 @@ export function restoreStrengthActivity(week, day, snapshot) {
   week.notes[day] = snapshot.notes || '';
   week.gymRpe[day] = snapshot.gymRpe || '';
   week.gymStats[day] = clone(snapshot.gymStats || {});
+  if (snapshot.sessionStatus != null) {
+    if (!week.sessionStatus) week.sessionStatus = {};
+    week.sessionStatus[day] = clone(snapshot.sessionStatus);
+  } else if (week.sessionStatus) {
+    delete week.sessionStatus[day];
+  }
+  if (snapshot.sessionSummary != null) {
+    if (!week.sessionSummary) week.sessionSummary = {};
+    week.sessionSummary[day] = clone(snapshot.sessionSummary);
+  } else if (week.sessionSummary) {
+    delete week.sessionSummary[day];
+  }
   return true;
 }

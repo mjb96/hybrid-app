@@ -156,7 +156,7 @@ export function openSwapModal(liftName) {
   const modal = document.getElementById('swapExerciseModal');
   if (!modal) return;
   const subtitle = document.getElementById('swapSubtitle');
-  if (subtitle) subtitle.textContent = `Swapping "${liftName}" — same movement, kit you have. Your target and logged sets carry over.`;
+  if (subtitle) subtitle.textContent = `Swapping "${liftName}" — similar movement pattern, kit you have. Your target and logged sets carry over.`;
   _renderSwapList(liftName);
   modal.classList.add('active');
 }

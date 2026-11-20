@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  activityDestinationForDate, buildActivityHistory, filterActivityHistory,
+  activityDestinationForDate, buildActivityHistory, filterActivityHistory, searchActivityHistory,
 } from '../js/activities/model.js';
 import {
   deleteRunActivity, deleteStrengthActivity,
@@ -186,4 +186,34 @@ test('activity rows honour the athlete’s weight/distance units and import prov
   assert.match(run.metrics.join(' '), /3\.11 mi/);
   assert.match(run.metrics.join(' '), /8:03 \/mi/);
   assert.equal(run.subtitle, 'Imported from CSV');
+  assert.equal(run.provenance, 'Imported from CSV');
+});
+
+test('a programmed week resolves the same day title Home shows', () => {
+  const state = fixture();
+  state.weeks['1'].programId = 'act_1';
+  const rows = buildActivityHistory(state, {
+    programLookup: (id) => (id === 'act_1' ? { days: { mon: { title: 'Push Strength' } } } : null),
+  });
+  assert.equal(rows.find((row) => row.kind === 'strength').title, 'Push Strength');
+});
+
+test('history search matches title, exercise, run name and metrics', () => {
+  const rows = buildActivityHistory(fixture());
+  assert.equal(searchActivityHistory(rows, 'squat').length, 1);
+  assert.equal(searchActivityHistory(rows, 'gps').length, 1, 'run provenance is searchable');
+  assert.equal(searchActivityHistory(rows, 'not-a-thing').length, 0);
+});
+
+test('deleting strength clears and restores session lifecycle', () => {
+  const state = fixture();
+  const week = state.weeks['1'];
+  week.sessionStatus = { mon: 'finished' };
+  week.sessionSummary = { mon: { finishedAt: '2026-07-13T10:00:00Z' } };
+  const snapshot = deleteStrengthActivity(week, 'mon', { lifts: {}, liftOrder: [] });
+  assert.equal(week.sessionStatus.mon, undefined);
+  assert.equal(week.sessionSummary.mon, undefined);
+  restoreStrengthActivity(week, 'mon', snapshot);
+  assert.equal(week.sessionStatus.mon, 'finished');
+  assert.deepEqual(week.sessionSummary.mon, { finishedAt: '2026-07-13T10:00:00Z' });
 });
