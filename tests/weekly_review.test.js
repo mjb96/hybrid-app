@@ -93,6 +93,36 @@ test('buildWeeklyReview: the score arc follows the reviewed day, not the system 
   assert.equal(expired.arc.hasData, false);
 });
 
+test('buildWeeklyReview: adherence counts sessions, not sets', () => {
+  // The audit's "6% · 5/81" contradiction: five completed sets in a part-finished
+  // session must read as sessions against the plan, the same unit the Progress
+  // hub uses, and imported archives must count by their real date.
+  const state = makeState();
+  const importedDay = (day, date) => ({
+    lifts: { [day]: { 'Back Squat': [{ w: '100', r: 5, c: true }, { w: '100', r: 5, c: true }] } },
+    dates: { [day]: date },
+    gymStats: { [day]: { time: '45:00' } },
+    sessionStatus: { [day]: 'finished' },
+    runs: {}, runSessions: {}, gymRpe: {}, notes: {}, bodyWeight: {}, liftMeta: {},
+    sessionId: `og_${day}`, sessionTitle: 'Imported', source: 'csv-import', activationId: 'imported',
+  });
+  state.weeks['arch:import:thu'] = importedDay('thu', addDaysISO(W3, 3));
+  state.weeks['arch:import:fri'] = importedDay('fri', addDaysISO(W3, 4));
+  const program = {
+    totalWeeks: 12,
+    days: {
+      mon: { title: 'Squat', runs: 'Rest', lifts: [{ name: 'Back Squat' }] },
+      tue: { title: 'Run', runs: '5k easy' },
+      thu: { title: 'Upper', runs: 'Rest', lifts: [{ name: 'Bench Press' }] },
+      fri: { title: 'Lower', runs: 'Rest', lifts: [{ name: 'Deadlift' }] },
+    },
+  };
+  const r = buildWeeklyReview(state, DAYS, program, { today: TODAY });
+  assert.equal(r.consistency.total, 4);
+  assert.equal(r.consistency.done, 4); // Mon lift, Wed run, Thu + Fri imports
+  assert.equal(r.consistency.pct, 100);
+});
+
 test('buildWeeklyReview: imported archived weeks are this week when their DATE says so', () => {
   const state = {
     currentWeek: '1',
