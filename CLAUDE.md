@@ -111,7 +111,9 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   `loggedSessionsByDate` counts sessions inside a slot — strength plus every
   run — not slots, so a strength+run day is two sessions. Projections use the
   same dated calendar series for strength and running, with a program-week
-  fallback only for legacy undated states.
+  fallback only for legacy undated states. Recovery/Strength current load
+  (ATL/CTL/ACWR, monotony, strain, consistency) uses the same dated timeline;
+  program-week series remain for the chart trends.
 - Progression styles: `js/programs/progression-style.js` defines `double`
   (default), `linear` and `rep-first`. Custom programs store `progressionStyle`;
   `computeDiagnosticForLift(..., { progressionStyle })` forwards it to

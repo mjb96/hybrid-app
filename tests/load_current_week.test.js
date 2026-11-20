@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { computeLoadAnalytics } from '../js/analytics/calculations/load-calcs.js';
 import { weeklyTonnageSeries } from '../js/metrics/metrics-strength.js';
+import { recomputeLoadMetrics } from '../js/brain/load_models.js';
 
 const DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 
@@ -43,6 +44,31 @@ test('computeLoadAnalytics: with current week == last week, behaviour is unchang
   // Same current-week reading regardless of how far the series is padded.
   assert.equal(laMax.currentRatio, laPadded.currentRatio);
   assert.equal(laMax.currentCTL, laPadded.currentCTL);
+});
+
+test('current load matches the dated Home timeline when archives exist', () => {
+  const date = new Date();
+  date.setDate(date.getDate() - 1);
+  const dateISO = date.toISOString().slice(0, 10);
+  const state = {
+    currentWeek: '1',
+    weeks: {
+      'arch:import:load': {
+        activationId: 'imported',
+        dates: { mon: dateISO },
+        lifts: { mon: { Squat: [{ w: '100', r: '5', c: true }] } },
+        gymRpe: { mon: '8' },
+        gymStats: { mon: { time: '60' } },
+        runs: {}, runSessions: {},
+      },
+    },
+  };
+  const la = computeLoadAnalytics(state, DAYS, 1);
+  const live = recomputeLoadMetrics(state);
+  assert.equal(la.currentScope, 'calendar');
+  assert.ok(la.currentATL > 0, 'archived load reaches current ATL');
+  assert.equal(la.currentATL, live.atl);
+  assert.equal(la.currentCTL, live.ctl);
 });
 
 test('weekly tonnage: the current-week slot carries the logged volume mid-program', () => {

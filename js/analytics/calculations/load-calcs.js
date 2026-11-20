@@ -4,8 +4,11 @@
 // Pure functions. No DOM, no side effects.
 // ==========================================
 import { rollingAverage, rollingSum, trendLine, pctChange, clamp } from './math-utils.js';
-import { weeklyLoadMetricsSeries } from '../../brain/load_models.js';
+import { weeklyLoadMetricsSeries, recomputeLoadMetrics } from '../../brain/load_models.js';
 import { weeklyLoadSeries, weekDailyLoads } from '../../metrics/metrics-load.js';
+import { dailyTrainingLoadTimeline } from '../../metrics/training-load.js';
+import { weekStartOf } from '../weekly-aggregate.js';
+import { todayKey } from '../../dates.js';
 
 // TSB (Training Stress Balance) series: CTL − ATL for each week.
 export function tsbSeries(atlSeries, ctlSeries) {
@@ -152,6 +155,18 @@ export function loadDistribution(liftLoad, runLoad) {
   };
 }
 
+/** Sum a dated training-load timeline into trailing Monday-based weeks. */
+function calendarWeeklyLoadTotals(timeline, weeks = 12) {
+  if (!Array.isArray(timeline) || !timeline.length) return [];
+  const byWeek = new Map();
+  for (const row of timeline) {
+    const key = weekStartOf(row.date);
+    byWeek.set(key, (byWeek.get(key) || 0) + (Number(row.load) || 0));
+  }
+  const keys = [...byWeek.keys()].sort();
+  return keys.slice(-weeks).map((key) => byWeek.get(key) || 0);
+}
+
 // Full load analytics payload.
 export function computeLoadAnalytics(state, days, maxWeek) {
   const { atl: atlSeries, ctl: ctlSeries } = weeklyLoadMetricsSeries(state, days, maxWeek);
@@ -163,37 +178,55 @@ export function computeLoadAnalytics(state, days, maxWeek) {
   const recovImpact   = recoveryImpactSeries(atlSeries, ctlSeries);
   const fatigue       = fatigueTrend(atlSeries, 4);
 
-  // "Current" = the athlete's current training week, not the last slot of a
-  // series padded out to the program's total weeks. Reading the last slot made
-  // ATL/CTL/ACWR collapse to "--" for anyone mid-program (weeks past today are
-  // empty), contradicting the Score, which reads the live load. Index the
-  // current week so both surfaces report the same load.
-  const lastIdx       = atlSeries.length - 1;
-  const wkNum         = parseInt(state?.currentWeek, 10);
-  const ci            = Number.isFinite(wkNum) ? Math.max(0, Math.min(wkNum - 1, lastIdx)) : lastIdx;
+  const weeklyTotal = liftLoad.map((l, i) => l + (runLoad[i] || 0));
+  const distribution = loadDistribution(liftLoad, runLoad);
 
-  const loadStatus    = trainingLoadStatus(atlSeries[ci] || 0, ctlSeries[ci] || 0);
+  // Current load is CALENDAR based when real dates exist: this is the same
+  // timeline Home/recomputeLoadMetrics use, so the two surfaces cannot disagree
+  // about ATL/CTL/ACWR or about an imported/archived session. Undated legacy
+  // states keep the program-week reading.
+  const today = todayKey();
+  const timeline = dailyTrainingLoadTimeline(state, { throughDate: today });
+  const hasDatedLoad = timeline.some((row) => (Number(row.load) || 0) > 0);
+  const calendarWeeks = calendarWeeklyLoadTotals(timeline, 12);
 
-  const currentATL    = atlSeries[ci] || 0;
-  const currentCTL    = ctlSeries[ci] || 0;
-  const currentTSB    = currentCTL - currentATL;
-  const currentRatio  = currentCTL > 0 ? Math.round((currentATL / currentCTL) * 100) / 100 : 0;
+  let loadStatus, currentATL, currentCTL, currentTSB, currentRatio;
+  let loadProgPct, monotony, strain, consistency;
+  if (hasDatedLoad) {
+    const live = recomputeLoadMetrics(state, { throughDate: today });
+    currentATL = live.atl || 0;
+    currentCTL = live.ctl || 0;
+    currentTSB = currentCTL - currentATL;
+    currentRatio = currentCTL > 0 ? Math.round((currentATL / currentCTL) * 100) / 100 : 0;
+    loadStatus = trainingLoadStatus(currentATL, currentCTL);
 
-  const weeklyTotal   = liftLoad.map((l, i) => l + (runLoad[i] || 0));
-  // Anchor at the current program week (`ci`) so this reflects the athlete's
-  // real position, and compare the two most recent COMPLETED weeks — never the
-  // padded end-of-program slots and never the partial current week.
-  const loadProgPct   = loadProgressionPct(weeklyTotal, ci);
+    // Compare the two most recent COMPLETED calendar weeks; the current one is
+    // partial by definition.
+    loadProgPct = loadProgressionPct(calendarWeeks, calendarWeeks.length - 1);
+    consistency = consistencyScore(calendarWeeks, 12);
 
-  // Foster monotony/strain are WITHIN-week daily-variability metrics: feed them
-  // the current week's 7 daily loads (rest days as 0), not the week-over-week
-  // totals. Anchored at the athlete's current program week (`ci`, 0-based → week
-  // number ci+1) to match the rest of this payload.
-  const currentWeekDaily = weekDailyLoads(state, days, ci + 1);
-  const monotony      = trainingMonotony(currentWeekDaily);
-  const strain        = strainScore(weeklyTotal[ci] || 0, currentWeekDaily);
-  const consistency   = consistencyScore(weeklyTotal, 12);
-  const distribution  = loadDistribution(liftLoad, runLoad);
+    const last7 = timeline.slice(-7).map((row) => Number(row.load) || 0);
+    while (last7.length < 7) last7.unshift(0);
+    const currentWeekLoad = last7.reduce((sum, load) => sum + load, 0);
+    monotony = trainingMonotony(last7);
+    strain = strainScore(currentWeekLoad, last7);
+  } else {
+    // Legacy program-week fallback. Anchor at the athlete's current program week
+    // so a padded program length never reads the empty final slot.
+    const lastIdx = atlSeries.length - 1;
+    const wkNum = parseInt(state?.currentWeek, 10);
+    const ci = Number.isFinite(wkNum) ? Math.max(0, Math.min(wkNum - 1, lastIdx)) : lastIdx;
+    currentATL = atlSeries[ci] || 0;
+    currentCTL = ctlSeries[ci] || 0;
+    currentTSB = currentCTL - currentATL;
+    currentRatio = currentCTL > 0 ? Math.round((currentATL / currentCTL) * 100) / 100 : 0;
+    loadStatus = trainingLoadStatus(currentATL, currentCTL);
+    loadProgPct = loadProgressionPct(weeklyTotal, ci);
+    const currentWeekDaily = weekDailyLoads(state, days, ci + 1);
+    monotony = trainingMonotony(currentWeekDaily);
+    strain = strainScore(weeklyTotal[ci] || 0, currentWeekDaily);
+    consistency = consistencyScore(weeklyTotal, 12);
+  }
 
   return {
     atlSeries,
@@ -207,6 +240,8 @@ export function computeLoadAnalytics(state, days, maxWeek) {
     liftLoad,
     runLoad,
     weeklyTotal,
+    calendarWeeklyTotals: calendarWeeks,
+    currentScope: hasDatedLoad ? 'calendar' : 'program-week',
     loadProgPct,
     currentATL,
     currentCTL,
