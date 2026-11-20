@@ -1668,6 +1668,30 @@ A slice is complete only when:
 - the roadmap status and session log are updated;
 - the change is committed as one understandable unit.
 
+### Quality gate for the current overhaul programme
+
+The overhaul is measured against a product bar, not a feature checklist:
+**openHybrid must be a tier above openGym and on par with Hevy** in workout
+logging, programmes, and the overall Home → Train → Progress → History →
+Settings journey. A phase is not mergeable when it only adds code while leaving
+a parity gap that the phase was supposed to close.
+
+Every product PR therefore states the gap-matrix rows it closes, the parity
+claim, and the evidence: browser checks plus a before/after interaction trace or
+screenshots, a tap-count comparison for the common path, empty/error/loading/
+offline states, 320/390/412 px and light/dark checks, 44 px targets, settings-
+driven units, correct calendar/program attribution, and no history rewrite or
+new network surface. Tests and browser checks are added or strengthened, never
+weakened to pass. Work is clean-room: no copied Hevy/openGym code, assets,
+media or visual identity.
+
+Hard reject: a slower logging path, unexplained extra taps, hidden settings,
+duplicated surfaces, wrong attribution, unreachable controls, missing empty
+states, hard-coded units, or no offline/data-safety coverage. If a phase is
+functionally complete but UX-below-bar, leave the PR open and report the exact
+gaps instead of merging. `.github/PULL_REQUEST_TEMPLATE.md` carries the
+checklist.
+
 ## 9. Explicitly parked
 
 These are valid future concerns but are not active priorities:
@@ -1761,6 +1785,18 @@ testable on its own.
 
 ## 12. Session log
 
+- **2026-11-20 — Release quality gate and PR template.**
+  - Every product PR now states the gap-matrix rows it closes and a parity claim
+    against the bar (a tier above openGym, on par with Hevy) for logging,
+    programmes and the affected UI journey.
+  - Merge requires evidence: browser checks plus a before/after interaction
+    trace, tap-count comparison, empty/error/loading/offline coverage,
+    320/390/412px + light/dark, 44px targets, settings-driven units, correct
+    calendar/program attribution, no history rewrite and no new network surface.
+  - `.github/PULL_REQUEST_TEMPLATE.md` carries the checklist. A phase that is
+    functionally complete but UX-below-bar stays open with its exact gaps.
+  - Baseline: 1,898 tests, typecheck, smoke, and all 42 real-browser checks pass
+    on `main` `6b1abf7` (one local timeout retry).
 - **2026-11-20 — Home date cells show recaps in place; no Activities detour.**
   - Clicking today always stays on Home: a ready day toggles its details, while
     completed/in-progress/rest days scroll to the Today decision or summary.
