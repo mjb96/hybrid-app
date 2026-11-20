@@ -64,8 +64,10 @@ export interface AppSettings {
   weightUnit?: 'kg' | 'lbs';
   distanceUnit?: 'km' | 'mi';
   theme?: 'dark' | 'light' | 'system';
-  restPeriods?: { compound: number; accessory: number; isolation: number };
+  restPeriods?: { warmup?: number; compound: number; accessory: number; isolation: number };
   restTimerEnabled?: boolean;
+  restAlertSound?: boolean;
+  restAlertVolume?: number;
   restOverrides?: Record<string, number>;
   progressionIncrement?: number;
   fitnessGoal?: string;

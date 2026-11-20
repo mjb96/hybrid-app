@@ -10,7 +10,9 @@ import { putRouteRecords, putRoutes, clearRouteDatabase, saveMapToDB } from './d
 import { parseImport } from './state/route-portability.js';
 import { CURRENT_SCHEMA_VERSION, isStateMigrationError, migrateState } from './state/migrations.js';
 import { APP_VERSION } from './constants.js';
-import { setRestTiers, setRestTimerEnabled, setRestOverrides, initRestPersistence } from './timers.js';
+import {
+  setRestTiers, setRestTimerEnabled, setRestOverrides, initRestPersistence, setRestAlertConfig,
+} from './timers.js';
 import { todayKey, startOfProgramWeek } from './dates.js';
 import { parseWorkoutCsv, applyWorkoutCsvImport, CSV_IMPORT_LIMITS, decodeCsvBytes } from './portability/import-workout-csv.js';
 import { moduleEnabled, setModuleEnabled, applyModuleVisibility } from './modules.js';
@@ -52,9 +54,9 @@ const _parseRest = (str) => {
   return Number.isFinite(n) ? n : null;
 };
 const REST_PRESETS = {
-  strength:    { compound: 240, accessory: 180, isolation: 120 },
-  hypertrophy: { compound: 180, accessory: 120, isolation: 90 },
-  efficient:   { compound: 120, accessory: 90,  isolation: 60 },
+  strength:    { warmup: 60, compound: 240, accessory: 180, isolation: 120 },
+  hypertrophy: { warmup: 45, compound: 180, accessory: 120, isolation: 90 },
+  efficient:   { warmup: 30, compound: 120, accessory: 90,  isolation: 60 },
 };
 import { showToast } from './state.js';
 import { rearmReminder, notificationsGranted } from './notifications.js';
@@ -347,15 +349,24 @@ function _syncSettingsUI() {
   _syncPlateSetupUI(appState);
 
   // Rest tiers + auto-timer toggle
-  const rp = s.restPeriods || { compound: 180, accessory: 120, isolation: 90 };
+  const rp = s.restPeriods || { warmup: 45, compound: 180, accessory: 120, isolation: 90 };
+  const rw = document.getElementById('settingsRestWarmup');
   const rc = document.getElementById('settingsRestCompound');
   const ra = document.getElementById('settingsRestAccessory');
   const ri = document.getElementById('settingsRestIsolation');
+  if (rw) rw.value = _fmtRest(rp.warmup ?? 45);
   if (rc) rc.value = _fmtRest(rp.compound);
   if (ra) ra.value = _fmtRest(rp.accessory);
   if (ri) ri.value = _fmtRest(rp.isolation);
   const rEnabled = document.getElementById('settingsRestEnabled');
   if (rEnabled) rEnabled.checked = s.restTimerEnabled !== false;
+  const rSound = document.getElementById('settingsRestAlertSound');
+  if (rSound) rSound.checked = s.restAlertSound !== false;
+  const rVolume = document.getElementById('settingsRestAlertVolume');
+  const rVolumeValue = document.getElementById('settingsRestAlertVolumeValue');
+  const volume = s.restAlertVolume == null ? 0.4 : s.restAlertVolume;
+  if (rVolume) rVolume.value = String(Math.round(volume * 100));
+  if (rVolumeValue) rVolumeValue.textContent = `${Math.round(volume * 100)}%`;
   const autoWarmup = document.getElementById('settingsAutoWarmup');
   if (autoWarmup) autoWarmup.checked = s.autoWarmupRamp === true;
 
@@ -809,12 +820,13 @@ export async function deleteActiveEquipmentProfile() {
 // Persist the three rest tiers from the Settings inputs (clamped 30–600s).
 export function saveRestPeriods() {
   const appState = _ensureSettings();
-  const cur = appState.settings.restPeriods || { compound: 180, accessory: 120, isolation: 90 };
-  const read = (id, fallback) => {
+  const cur = appState.settings.restPeriods || { warmup: 45, compound: 180, accessory: 120, isolation: 90 };
+  const read = (id, fallback, min = 30) => {
     const sec = _parseRest(document.getElementById(id)?.value);
-    return sec != null ? Math.min(600, Math.max(30, sec)) : fallback;
+    return sec != null ? Math.min(600, Math.max(min, sec)) : fallback;
   };
   appState.settings.restPeriods = {
+    warmup:   read('settingsRestWarmup',   cur.warmup ?? 45, 0),
     compound:  read('settingsRestCompound',  cur.compound),
     accessory: read('settingsRestAccessory', cur.accessory),
     isolation: read('settingsRestIsolation', cur.isolation),
@@ -830,9 +842,11 @@ export function applyRestPreset(name) {
   const appState = _ensureSettings();
   appState.settings.restPeriods = { ...preset };
   setRestTiers(preset);
+  const rw = document.getElementById('settingsRestWarmup');
   const rc = document.getElementById('settingsRestCompound');
   const ra = document.getElementById('settingsRestAccessory');
   const ri = document.getElementById('settingsRestIsolation');
+  if (rw) rw.value = _fmtRest(preset.warmup ?? 45);
   if (rc) rc.value = _fmtRest(preset.compound);
   if (ra) ra.value = _fmtRest(preset.accessory);
   if (ri) ri.value = _fmtRest(preset.isolation);
@@ -844,6 +858,23 @@ export function setRestTimerEnabledSetting(enabled) {
   const appState = _ensureSettings();
   appState.settings.restTimerEnabled = !!enabled;
   setRestTimerEnabled(!!enabled);
+  saveStateToLocalStorage(true);
+}
+
+export function setRestAlertSoundSetting(enabled) {
+  const appState = _ensureSettings();
+  appState.settings.restAlertSound = !!enabled;
+  setRestAlertConfig({ sound: !!enabled, volume: appState.settings.restAlertVolume });
+  saveStateToLocalStorage(true);
+}
+
+export function setRestAlertVolumeSetting(value) {
+  const appState = _ensureSettings();
+  const volume = Math.max(0, Math.min(1, Number(value) || 0));
+  appState.settings.restAlertVolume = volume;
+  setRestAlertConfig({ sound: appState.settings.restAlertSound !== false, volume });
+  const label = document.getElementById('settingsRestAlertVolumeValue');
+  if (label) label.textContent = `${Math.round(volume * 100)}%`;
   saveStateToLocalStorage(true);
 }
 
@@ -1569,6 +1600,10 @@ export function applySettingsOnBoot(appState) {
   // callback so a live ± adjustment persists back into settings.restOverrides.
   setRestTiers(s.restPeriods);
   setRestTimerEnabled(s.restTimerEnabled);
+  setRestAlertConfig({
+    sound: s.restAlertSound !== false,
+    volume: s.restAlertVolume == null ? 0.4 : s.restAlertVolume,
+  });
   setRestOverrides(s.restOverrides || {});
   initRestPersistence((overrides) => {
     const st = _getState?.();

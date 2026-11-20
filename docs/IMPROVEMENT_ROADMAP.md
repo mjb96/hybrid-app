@@ -1896,6 +1896,9 @@ testable on its own.
   - Added a per-set **plate line** for barbell lifts, using the entered/ghost
     weight and the active equipment profile, plus the load change since the
     previous set. It updates live while typing and respects `showPlateHints`.
+  - Rest settings now include a configurable warm-up tier (0 disables it), an
+    alert sound on/off switch and a volume control. Presets update all four
+    tiers.
   - The session recap now closes the loop per lift: **Last time** (the previous
     working sets) and **Next time** (the progression suggestion with its
     rationale). The next line is omitted when the session carries no prescribed
