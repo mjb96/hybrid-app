@@ -169,16 +169,20 @@ export function applyExerciseSwap(weekData, day, oldName, newName, blueprint) {
   if (!dayLifts || !Array.isArray(dayLifts[oldName])) return { ok: false, reason: 'missing' };
   if (Array.isArray(dayLifts[newName])) return { ok: false, reason: 'duplicate' };
 
-  // Re-key the sets array — this is what carries target + logged data across.
-  dayLifts[newName] = dayLifts[oldName];
-  delete dayLifts[oldName];
-
-  // Preserve position in the explicit display order (derive one if absent).
+  // Derive the display order BEFORE re-keying. If the saved order is missing,
+  // `orderedLiftNames` reads the current lift keys; doing it after the delete
+  // put the new exercise at the end instead of the old one's position.
   if (!weekData.liftOrder) weekData.liftOrder = {};
   let order = weekData.liftOrder[day];
   if (!Array.isArray(order) || !order.includes(oldName)) {
     order = orderedLiftNames(weekData, day, blueprint);
   }
+
+  // Re-key the sets array — this is what carries target + logged data across.
+  dayLifts[newName] = dayLifts[oldName];
+  delete dayLifts[oldName];
+
+  // Preserve position in the explicit display order.
   weekData.liftOrder[day] = order.map(n => (n === oldName ? newName : n));
 
   // Carry any per-exercise meta (e.g. superset grouping).

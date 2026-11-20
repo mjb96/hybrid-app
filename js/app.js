@@ -1917,6 +1917,10 @@ async function bootstrapApp() {
     document.addEventListener('app:open-activities', (e) => openActivities({
       date: e.detail?.date || null,
       directIfSingle: e.detail?.directIfSingle === true,
+      filter: e.detail?.filter || 'all',
+      activationId: e.detail?.activationId || null,
+      label: e.detail?.label || null,
+      view: e.detail?.view === 'calendar' ? 'calendar' : undefined,
     }));
     determineDefaultCalendarDay();
     await pullEngineDataFromStorage();

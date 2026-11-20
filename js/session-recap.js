@@ -435,9 +435,16 @@ export function renderSessionRecapHTML(r, insights = [], thresholdSec = null, ta
       ${r.run ? `<div class="recap-section-title">Run detail</div>${_runTilesFull(r)}${_hrZoneBar(r)}${_splitTableFull(r, thresholdSec)}${_gpsQualityAudit(r)}` : ''}
     `;
   } else {
+    // Imported/manual runs have distance but no GPS route in IndexedDB. An empty
+    // map container read as a broken screen; say so explicitly instead.
+    const runHasRoute = !!(r.run && (r.run.splits?.length || r.run.gpsQuality));
     body = `
       <div class="recap-stats">${_summaryTiles(r)}</div>
-      ${r.run && r.run.distKm > 0 ? `<div id="recapMapContainer" class="recap-map"></div>` : ''}
+      ${r.run && r.run.distKm > 0
+        ? (runHasRoute
+          ? `<div id="recapMapContainer" class="recap-map"></div>`
+          : `<div class="recap-no-route">No GPS route recorded for this run.</div>`)
+        : ''}
       ${insights.length ? `<div class="recap-section-title">Insights</div>
         <ul class="recap-insights">${insights.map((i) =>
           `<li class="recap-insight--${esc(i.priority || 'info')}">${esc(i.text)}</li>`).join('')}</ul>` : ''}

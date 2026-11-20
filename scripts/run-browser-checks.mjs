@@ -41,6 +41,7 @@ const checks = [
   'scripts/program-preview-consistency-browser-check.mjs',
   'scripts/jt-shed-simplified-browser-check.mjs',
   'scripts/workout-history-browser-check.mjs',
+  'scripts/history-browser-check.mjs',
   'scripts/edit-saved-browser-check.mjs',
   'scripts/exercise-picker-browser-check.mjs',
   'scripts/copy-program-browser-check.mjs',

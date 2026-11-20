@@ -27,6 +27,13 @@ test('suggests same-pattern swaps and never the original', () => {
   assert.ok(!subs.some(s => s.name === 'Back Squat'), 'excludes the original');
 });
 
+test('hip thrust swaps stay glute-dominant instead of offering deadlifts', () => {
+  const subs = getSubstitutions('Barbell Hip Thrust', { barbell: true, rack: true, dumbbells: true, cables: true, bands: true });
+  assert.ok(subs.length > 0);
+  assert.ok(subs.every((s) => s.pattern === 'hip_extension'));
+  assert.ok(!subs.some((s) => /deadlift/i.test(s.name)), 'deadlift is not a hip-thrust substitute');
+});
+
 test('filters by available equipment', () => {
   // No barbell/rack, only bodyweight → barbell squats must drop out, Bodyweight Squat stays.
   const subs = getSubstitutions('Back Squat', { dumbbells: false });
@@ -69,6 +76,18 @@ test('swap preserves the exercise position in the day', () => {
   const wd = dayWithLoggedSquat();
   applyExerciseSwap(wd, 'mon', 'Back Squat', 'Goblet Squat');
   assert.deepEqual(wd.liftOrder.mon, ['Goblet Squat', 'Bench Press'], 'stays first, Bench unaffected');
+});
+
+test('swap keeps its position even when no liftOrder was stored', () => {
+  const wd = {
+    lifts: { mon: {
+      'Back Squat': [{ w: 100, r: 5, c: true }],
+      'Bench Press': [{ w: 80, r: 5, c: false }],
+      Row: [{ w: 60, r: 8, c: false }],
+    } },
+  };
+  applyExerciseSwap(wd, 'mon', 'Back Squat', 'Goblet Squat');
+  assert.deepEqual(wd.liftOrder.mon, ['Goblet Squat', 'Bench Press', 'Row']);
 });
 
 test('swap carries superset meta across', () => {

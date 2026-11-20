@@ -89,11 +89,13 @@ function runName(run) {
 }
 
 /**
- * Flatten persisted training into Garmin-style activity rows.
+ * Flatten persisted training into activity rows.
  * @param {any} state
+ * @param {{ programLookup?: (id: string|null) => any }} [options]
  * @returns {Array<any>}
  */
-export function buildActivityHistory(state) {
+export function buildActivityHistory(state, options = {}) {
+  const programLookup = typeof options.programLookup === 'function' ? options.programLookup : null;
   const rows = [];
   let fallbackIndex = 0;
   for (const [weekKey, week] of Object.entries(state?.weeks || {})) {
@@ -110,13 +112,19 @@ export function buildActivityHistory(state) {
       if (strengthActivity) {
         const summary = strengthSummary(week, day);
         const duration = week.gymStats?.[day]?.time || '';
+        // A programmed week has no stored sessionTitle. Resolve the same
+        // program-day title Home shows instead of the useless generic fallback.
+        const program = programLookup?.(week.programId || state?.activeProgramId || null);
+        const programTitle = program?.days?.[day]?.title || null;
         rows.push({
           id: week.sessionId ? `strength:${week.sessionId}` : `strength:${encodeURIComponent(weekKey)}:${day}`,
           kind: 'strength', week: weekKey, day, sessionId: week.sessionId || null,
           activationId: week.activationId || null,
           localDate, dateLabel: activityDateLabel(localDate),
           timestamp: dateStamp(localDate, null, ++fallbackIndex),
-          title: week.sessionTitle || 'Strength Workout',
+          title: week.sessionTitle || programTitle || 'Strength Workout',
+          source: week.source || null,
+          provenance: week.source ? sourceLabel(week.source) : null,
           status: week.sessionStatus?.[day] || null,
           adherence: week.sessionSummary?.[day] || null,
           subtitle: summary.exercises.slice(0, 2).join(', ') + (summary.exercises.length > 2 ? ` +${summary.exercises.length - 2}` : ''),
@@ -150,6 +158,8 @@ export function buildActivityHistory(state) {
           dateLabel: activityDateLabel(localRunDate),
           timestamp: dateStamp(localRunDate, run.startTs || run.updatedTs, ++fallbackIndex),
           title: runTitle || runName(run),
+          source: run.source || null,
+          provenance: sourceLabel(run.source),
           subtitle: sourceLabel(run.source),
           metrics: [dist > 0 ? distanceLabel(dist, distanceUnit) : '', run.time || '', run.pace ? paceLabel(run.pace, distanceUnit) : ''].filter(Boolean),
           run: { ...run },
@@ -166,6 +176,21 @@ export function filterActivityHistory(rows, kind = 'all', localDate = null, acti
     && (!localDate || row.localDate === localDate)
     && (!activationId || row.activationId === activationId)
   );
+}
+
+/** Case-insensitive search over the visible row fields. */
+export function searchActivityHistory(rows, query) {
+  const needle = String(query || '').trim().toLowerCase();
+  if (!needle) return rows || [];
+  return (rows || []).filter((row) => {
+    const haystack = [
+      row.title, row.subtitle, row.provenance, row.dateLabel,
+      ...(row.metrics || []),
+      ...(row.exercises || []),
+      ...(row.run ? [row.run.name, row.run.type] : []),
+    ].filter(Boolean).join(' ').toLowerCase();
+    return haystack.includes(needle);
+  });
 }
 
 /** Resolve a date tap without choosing arbitrarily between same-day sessions. */

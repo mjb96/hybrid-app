@@ -236,7 +236,7 @@ surfaces, not implementation-file ownership.
 | **Plan builder** | Create or modify a personal plan | Name/duration, days, exercise picker, order/replace/remove, weekly progression, preview/save/delete; unsaved and invalid states | **Plans**. Split Simple and Advanced paths later. |
 | **Profile** | Review identity, all-time stats, active plan and achievements | Opened from Home avatar; links to plan, settings and goal editing; sparse-stat and no-plan states | **Profile**, reached from avatar rather than primary navigation. |
 | **Settings** | Configure identity, units, training behaviour, equipment, notifications, appearance, backups, Health Connect and account | Long modal panel; permission unavailable, signed-out, backup unavailable, recoverable snapshot, destructive reset/delete and import-replace states | **Profile/Settings**. Preserve focus return, Android Back/Escape and explicit destructive scope. |
-| **Activities list/detail** | Find exact logged strength, run and walk evidence; edit/delete a record | Filtered list, same-day separate runs, detail, route, empty history, missing route, delete with Undo | **Train** for recent activity; linked evidence also remains reachable from **Progress**. |
+| **History list/detail** | Find exact logged strength, run and walk evidence; edit/delete a record | Calendar \| List, month headers, search, same-day separate runs, imported provenance, detail, route / no-route, empty history, delete with Undo | **History** is the record/action destination; **Train** keeps recent activity and **Progress** links to the same records as evidence. |
 | **Session recap** | Review a just-finished or historical session | Completed work, comparisons, notable progress, share, route; sparse/partial session states | **Train**, with deep links into Progress evidence. |
 | **Quick activity** | Track a run or walk now | GPS acquisition, live time/distance/pace, pause/resume, finish/cancel, permission/background/replay failures | **Train**. Phase 2C will give this surface parity with the strength cockpit. |
 | **Onboarding and restore** | Start safely with a new profile or recover existing work | Restore-first gateway, name, goal, experience/frequency/recovery/equipment, recommended plan, optional units/bodyweight, notification choice, provisional score; import failure paths | **First use**. New setup must never obscure restore options or trap a permission denial. |
@@ -269,7 +269,7 @@ surfaces, not implementation-file ownership.
 | Workout tab versus global Start tab | **Resolved in the shell prototype:** Train owns the planned cockpit and Quick Start; no fifth Start destination. |
 | Home CTA, Morning Briefing mission and Choose another workout | Phase 1B combines status/coaching/action into one Today card. One primary action; alternate workout remains secondary. |
 | Home In Focus graphs, former At-a-Glance tiles and Progress domains | **Resolved:** Home retains the two owner-preferred In Focus graphs; the repeated At-a-Glance grid is removed. Progress owns deeper comparison and calculation detail. |
-| Home Activities, Progress activity calendar and session evidence | Train owns recent/history browsing. Progress links to the same exact records as evidence rather than maintaining a competing history. |
+| Home History, Progress activity calendar and session evidence | **History** owns calendar/list browsing, detail and edit/delete. Train owns recent activity; Progress links to the same exact records as evidence rather than maintaining a competing calendar. |
 | Manual run logger, cockpit run card and GPS Quick Activity | Train distinguishes **Track now** from **Log a past activity**; the active-session hierarchy is shared in Phase 2C. |
 | Active-plan banner in Plans, Home programme week and workout day selector | Plans owns plan management; Home shows only today/this-week context; Train owns session/day selection. |
 | Current body weight in Settings and Body Weight history in Progress | Settings owns the profile baseline/unit; Progress owns dated entries and trend interpretation. |
@@ -1868,6 +1868,27 @@ testable on its own.
     completed working sets (warm-ups and unticked rows excluded), normalises to
     the hardest-trained muscle and maps it onto the body regions. The chips are
     the accessible text equivalent.
+- **2026-11-20 — History overhaul: calendar-first imported history.**
+  - Activities is presented as **History** and now has List | Calendar views.
+    Calendar cells group the same row model History renders, so a day with two
+    sessions shows both and opens a day-filtered list. The list has sticky month
+    headers, instant search, type filters and imported/GPS provenance badges.
+  - Imported strength titles resolve the program-day title Home uses. Cardio-only
+    imports no longer create a phantom strength row, FIT strength keeps its
+    duration/HR detail, and an imported run without GPS says so instead of
+    rendering an empty map.
+  - Deleting strength now clears `sessionStatus`/`sessionSummary` and Undo
+    restores them; the delete-cancel path closes its action menu.
+  - Removed the duplicate Progress activity calendar; Train and Progress link to
+    History instead. The old `home/activity-calendar.js` map is deleted.
+  - Week in Review adherence now compares sessions (same unit as the Progress
+    hub) instead of prescribed-vs-completed sets. Swap keeps its position even
+    without a stored `liftOrder`; hip-thrust substitutions stay glute-dominant.
+  - Validation: 1,932 node tests, typecheck, smoke, and the new
+    `scripts/history-browser-check.mjs` (imported titles, provenance, search,
+    Calendar | List, same-day sessions, no-route state).
+  - Next: Progress IA and the remaining program-week-only charts (Training
+    Calendar, Consistency Log, load-model split).
 - **2026-11-20 — Home week history, bounded to four previous weeks.**
   - The week header now pages back through four calendar weeks. A past week
     renders a recap (sessions, volume, sets, PRs and the same heat map) instead

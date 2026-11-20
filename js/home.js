@@ -16,7 +16,6 @@ import { pushOvertrainingWarning, pushFastingStageNudge } from './notifications.
 import { reconcileStreakFreezes } from './brain/streak.js';
 import { shouldSuggestDeload } from './engine.js';
 import { computeDashboardModel } from './home/dashboard-model.js';
-import { renderActivityCalendar } from './home/activity-calendar.js';
 import { initFastingCard } from './home/fasting-card.js';
 import { setHTML } from './ui/render.js';
 import { escapeHtml } from './util.js';
@@ -649,7 +648,6 @@ export function renderHome() {
 
 }
 
-export { renderActivityCalendar } from './home/activity-calendar.js';
 
 // ==========================================
 // EVENT DELEGATION ROUTER

@@ -110,6 +110,13 @@ export function renderProgressHub(container, model, hidden = []) {
     <div class="ph-grid">${domains.map(domainCard).join('')}</div>
     ${secondary.length ? `<h3 class="section-header mt-4">More detail</h3>
     <div class="hub-group">${secondary.map(secondaryRow).join('')}</div>` : ''}
+    <button type="button" class="hub-link hub-link--quiet" data-action="open-activities">
+      <span class="hub-link__label">
+        <span class="hub-link__title">History</span>
+        <span class="hub-link__desc">Calendar, workout details, edit and delete</span>
+      </span>
+      <span class="hub-link__arrow" aria-hidden="true">→</span>
+    </button>
     <details class="an-method mt-3">
       <summary>How this page is calculated</summary>
       <p>Every figure here covers one <strong>calendar</strong> week (Monday to Sunday), attributed by the real date each session was logged — not by your program week counter, so an archived program's sessions still count towards the week they happened in.</p>

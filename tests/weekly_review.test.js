@@ -121,6 +121,7 @@ test('buildWeeklyReview: adherence counts sessions, not sets', () => {
   assert.equal(r.consistency.total, 4);
   assert.equal(r.consistency.done, 4); // Mon lift, Wed run, Thu + Fri imports
   assert.equal(r.consistency.pct, 100);
+  assert.equal(r.consistency.unit, 'sessions');
 });
 
 test('buildWeeklyReview: imported archived weeks are this week when their DATE says so', () => {
