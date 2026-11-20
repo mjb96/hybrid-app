@@ -13,7 +13,7 @@
 // =============================================================================
 import { showToast } from '../state.js';
 import { dateKey } from '../dates.js';
-import { numberPromptModal } from '../ui/confirm-modal.js';
+import { numberPromptModal, textPromptModal } from '../ui/confirm-modal.js';
 import { applySetRemoval, restoreSetRemoval } from './set-plan.js';
 import { applyBandLoad, applyLoadMode, bandRole, resolvedLoadMode } from './load-mode.js';
 import {
@@ -333,6 +333,107 @@ export function toggleLoadBasis(liftName, setIndex) {
           : 'The entered weight is the pair total');
     }
   }
+}
+
+function _setAt(liftName, setIndex) {
+  const appState = _getState();
+  const day = _getSelectedDay();
+  const weekKey = activeWorkoutWeekKey(appState);
+  return { appState, day, weekKey, sets: appState.weeks?.[weekKey]?.lifts?.[day]?.[liftName] };
+}
+
+function _syncSetMetaRow(liftName, setIndex) {
+  const row = document.querySelector(
+    `.cockpit-exercise[data-liftname="${CSS.escape(liftName)}"] .cockpit-set-row[data-set-index="${setIndex}"]`,
+  );
+  if (!row) return;
+  const set = _setAt(liftName, setIndex).sets?.[setIndex] || {};
+  const restButton = row.querySelector('[data-action="edit-set-rest"]');
+  const restReset = row.querySelector('[data-action="clear-set-rest"]');
+  const rest = Number(set.restSec);
+  if (restButton) {
+    restButton.textContent = set.restSec == null
+      ? 'Rest default'
+      : rest <= 0 ? 'Rest off' : `Rest ${Math.floor(rest / 60)}:${String(rest % 60).padStart(2, '0')}`;
+    restButton.classList.toggle('has-rest', set.restSec != null);
+  }
+  if (restReset) {
+    if (set.restSec == null) restReset.setAttribute('hidden', '');
+    else restReset.removeAttribute('hidden');
+  }
+  const noteButton = row.querySelector('[data-action="edit-set-note"]');
+  if (noteButton) {
+    noteButton.textContent = set.note ? 'Note ✓' : 'Note';
+    noteButton.classList.toggle('has-note', !!set.note);
+  }
+  let noteEl = row.querySelector('.set-note');
+  if (set.note) {
+    if (!noteEl) {
+      noteEl = document.createElement('div');
+      noteEl.className = 'set-note';
+      const adv = row.querySelector('.set-adv-row');
+      if (adv) row.insertBefore(noteEl, adv);
+      else row.appendChild(noteEl);
+    }
+    noteEl.textContent = set.note;
+  } else {
+    noteEl?.remove();
+  }
+}
+
+export function setSetRest(liftName, setIndex, seconds) {
+  const { sets } = _setAt(liftName, setIndex);
+  if (!sets?.[setIndex]) return;
+  if (seconds == null) delete sets[setIndex].restSec;
+  else sets[setIndex].restSec = Math.max(0, Math.min(600, Math.round(Number(seconds) || 0)));
+  _saveState(true);
+  _syncSetMetaRow(liftName, setIndex);
+}
+
+export async function editSetRest(liftName, setIndex) {
+  const { sets } = _setAt(liftName, setIndex);
+  if (!sets?.[setIndex]) return;
+  const value = await numberPromptModal({
+    title: 'Rest after this set',
+    message: 'Seconds. 0 turns the timer off for this set; cancel keeps the current setting.',
+    label: 'Seconds',
+    unit: 's',
+    min: -1,
+    max: 600,
+    confirmLabel: 'Save rest',
+  });
+  if (value == null) return;
+  setSetRest(liftName, setIndex, value);
+}
+
+export function clearSetRest(liftName, setIndex) {
+  setSetRest(liftName, setIndex, null);
+}
+
+export function setSetNote(liftName, setIndex, note) {
+  const { sets } = _setAt(liftName, setIndex);
+  if (!sets?.[setIndex]) return;
+  const value = String(note || '').trim().slice(0, 140);
+  if (value) sets[setIndex].note = value;
+  else delete sets[setIndex].note;
+  _saveState(true);
+  _syncSetMetaRow(liftName, setIndex);
+}
+
+export async function editSetNote(liftName, setIndex) {
+  const { sets } = _setAt(liftName, setIndex);
+  if (!sets?.[setIndex]) return;
+  const value = await textPromptModal({
+    title: 'Set note',
+    message: 'A short cue for this set only. Clearing the field removes it.',
+    label: 'Note',
+    placeholder: 'e.g. paused, belt, left side felt heavy',
+    value: sets[setIndex].note || '',
+    maxLength: 140,
+    confirmLabel: 'Save note',
+  });
+  if (value == null) return;
+  setSetNote(liftName, setIndex, value);
 }
 
 export function setPerSetRir(liftName, setIndex, rir) {

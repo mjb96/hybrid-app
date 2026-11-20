@@ -37,6 +37,18 @@ test('dumbbell rows expose the Each / Both basis; barbell rows do not', () => {
   assert.doesNotMatch(barbell, /toggle-load-basis/);
 });
 
+test('per-set rest and note controls render their stored values', () => {
+  const html = buildSetRow(
+    { w: '90', r: '8', c: true, restSec: 90, note: 'Paused at the bottom' }, 0, 'Back Squat', null,
+    'kg', 'Back Squat', 80, 8,
+  );
+  assert.match(html, /Rest 1:30/);
+  assert.match(html, /edit-set-rest/);
+  assert.match(html, /Note ✓/);
+  assert.match(html, /Paused at the bottom/);
+  assert.match(html, /set-note/);
+});
+
 test('failure is an independent set flag, not the AMRAP type', () => {
   const html = buildSetRow(
     { w: '90', r: '8', c: true, failure: true }, 0, 'Back Squat', null,

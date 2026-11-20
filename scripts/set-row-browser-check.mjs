@@ -185,6 +185,30 @@ try {
       fail(`${tag}: a completed set did not show its comparison against last time (${JSON.stringify(comparison)})`);
     }
 
+    // ---- per-set rest and note (one viewport is enough for this UI path) ----
+    if (width === 412 && theme === 'dark') {
+      await page.click('.cockpit-exercise:not(.collapsed) .cockpit-set-row .btn-set-more');
+      await page.click('.cockpit-set-row.adv-open [data-action="edit-set-rest"]');
+      await page.waitForSelector('.cmodal__input');
+      await page.fill('.cmodal__input', '75');
+      await page.click('.cmodal__btn--ok');
+      await page.waitForTimeout(350);
+      const restButton = await page.locator('[data-action="edit-set-rest"]').first().textContent();
+      if (!/1:15/.test(restButton || '')) fail(`${tag}: per-set rest did not render 1:15 (got "${restButton}")`);
+
+      await page.click('.cockpit-set-row.adv-open [data-action="edit-set-note"]');
+      await page.waitForSelector('.cmodal__input');
+      await page.fill('.cmodal__input', 'Belt on, paused');
+      await page.click('.cmodal__btn--ok');
+      await page.waitForTimeout(350);
+      const note = await page.locator('.cockpit-exercise:not(.collapsed) .cockpit-set-row .set-note').first().textContent();
+      if (!/Belt on, paused/.test(note || '')) fail(`${tag}: per-set note did not render (got "${note}")`);
+      const storedMeta = await storedFirstSet(page, 'Incline Barbell Press');
+      if (storedMeta?.restSec !== 75 || storedMeta?.note !== 'Belt on, paused') {
+        fail(`${tag}: per-set rest/note did not persist: ${JSON.stringify({ restSec: storedMeta?.restSec, note: storedMeta?.note })}`);
+      }
+    }
+
     // ---- layout -------------------------------------------------------------
     if (await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1)) {
       fail(`${tag}: page-level horizontal overflow`);

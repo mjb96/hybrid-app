@@ -9,7 +9,8 @@ const hasUnfinishedEditedSet = (sets) => Array.isArray(sets) && sets.some((set) 
   set && !hasCompletedSet([set]) && (
     String(set.w ?? '').trim() || String(set.r ?? '').trim() || set.type ||
     set.rpe != null || set.rir != null || set.bw || set.band || set.loadMode ||
-    set.failure === true || set.basis === 'each' || set.basis === 'total'
+    set.failure === true || set.basis === 'each' || set.basis === 'total' ||
+    set.restSec != null || String(set.note || '').trim() !== ''
   )
 );
 

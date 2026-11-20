@@ -180,15 +180,24 @@ function _startRestCountdown() {
 // liftName: the exercise name string (e.g. "Back Squat")
 // setRpe:   optional numeric RPE of the completed set
 // setType:  optional set type char — 'W' = warmup, 'F' = AMRAP, '' = working set
-export function triggerRestTimerEngine(liftName, setRpe, setType, planRestSec = null) {
+export function triggerRestTimerEngine(liftName, setRpe, setType, planRestSec = null, setRestSec = null) {
   if (!_restTimerEnabled) return; // auto rest timer turned off in Settings
 
   let duration;
   _currentLift = liftName || null;
   _currentWorking = (setType !== 'W' && setType !== 'F');
 
-  // 1. Warmup sets always get a short 45s rest, regardless of lift type.
-  if (setType === 'W') {
+  // 0. A per-set rest is the athlete's explicit choice and outranks the plan,
+  // the remembered per-exercise override and the tier. 0 means no timer.
+  if (setRestSec != null && setRestSec !== '' && Number.isFinite(Number(setRestSec))) {
+    const explicit = Math.round(Number(setRestSec));
+    if (explicit <= 0) {
+      dismissRestTimer();
+      return;
+    }
+    duration = Math.min(600, Math.max(0, explicit));
+  } else if (setType === 'W') {
+    // 1. Warmup sets always get a short 45s rest, regardless of lift type.
     duration = 45;
   } else if (setType === 'F') {
     // AMRAP sets get a fixed 2-minute rest

@@ -123,6 +123,69 @@ export function confirmModal(opts = {}) {
  *          confirmLabel?:string, cancelLabel?:string, min?:number, max?:number}} [opts]
  * @returns {Promise<number|null>} the value, or null if dismissed
  */
+/**
+ * Small single-line text prompt, sharing the confirm modal's styles and focus
+ * handling. Resolves to the trimmed string ('' clears), or null on cancel.
+ */
+export function textPromptModal(opts = {}) {
+  const {
+    title = 'Add a note', message = '', label = '', placeholder = '',
+    value = '', maxLength = 140, confirmLabel = 'Save', cancelLabel = 'Cancel',
+  } = opts;
+  if (typeof document === 'undefined') return Promise.resolve(null);
+  ensureStyles();
+
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'cmodal-overlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-label', title);
+    overlay.innerHTML = `
+      <div class="cmodal">
+        <div class="cmodal__title">${esc(title)}</div>
+        ${message ? `<div class="cmodal__msg">${esc(message)}</div>` : ''}
+        <label class="cmodal__field">
+          ${label ? `<span class="cmodal__label">${esc(label)}</span>` : ''}
+          <span class="cmodal__inputwrap">
+            <input class="cmodal__input" type="text" maxlength="${Math.max(1, Number(maxLength) || 140)}"
+                   data-cm="input" value="${esc(value)}" placeholder="${esc(placeholder)}"
+                   aria-label="${esc(label || title)}">
+          </span>
+        </label>
+        <div class="cmodal__row">
+          <button class="cmodal__btn cmodal__btn--cancel" data-cm="cancel">${esc(cancelLabel)}</button>
+          <button class="cmodal__btn cmodal__btn--ok" data-cm="ok">${esc(confirmLabel)}</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    const input = /** @type {HTMLInputElement} */ (overlay.querySelector('[data-cm="input"]'));
+    let done = false;
+    const close = (result) => {
+      if (done) return;
+      done = true;
+      closeManagedModal(overlay);
+      overlay.classList.remove('cmodal--in');
+      setTimeout(() => { overlay.remove(); resolve(result); }, 200);
+    };
+    const submit = () => close(String(input?.value ?? '').trim());
+    overlay.addEventListener('click', (e) => {
+      const t = /** @type {HTMLElement} */ (e.target);
+      if (t === overlay) close(null);
+      else if (t.closest('[data-cm="ok"]')) submit();
+      else if (t.closest('[data-cm="cancel"]')) close(null);
+    });
+    overlay.addEventListener('keydown', (e) => {
+      if (/** @type {KeyboardEvent} */ (e).key === 'Enter') { e.preventDefault(); submit(); }
+    });
+    openManagedModal(overlay, {
+      initialFocus: '[data-cm="input"]',
+      onRequestClose: () => close(null),
+    });
+    requestAnimationFrame(() => overlay.classList.add('cmodal--in'));
+  });
+}
+
 export function numberPromptModal(opts = {}) {
   const {
     title = 'Enter a value', message = '', label = '', unit = '',

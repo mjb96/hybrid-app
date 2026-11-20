@@ -1889,10 +1889,14 @@ testable on its own.
     unilateral movements); the row chip cycles the basis and the value is
     stamped only once real user data exists. All volume readers now go through
     `setVolume`, so Strength, History, Home and Progress agree.
+  - Added per-set **rest** and **note**. Rest precedence is explicit set value
+    (0 = no timer) → plan prescription → remembered per-exercise override →
+    exercise tier; note is a 140-character cue shown in the logger and recap.
+    Both are additive fields and are recognised by the draft predicates.
   - Validation: node tests, typecheck, smoke, settings-nav browser check
     (visible Logging controls/preset/scope), set-row and quick-log tests.
-  - Next: per-set rest/note, timed/distance sets, per-exercise config sheet and
-    the load explanation/recap closure.
+  - Next: timed/distance sets, per-exercise config sheet and the load
+    explanation/recap closure.
 - **2026-11-20 — Progress overview: week hero, recent weeks, calendar heatmaps.**
   - The hub now leads with a this-week summary (sessions / planned, volume,
     distance, PRs, adherence bar) and a 12-week session strip, then the four

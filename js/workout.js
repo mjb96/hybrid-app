@@ -68,6 +68,7 @@ import {
 import {
   appendCustomSetRow, appendWarmupSetRow, removeCustomSetRow, cycleSetType,
   setSetLoadMode, cycleSetLoad, setPerSetRir, toggleSetFailure, toggleLoadBasis,
+  editSetRest, clearSetRest, editSetNote,
   currentBodyweight as _currentBodyweight,
 } from './workout/set-mutations.js';
 // Re-exported for js/app.js, which imports these from here.
@@ -75,6 +76,7 @@ export { openConfirmResetModal, closeConfirmResetModal, executeResetActiveDayMet
 export {
   appendCustomSetRow, appendWarmupSetRow, removeCustomSetRow, cycleSetType,
   setSetLoadMode, cycleSetLoad, setPerSetRir, toggleSetFailure, toggleLoadBasis,
+  editSetRest, clearSetRest, editSetNote,
 };
 import {
   renderExerciseLibraryList,
@@ -1037,9 +1039,10 @@ export function executeOneTapQuickLog(labelNode, liftName, sIdx) {
   try {
     const gymRpeEl = document.getElementById('sessionGymRpeCockpit');
     const setRpe = gymRpeEl && gymRpeEl.value ? parseFloat(gymRpeEl.value) : null;
-    const setType = appState.weeks[wk].lifts?.[selectedDay]?.[liftName]?.[sIdx]?.type || '';
+    const stored = appState.weeks[wk].lifts?.[selectedDay]?.[liftName]?.[sIdx] || {};
+    const setType = stored.type || '';
     const planRest = getProgramById(appState.activeProgramId)?.prescriptions?.[selectedDay]?.[liftName]?.restSec;
-    triggerRestTimerEngine(liftName, setRpe, setType, planRest);
+    triggerRestTimerEngine(liftName, setRpe, setType, planRest, stored.restSec);
   } catch(e) { console.warn(e); }
 
   const quickW = parseFloat(targetW);
@@ -1362,9 +1365,10 @@ export function toggleGymCheckLoggingState(checkboxNode) {
       const _selDay = _getSelectedDay();
       const _wk = activeWorkoutWeekKey(_appState);
       const _sIdx = exCard ? Array.from(exCard.querySelectorAll('.cockpit-set-row')).indexOf(parentRow) : -1;
-      const setType = _appState.weeks[_wk].lifts?.[_selDay]?.[liftName]?.[_sIdx]?.type || '';
+      const storedForRest = _appState.weeks[_wk].lifts?.[_selDay]?.[liftName]?.[_sIdx] || {};
+      const setType = storedForRest.type || '';
       const planRest = getProgramById(_appState.activeProgramId)?.prescriptions?.[_selDay]?.[liftName]?.restSec;
-      triggerRestTimerEngine(liftName, setRpe, setType, planRest);
+      triggerRestTimerEngine(liftName, setRpe, setType, planRest, storedForRest.restSec);
       // Stamp workout date on first set completion for this day
       if (!_appState.weeks[_wk].dates) _appState.weeks[_wk].dates = {};
       if (!_appState.weeks[_wk].dates[_selDay]) {
@@ -1946,6 +1950,9 @@ document.addEventListener('click', (e) => {
   else if (action === 'set-rir') setPerSetRir(liftName, sIdx, parseInt(target.getAttribute('data-rir'), 10));
   else if (action === 'toggle-set-failure') toggleSetFailure(liftName, sIdx);
   else if (action === 'toggle-load-basis') toggleLoadBasis(liftName, sIdx);
+  else if (action === 'edit-set-rest') void editSetRest(liftName, sIdx);
+  else if (action === 'clear-set-rest') clearSetRest(liftName, sIdx);
+  else if (action === 'edit-set-note') void editSetNote(liftName, sIdx);
   else if (action === 'rest-adjust') adjustRestDuration(parseInt(target.getAttribute('data-delta'), 10));
   else if (action === 'open-add-exercise') openAddExerciseModal();
   else if (action === 'close-add-exercise') closeAddExerciseModal();

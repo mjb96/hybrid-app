@@ -125,6 +125,7 @@ export function buildSessionRecap(state, week, day, sessionId = null, activityKi
       .map((s) => ({
         w: parseFloat(s.w) || 0, r: parseInt(s.r, 10) || 0,
         warmup: isWarmupSet(s), type: s.type || '', failure: s.failure === true,
+        note: String(s.note || '').trim(),
         rir: s.rir != null ? s.rir : (s.rpe != null ? 10 - s.rpe : null),
         vol: Math.round(setVolume(s)),
         // Snapshot role metadata (J&T tiers) so history shows the ORIGINAL set
@@ -314,6 +315,7 @@ function _liftSetGrid(r) {
             ${_setTag(s)}
             ${s.rir != null ? `<span class="rc-set__rir">RIR ${s.rir}</span>` : ''}
             <span class="rc-set__vol">${s.vol.toLocaleString()} ${unit}</span>
+            ${s.note ? `<span class="rc-set__note">${esc(s.note)}</span>` : ''}
           </div>`;
     }).join('');
     return `
