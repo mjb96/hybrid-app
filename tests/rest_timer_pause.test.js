@@ -137,6 +137,19 @@ test('adjusting while paused keeps it paused', () => {
   dismissRestTimer();
 });
 
+test('a per-set rest outranks the plan and the exercise-type default', () => {
+  triggerRestTimerEngine('Back Squat', null, '', 180, 60);
+  assert.equal(nodes.cockpitTimerClock.textContent, '1:00');
+  assert.equal(bar().classList.contains('active'), true);
+  dismissRestTimer();
+});
+
+test('a per-set rest of zero suppresses the timer entirely', () => {
+  triggerRestTimerEngine('Back Squat', null, '', 180, 0);
+  assert.equal(bar().classList.contains('active'), false);
+  dismissRestTimer();
+});
+
 test('an imported plan rest overrides the exercise-type default', () => {
   triggerRestTimerEngine('Lateral Raise', null, '', 120);
   assert.equal(nodes.cockpitTimerClock.textContent, '2:00');

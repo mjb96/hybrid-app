@@ -577,7 +577,8 @@ export function reconcilePrescribedSets(existing, desiredCount, roleStamps = nul
   const hasUserData = existing.some((set) => set && (
     isCompletedSet(set) || String(set.w ?? '').trim() || String(set.r ?? '').trim() ||
     set.type || set.rpe != null || set.rir != null || set.bw || set.band || set.loadMode ||
-    set.failure === true || set.basis === 'each' || set.basis === 'total'
+    set.failure === true || set.basis === 'each' || set.basis === 'total' ||
+    set.restSec != null || String(set.note || '').trim() !== ''
   ));
   // A fresh (untouched) scaffold may be rebuilt exactly — re-stamp roles by index.
   // No warm-ups can exist here (a warm-up sets `type`, which trips hasUserData),

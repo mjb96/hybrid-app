@@ -192,6 +192,21 @@ test('toggleLoadBasis cycles a dumbbell set between Each and Both', () => {
   assert.equal(sets('Dumbbell Bench Press')[0].basis, 'each');
 });
 
+test('per-set rest and note persist and clear', async () => {
+  initWith(freshState());
+  workout.appendCustomSetRow(null, 'Row');
+  const mutations = await import('../js/workout/set-mutations.js');
+  mutations.setSetRest('Row', 0, 90);
+  assert.equal(sets('Row')[0].restSec, 90);
+  mutations.setSetRest('Row', 0, null);
+  assert.equal(sets('Row')[0].restSec, undefined);
+
+  mutations.setSetNote('Row', 0, '  belt on  ');
+  assert.equal(sets('Row')[0].note, 'belt on');
+  mutations.setSetNote('Row', 0, '');
+  assert.equal(sets('Row')[0].note, undefined);
+});
+
 test('removeCustomSetRow deletes the set and prunes empty lift from liftOrder', () => {
   initWith(freshState());
   state.weeks['1'].liftOrder.mon = ['Deadlift'];

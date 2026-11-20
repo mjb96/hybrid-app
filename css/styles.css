@@ -2903,6 +2903,26 @@ html[data-theme="light"] .bm-h4 { stroke: #fff; }
   opacity: 1; background: rgba(34,211,238,0.16);
   border-color: rgba(34,211,238,0.45); color: #67e8f9;
 }
+.btn-set-meta {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 44px; font-size: 0.66rem; font-weight: 700; padding: 0 10px;
+  border-radius: 999px; border: 1px solid var(--border-medium);
+  background: var(--overlay-sm); color: var(--text-faint);
+  cursor: pointer; transition: all 0.15s ease;
+}
+.btn-set-meta.has-rest, .btn-set-meta.has-note {
+  opacity: 1; background: rgba(99,102,241,0.16);
+  border-color: rgba(99,102,241,0.45); color: #c7d2fe;
+}
+.btn-set-meta[hidden] { display: none; }
+.set-note {
+  grid-column: 1 / -1;
+  margin: 2px 0 0 calc(28px + var(--space-3));
+  color: var(--text-secondary);
+  font-size: 0.68rem;
+  font-style: italic;
+  line-height: 1.4;
+}
 
 /* ==========================================
    PROFILE AVATAR BUTTON
@@ -9130,7 +9150,8 @@ html[data-theme="light"] .activity-filter--active { color: #07566b; }
 .rc-exercise__name { font-size: 0.9rem; font-weight: 800; color: var(--text-inverse, #f8fafc); min-width: 0; }
 .rc-exercise__meta { flex: 0 0 auto; font-size: 0.7rem; font-weight: 700; color: var(--text-muted, #94a3b8); font-variant-numeric: tabular-nums; }
 .rc-sets { display: flex; flex-direction: column; gap: 4px; }
-.rc-set { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 9px; background: rgba(255,255,255,0.03); border: 1px solid var(--border, #1f242c); font-size: 0.8rem; }
+.rc-set { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 9px; background: rgba(255,255,255,0.03); border: 1px solid var(--border, #1f242c); font-size: 0.8rem; }
+.rc-set__note { flex: 1 0 100%; margin-left: 28px; color: var(--text-muted, #94a3b8); font-size: 0.66rem; font-style: italic; }
 .rc-set--warm { opacity: 0.62; }
 .rc-set__n { flex: 0 0 auto; width: 18px; text-align: center; font-size: 0.68rem; font-weight: 800; color: var(--text-muted, #94a3b8); }
 .rc-set__wr { flex: 1 1 auto; font-weight: 700; color: var(--text-inverse, #f8fafc); font-variant-numeric: tabular-nums; }

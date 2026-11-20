@@ -36,6 +36,10 @@ export function buildSetRow(sData, sIdx, safeLiftName, historicalSetData = null,
   const basis = basisCapable
     ? normalizeBasis(sData.basis || (sData.c ? 'total' : defaultBasisForExercise(exerciseName)))
     : null;
+  const restSeconds = Number(sData.restSec);
+  const restLabel = sData.restSec == null
+    ? 'Rest default'
+    : restSeconds <= 0 ? 'Rest off' : `Rest ${Math.floor(restSeconds / 60)}:${String(restSeconds % 60).padStart(2, '0')}`;
   const directMode = resolvedLoadMode(sData, exerciseName);
   const knownBodyweight = Number.isFinite(Number.parseFloat(bodyweight)) && Number.parseFloat(bodyweight) > 0
     ? Number.parseFloat(bodyweight) : null;
@@ -96,6 +100,9 @@ export function buildSetRow(sData, sIdx, safeLiftName, historicalSetData = null,
   const prevHtml = prev
     ? `<div class="set-prev" aria-label="${escapeHtml(prev.label)}" data-prev-w="${Number.isFinite(priorWeight) ? priorWeight : ''}" data-prev-r="${Number.isFinite(priorReps) ? priorReps : ''}">${escapeHtml(prev.text)}${compareHtml}</div>`
     : '';
+  const noteHtml = sData.note
+    ? `<div class="set-note">${escapeHtml(String(sData.note))}</div>`
+    : '';
 
   return `<div class="cockpit-set-row ${sData.c ? 'is-complete' : ''} ${typeClass} ${sData.isPR ? 'is-pr' : ''}"${hasRole ? ` data-set-role="${escapeHtml(String(roleTag.role))}"` : ''}${boAttrs} data-set-index="${sIdx}" data-load-mode="${directMode}"${basisCapable ? ` data-load-basis="${escapeHtml(basis)}"` : ''}>
     ${roleTagHtml}
@@ -134,6 +141,7 @@ export function buildSetRow(sData, sIdx, safeLiftName, historicalSetData = null,
             title="Set type, load & remove">⋯</button>
     <div class="set-row-msg" role="status" aria-live="polite" hidden></div>
     ${prevHtml}
+    ${noteHtml}
 
     <div class="set-adv-row">
       <button class="type-pill tactile-scale"
@@ -164,6 +172,22 @@ export function buildSetRow(sData, sIdx, safeLiftName, historicalSetData = null,
         title="${basis === 'each' ? 'The entered weight is per dumbbell'
           : basis === 'per-side' ? 'The entered weight is for the working side'
           : 'The entered weight is the pair total'}">${basisLabel(basis)}</button>` : ''}
+      <button class="btn-set-meta tactile-scale${sData.restSec != null ? ' has-rest' : ''}"
+        data-action="edit-set-rest"
+        data-liftname="${safeLiftName}"
+        data-sidx="${sIdx}"
+        title="Rest after this set">${restLabel}</button>
+      <button class="btn-set-meta tactile-scale"
+        data-action="clear-set-rest"
+        data-liftname="${safeLiftName}"
+        data-sidx="${sIdx}"
+        title="Use the default rest for this set"
+        ${sData.restSec == null ? 'hidden' : ''}>Reset</button>
+      <button class="btn-set-meta tactile-scale${sData.note ? ' has-note' : ''}"
+        data-action="edit-set-note"
+        data-liftname="${safeLiftName}"
+        data-sidx="${sIdx}"
+        title="Add a note to this set">${sData.note ? 'Note ✓' : 'Note'}</button>
       <button class="btn-set-delete tactile-scale"
         data-action="remove-set"
         data-liftname="${safeLiftName}"
