@@ -113,9 +113,11 @@ function comparisonWindow(totals, today, weekStart) {
   return totals.days.slice(0, elapsed || totals.days.length);
 }
 
-// The Hybrid Score arc across the last 7 recorded days.
-function scoreArc(state) {
-  const cutoffISO = addDaysISO(todayKey(), -6);
+// The Hybrid Score arc across the last 7 recorded days, ending on the review's
+// day. It must follow `opts.today` (fixtures, notification previews), never the
+// system clock, or the same review reports a different arc when replayed.
+function scoreArc(state, today = todayKey()) {
+  const cutoffISO = addDaysISO(today, -6);
   const entries = (state?.hybridScore?.history || [])
     .filter((h) => h.date >= cutoffISO)
     .sort((a, b) => a.date.localeCompare(b.date));
@@ -177,7 +179,7 @@ export function buildWeeklyReview(state, days, program, opts = {}) {
   const volumeDeltaPct = pctDelta(current.volumeKg, prevVolume);
   const distanceDeltaPct = pctDelta(current.distanceKm, prevDistance);
   const prs = calendarWeekPRs(state, weekStart, today);
-  const arc = scoreArc(state);
+  const arc = scoreArc(state, today);
   const isCurrentWeek = weekStart === weekStartOf(today);
 
   const focus = pickWeeklyFocus({

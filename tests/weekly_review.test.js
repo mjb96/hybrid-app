@@ -80,6 +80,19 @@ test('buildWeeklyReview: calendar totals, PR detection, score arc', () => {
   assert.equal(r.label, 'This week');
 });
 
+test('buildWeeklyReview: the score arc follows the reviewed day, not the system clock', () => {
+  // On 2026-11-22 the cutoff is 2026-11-16, so the arc holds 18 Nov + 20 Nov
+  // (78 → 84). A system-clock read on any other day returns a different arc,
+  // which is why this fixture must stay deterministic forever.
+  const mid = buildWeeklyReview(makeState(), DAYS, PROGRAM, { today: '2026-11-22' });
+  assert.equal(mid.arc.hasData, true);
+  assert.equal(mid.arc.delta, 6);
+
+  // Far past the recorded week, the same state has no arc at all.
+  const expired = buildWeeklyReview(makeState(), DAYS, PROGRAM, { today: '2026-12-20' });
+  assert.equal(expired.arc.hasData, false);
+});
+
 test('buildWeeklyReview: imported archived weeks are this week when their DATE says so', () => {
   const state = {
     currentWeek: '1',
