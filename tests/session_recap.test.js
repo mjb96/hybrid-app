@@ -148,6 +148,18 @@ test('a run without a GPS route says so instead of rendering an empty map', () =
   assert.doesNotMatch(html, /id="recapMapContainer"/);
 });
 
+test('failure stays visible in the session recap', () => {
+  const wd = {
+    dates: { mon: '2026-07-02' },
+    lifts: { mon: { Squat: [{ w: 100, r: 5, c: true, failure: true }] } },
+    runs: {},
+  };
+  const r = buildSessionRecap(stateWith(wd), '1', 'mon');
+  assert.equal(r.lifts[0].setList[0].failure, true);
+  const html = renderSessionRecapHTML(r, [], null, 'breakdown');
+  assert.match(html, /failure/);
+});
+
 test('recap labels weights and distances in the athlete’s units', () => {
   const state = {
     settings: { weightUnit: 'lbs', distanceUnit: 'mi' },

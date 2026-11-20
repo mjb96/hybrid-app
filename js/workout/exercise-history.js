@@ -158,11 +158,20 @@ export function latestExercisePerformance(state, exerciseName, options = {}) {
  *
  * @param {any} state
  * @param {string} exerciseName
- * @param {{weekKey?:string|number, day?:string, beforeDate?:string|Date}} [options]
+ * @param {{
+ *   weekKey?:string|number,
+ *   day?:string,
+ *   beforeDate?:string|Date,
+ *   scope?:'all'|'activation'|'program',
+ * }} [options]
  */
 export function exerciseLoggerHistory(state, exerciseName, options = {}) {
   const performances = exercisePerformanceHistory(state, exerciseName, {
-    scope: EXERCISE_HISTORY_SCOPE.ALL,
+    // "Last performed" can be scoped to the current program. PR detection stays
+    // all-time and is computed by the caller with the default ALL scope.
+    scope: options.scope || EXERCISE_HISTORY_SCOPE.ALL,
+    activationId: state?.activeActivationId ?? null,
+    programId: state?.activeProgramId ?? null,
     exclude: options.weekKey == null
       ? undefined
       : { weekKey: options.weekKey, day: options.day },

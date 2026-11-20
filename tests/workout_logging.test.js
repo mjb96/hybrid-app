@@ -172,6 +172,16 @@ test('setPerSetRir sets RIR + derived RPE, and taps to clear', () => {
   assert.equal(sets('Row')[0].rpe, null);
 });
 
+test('toggleSetFailure is independent of the AMRAP set type and toggles off', () => {
+  initWith(freshState());
+  workout.appendCustomSetRow(null, 'Row');
+  workout.toggleSetFailure('Row', 0);
+  assert.equal(sets('Row')[0].failure, true);
+  assert.equal(sets('Row')[0].type, undefined, 'failure never reuses type F');
+  workout.toggleSetFailure('Row', 0);
+  assert.equal(sets('Row')[0].failure, undefined);
+});
+
 test('removeCustomSetRow deletes the set and prunes empty lift from liftOrder', () => {
   initWith(freshState());
   state.weeks['1'].liftOrder.mon = ['Deadlift'];

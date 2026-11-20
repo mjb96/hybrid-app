@@ -277,6 +277,26 @@ export async function cycleSetLoad(liftName, setIndex) {
   _saveState(true);
 }
 
+/**
+ * Failure is a per-set fact independent of set type. `type: 'F'` is AMRAP and
+ * must stay that way; a set taken to failure can be a normal working set.
+ */
+export function toggleSetFailure(liftName, setIndex) {
+  const appState = _getState();
+  const day = _getSelectedDay();
+  const weekKey = activeWorkoutWeekKey(appState);
+  const sets = appState.weeks?.[weekKey]?.lifts?.[day]?.[liftName];
+  if (!sets || !sets[setIndex]) return;
+  const set = sets[setIndex];
+  set.failure = !set.failure;
+  if (!set.failure) delete set.failure;
+  _saveState(true);
+  const row = document.querySelector(
+    `.cockpit-exercise[data-liftname="${CSS.escape(liftName)}"] .cockpit-set-row[data-set-index="${setIndex}"]`,
+  );
+  row?.querySelector('[data-action="toggle-set-failure"]')?.classList.toggle('is-failure', !!set.failure);
+}
+
 export function setPerSetRir(liftName, setIndex, rir) {
   const appState = _getState();
   const day = _getSelectedDay();

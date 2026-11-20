@@ -1268,6 +1268,10 @@ select.native-select {
   opacity: 0.75;
   padding: 2px 0 0 calc(28px + var(--space-3));
 }
+.set-cmp { margin-left: 6px; font-weight: 900; }
+.set-cmp--up { color: var(--color-green, #10b981); }
+.set-cmp--down { color: var(--color-amber, #f59e0b); }
+.set-cmp--same { color: var(--text-muted); }
 
 /* Inline entry errors. The row that is wrong is the row that says so — a toast
    appears away from the offending field and is gone before you look up. */
@@ -2885,6 +2889,16 @@ html[data-theme="light"] .bm-h4 { stroke: #fff; }
 .btn-load.load-L  { opacity: 1; background: rgba(16,185,129,0.18); border-color: rgba(16,185,129,0.5); color: #34d399; }
 .btn-load.load-M  { opacity: 1; background: rgba(245,158,11,0.18); border-color: rgba(245,158,11,0.5); color: #fbbf24; }
 .btn-load.load-H  { opacity: 1; background: rgba(239,68,68,0.18);  border-color: rgba(239,68,68,0.5);  color: #f87171; }
+.btn-failure {
+  font-size: 0.66rem; font-weight: 700; padding: 3px 12px;
+  border-radius: 999px; border: 1px solid var(--border-medium);
+  background: var(--overlay-sm); color: var(--text-faint);
+  cursor: pointer; transition: all 0.15s ease;
+}
+.btn-failure.is-failure {
+  opacity: 1; background: rgba(239,68,68,0.18);
+  border-color: rgba(239,68,68,0.5); color: #f87171;
+}
 
 /* ==========================================
    PROFILE AVATAR BUTTON

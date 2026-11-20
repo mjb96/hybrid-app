@@ -1531,29 +1531,39 @@
             </div>
           </div>
           <div class="settings-row" style="display:block;">
+            <div class="settings-section-label settings-section-label--sub">Logging</div>
             <label class="hc-data-toggle"><input type="checkbox" id="settingsRestEnabled" checked><span>Auto rest timer between sets</span></label>
             <label class="hc-data-toggle"><input type="checkbox" id="settingsAutoWarmup"><span>Auto warm-up ramp</span></label>
             <div class="settings-hint">After you enter the first working weight, add editable 40/60/80% warm-up sets. Only for barbell lifts; never added twice.</div>
-            <!-- V2 (S5): per-tier rest tuning / presets / remembered-rest reset retired
-                 as power-user knobs. Elements kept hidden so settings.js reads stay safe;
-                 rest still auto-suggests by exercise type using sensible defaults. -->
-            <div style="display:none;">
-              <div class="run-grid-inputs" style="grid-template-columns: repeat(3, 1fr);">
-                <label><span class="set-num-lbl block mb-1 text-accent-red">Compound</span><input type="text" id="settingsRestCompound" inputmode="numeric" placeholder="3:00" style="text-align:center;"></label>
-                <label><span class="set-num-lbl block mb-1 text-accent-amber">Accessory</span><input type="text" id="settingsRestAccessory" inputmode="numeric" placeholder="2:00" style="text-align:center;"></label>
-                <label><span class="set-num-lbl block mb-1 text-accent-green">Isolation</span><input type="text" id="settingsRestIsolation" inputmode="numeric" placeholder="1:30" style="text-align:center;"></label>
-              </div>
-              <button class="settings-toggle-btn" data-action="reset-rest-overrides">Reset remembered rests</button>
+            <div class="settings-hint">Rest by exercise type. These are the defaults; the timer's ± buttons remember a per-exercise override.</div>
+            <div class="settings-toggle-group" style="margin:8px 0;">
+              <button class="settings-toggle-btn" data-action="rest-preset" data-preset="efficient">Efficient</button>
+              <button class="settings-toggle-btn" data-action="rest-preset" data-preset="hypertrophy">Standard</button>
+              <button class="settings-toggle-btn" data-action="rest-preset" data-preset="strength">Strength</button>
             </div>
+            <div class="run-grid-inputs" style="grid-template-columns: repeat(3, 1fr);">
+              <label><span class="set-num-lbl block mb-1 text-accent-red">Compound</span><input type="text" id="settingsRestCompound" inputmode="numeric" placeholder="3:00" style="text-align:center;"></label>
+              <label><span class="set-num-lbl block mb-1 text-accent-amber">Accessory</span><input type="text" id="settingsRestAccessory" inputmode="numeric" placeholder="2:00" style="text-align:center;"></label>
+              <label><span class="set-num-lbl block mb-1 text-accent-green">Isolation</span><input type="text" id="settingsRestIsolation" inputmode="numeric" placeholder="1:30" style="text-align:center;"></label>
+            </div>
+            <button class="settings-toggle-btn" data-action="reset-rest-overrides">Reset remembered rests</button>
           </div>
-          <!-- V2 (S5): progression step retired as a power-user knob (defaults to 2.5 kg). -->
-          <div class="settings-row" style="display:none;">
+          <div class="settings-row">
             <label class="settings-row-label">Progression Step</label>
             <div class="settings-toggle-group">
               <button class="settings-toggle-btn" data-action="set-progression" data-kg="1.25">1.25</button>
               <button class="settings-toggle-btn active" data-action="set-progression" data-kg="2.5">2.5</button>
-              <button class="settings-toggle-btn" data-action="set-progression" data-kg="5">5 kg</button>
+              <button class="settings-toggle-btn" data-action="set-progression" data-kg="5">5</button>
             </div>
+            <div class="settings-hint">The smallest load jump a progression suggests, in your weight unit.</div>
+          </div>
+          <div class="settings-row">
+            <label class="settings-row-label">Last performed means</label>
+            <div class="settings-toggle-group">
+              <button class="settings-toggle-btn active" data-action="set-previous-scope" data-scope="all">Any workout</button>
+              <button class="settings-toggle-btn" data-action="set-previous-scope" data-scope="program">This program</button>
+            </div>
+            <div class="settings-hint">Applies to the Last performed panel and Use previous values. PR detection always checks all history.</div>
           </div>
           <div class="settings-row" data-module="running">
             <label class="settings-row-label">Threshold Pace</label>

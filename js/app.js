@@ -75,7 +75,7 @@ import { initOnboarding, shouldShowOnboarding, startOnboarding, handleOnboarding
 import {
   initSettings, openSettings, closeSettings,
   saveName, saveBodyWeight, setWeightUnit,
-  setProgressionIncrement, setDistanceUnit, setTheme, setPalette, stepCurrentWeek, setAutoAdvanceWeek,
+  setProgressionIncrement, setPreviousValuesScope, setDistanceUnit, setTheme, setPalette, stepCurrentWeek, setAutoAdvanceWeek,
   saveThresholdPace as saveSettingsThresholdPace,
   exportData, triggerImport, handleImportFile, restoreImportBackup, confirmResetAllData,
   triggerExternalCsvImport, handleExternalCsvFile, triggerFitImport, handleFitFiles, toggleModule,
@@ -1223,6 +1223,7 @@ document.addEventListener('click', (e) => {
   else if (action === 'rest-preset') applyRestPreset(target.getAttribute('data-preset'));
   else if (action === 'reset-rest-overrides') resetRestOverrides();
   else if (action === 'set-progression') setProgressionIncrement(parseFloat(target.getAttribute('data-kg')));
+  else if (action === 'set-previous-scope') setPreviousValuesScope(target.getAttribute('data-scope'));
   else if (action === 'week-step') stepCurrentWeek(parseInt(target.getAttribute('data-delta'), 10));
   else if (action === 'export-data') exportData();
   else if (action === 'import-data') triggerImport();

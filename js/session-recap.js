@@ -124,7 +124,7 @@ export function buildSessionRecap(state, week, day, sessionId = null, activityKi
       .filter((s) => isCompletedSet(s))
       .map((s) => ({
         w: parseFloat(s.w) || 0, r: parseInt(s.r, 10) || 0,
-        warmup: isWarmupSet(s), type: s.type || '',
+        warmup: isWarmupSet(s), type: s.type || '', failure: s.failure === true,
         rir: s.rir != null ? s.rir : (s.rpe != null ? 10 - s.rpe : null),
         vol: Math.round(setVolume(s)),
         // Snapshot role metadata (J&T tiers) so history shows the ORIGINAL set
@@ -296,6 +296,7 @@ function _paceChart(r, thresholdSec) {
 function _setTag(s) {
   if (s.warmup || s.type === 'W') return '<span class="rc-set__tag rc-set__tag--w">warm</span>';
   if (s.type === 'D') return '<span class="rc-set__tag rc-set__tag--d">drop</span>';
+  if (s.failure) return '<span class="rc-set__tag rc-set__tag--f">failure</span>';
   if (s.type === 'F') return '<span class="rc-set__tag rc-set__tag--f">amrap</span>';
   return '';
 }

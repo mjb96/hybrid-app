@@ -304,6 +304,7 @@ function _syncSettingsUI() {
   _setToggleActive('[data-action="set-unit"]',        `[data-unit="${s.weightUnit || 'kg'}"]`);
   _setToggleActive('[data-action="set-dist-unit"]',   `[data-unit="${s.distanceUnit || 'km'}"]`);
   _setToggleActive('[data-action="set-progression"]', `[data-kg="${s.progressionIncrement || 2.5}"]`);
+  _setToggleActive('[data-action="set-previous-scope"]', `[data-scope="${s.previousValuesScope === 'program' ? 'program' : 'all'}"]`);
   _setToggleActive('[data-action="set-theme"]',       `[data-theme-val="${s.theme || 'dark'}"]`);
   _setToggleActive('[data-action="set-palette"]',     `[data-palette="${normalizePalette(s.palette)}"]`);
   _setToggleActive('[data-action="set-fitness-goal"]',`[data-goal="${s.fitnessGoal || 'hybrid'}"]`);
@@ -582,7 +583,18 @@ export function setProgressionIncrement(kg) {
   appState.settings.progressionIncrement = kg;
   saveStateToLocalStorage(true);
   _setToggleActive('[data-action="set-progression"]', `[data-kg="${kg}"]`);
-  showToast(`Progression step: ${kg}kg`);
+  const unit = appState.settings.weightUnit === 'lbs' ? 'lbs' : 'kg';
+  showToast(`Progression step: ${kg} ${unit}`);
+}
+
+export function setPreviousValuesScope(scope) {
+  const appState = _ensureSettings();
+  appState.settings.previousValuesScope = scope === 'program' ? 'program' : 'all';
+  saveStateToLocalStorage(true);
+  _setToggleActive('[data-action="set-previous-scope"]', `[data-scope="${appState.settings.previousValuesScope}"]`);
+  showToast(appState.settings.previousValuesScope === 'program'
+    ? 'Last performed: this program'
+    : 'Last performed: any workout');
 }
 
 export function setTheme(mode) {
