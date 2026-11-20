@@ -59,6 +59,7 @@ const now = new Date(CLOCK);
 const todayDay = DAY_KEYS[new Date(`${todayISO}T12:00:00Z`).getUTCDay()];
 const otherDay = DAY_KEYS[(DAY_KEYS.indexOf(todayDay) + 6) % 7];
 const yesterdayISO = new Date(Date.parse(`${todayISO}T12:00:00Z`) - 86400000).toISOString().slice(0, 10);
+const lastWeekISO = new Date(Date.parse(`${todayISO}T12:00:00Z`) - 7 * 86400000).toISOString().slice(0, 10);
 
 function program(restToday = false) {
   return {
@@ -72,7 +73,7 @@ function program(restToday = false) {
   };
 }
 
-function fixture({ state = 'ready', theme = 'dark', hideWeekStrip = false } = {}) {
+function fixture({ state = 'ready', theme = 'dark', hideWeekStrip = false, pastWeek = false } = {}) {
   const testProgram = program(state === 'rest');
   const lifts = Object.fromEntries(DAY_KEYS.map((day) => [
     day,
@@ -116,7 +117,18 @@ function fixture({ state = 'ready', theme = 'dark', hideWeekStrip = false } = {}
       ...(hideWeekStrip ? { ui: { home: { hidden: ['weekStrip'] }, progress: { hidden: [] } } } : {}),
     },
     customPrograms: [testProgram],
-    weeks: { '1': week },
+    weeks: {
+      '1': week,
+      ...(pastWeek ? {
+        'arch:old:1': {
+          activationId: 'old', programId: testProgram.id,
+          dates: { mon: lastWeekISO },
+          lifts: { mon: { 'EZ-Bar Curl': [{ w: '20', r: '10', c: true }] } },
+          runs: {}, runSessions: {}, sessionStatus: {}, sessionSummary: {}, gymStats: {},
+          liftOrder: {}, liftMeta: {}, notes: {}, gymRpe: {}, bodyWeight: {},
+        },
+      } : {}),
+    },
     loadMetrics: { atl: 0, ctl: 0 },
     healthConnect: { connected: false, hrv: [], restingHR: [], sleep: [], steps: [], vo2max: [] },
     wellnessLog: [], bodyWeightLog: [],
@@ -125,9 +137,9 @@ function fixture({ state = 'ready', theme = 'dark', hideWeekStrip = false } = {}
   };
 }
 
-async function openState({ state, theme = 'dark', width = 390, height = 844, hideWeekStrip = false }) {
+async function openState({ state, theme = 'dark', width = 390, height = 844, hideWeekStrip = false, pastWeek = false }) {
   const context = await createBrowserContext(browser, { viewport: { width, height }, timezoneId: TZ });
-  const seed = fixture({ state, theme, hideWeekStrip });
+  const seed = fixture({ state, theme, hideWeekStrip, pastWeek });
   await context.addInitScript(([key, value]) => localStorage.setItem(key, value), [STORAGE_KEY, JSON.stringify(seed)]);
   await context.addInitScript(pinClock, CLOCK);
   const page = await context.newPage();
@@ -251,6 +263,31 @@ try {
     await page.locator('#homePrimaryCta').click();
     ok(await page.locator('#view-workout').evaluate((el) => el.classList.contains('active')), 'Resume opens Train');
     ok(await page.locator('#cockpitDaySelectorBar .day-pill.active').getAttribute('data-day') === otherDay, 'Resume restores the unresolved workout day');
+    await context.close();
+  }
+
+  {
+    const { context, page } = await openState({ state: 'ready', pastWeek: true });
+    await page.locator('.home-week-day.is-today').click();
+    ok(await page.locator('#view-home.active').count() === 1, 'today date stays on Home');
+    await page.locator('[data-action="home-week-prev"]').click();
+    await page.waitForSelector('.week-recap');
+    const done = page.locator('#homeWeekDays .home-week-day--done').first();
+    ok(await done.count() >= 1, 'past week shows a completed day');
+    await done.click();
+    await page.waitForSelector('.day-recap');
+    ok(await page.locator('#view-home.active').count() === 1, 'a completed date stays on Home');
+    ok(await page.locator('.day-recap .session-map svg').count() === 2, 'day recap shows the muscle map');
+    await page.locator('[data-action="home-week-recap"]').click();
+    ok(await page.locator('.week-recap').count() === 1, 'back to week restores the weekly recap');
+    await context.close();
+  }
+
+  {
+    const { context, page } = await openState({ state: 'completed' });
+    await page.locator('.home-week-day.is-today').click();
+    ok(await page.locator('#view-home.active').count() === 1, 'completed today stays on Home');
+    ok(await page.locator('.today-card[data-today-state="completed"]').count() === 1, 'completed today shows the Today summary');
     await context.close();
   }
 
