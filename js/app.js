@@ -352,6 +352,9 @@ export function showCopyWorkouts() {
 }
 
 export function copyPastWorkout(activityId) {
+  // The copy can be launched from History's detail view or the workout picker;
+  // History must be fully dismissed either way or it covers the cockpit.
+  if (isActivitiesOpen()) closeActivities({ force: true });
   const row = buildActivityHistory(appState).find((item) => item.kind === 'strength' && item.id === activityId);
   const sourceWeek = row && appState.weeks?.[row.week];
   if (!row || !sourceWeek) { showToast('That workout could not be found', true); return; }

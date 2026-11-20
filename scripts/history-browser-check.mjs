@@ -134,6 +134,34 @@ try {
   check((await page.locator('.recap-no-route').textContent()).includes('No GPS route'), 'missing-route copy is not shown');
   check((await page.locator('.activity-detail-source').textContent()).includes('Imported from CSV'), 'detail provenance is missing');
 
+  // Repeat a stored strength workout: History closes, a blank one-off copy opens
+  // in the cockpit, and the logged sets are not re-completed in the copy.
+  await page.click('#activitiesBack');
+  await page.fill('#historySearchInput', 'Imported Lower');
+  await page.waitForFunction(() => document.querySelectorAll('.activity-history-row').length === 1);
+  await page.click('.activity-history-row:has-text("Imported Lower")');
+  await page.waitForSelector('.activity-repeat');
+  await page.click('.activity-repeat');
+  await page.waitForSelector('#trainCockpit:not([hidden])');
+  const copied = await page.evaluate(() => {
+    const s = JSON.parse(localStorage.getItem('hybrid_engine_v2_state') || '{}');
+    const key = s.activeStrengthSessionKey;
+    const week = key ? s.weeks?.[key] : null;
+    const sets = week?.lifts?.[week?.sessionDay]?.['Back Squat'] || [];
+    return {
+      kind: week?.sessionKind || '',
+      title: week?.sessionTitle || '',
+      sets: sets.length,
+      done: sets.filter((set) => set && set.c).length,
+      historyOpen: document.getElementById('activitiesScreen')?.style.display !== 'none',
+    };
+  });
+  check(copied.kind === 'copy', 'Repeat did not create a copied session');
+  check(/Imported Lower/.test(copied.title), 'The copied session lost its source title');
+  check(copied.sets === 2, 'The copied session lost its exercises/sets');
+  check(copied.done === 0, 'The copied session started with completed sets');
+  check(copied.historyOpen === false, 'History stayed open over the repeated workout');
+
   check(errors.length === 0, `page errors: ${errors.join(' | ')}`);
   if (failures.length) {
     console.error('History browser check failed:');

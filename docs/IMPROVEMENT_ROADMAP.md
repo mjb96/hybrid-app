@@ -1972,6 +1972,15 @@ testable on its own.
     smoke, progress-hub browser check (chart points, four cards, session rows,
     range switch, no overflow at 320/390/412px).
   - Next: History copy/repeat and full exercise editing.
+- **2026-11-21 — Repeat a strength workout from History.**
+  - The strength detail now leads with **Repeat this workout**. It force-closes
+    History and creates a fresh one-off session from the source sets through the
+    existing `createOneOffStrengthSession` copy path: exercises, loads, reps,
+    rests and notes carry over, completion and PR flags do not.
+  - The same action is still reachable from Choose workout → Copy past workout.
+  - Validation: typecheck, smoke, History browser check (copy is created, title
+    kept, two sets, none completed, History dismissed).
+  - Next: full add/remove-exercise editing in saved sessions.
 - **2026-11-21 — Training Report: real session counts, 30 days or 12 months.**
   - `forEachLoggedDay` now exposes `sessionCount` (one strength session + every
     run in the slot). The Training Report sums sessions, not unique dates, so a
