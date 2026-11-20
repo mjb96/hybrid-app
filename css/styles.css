@@ -9187,6 +9187,7 @@ html[data-theme="light"] .activity-filter--active { color: #07566b; }
 .migration-recovery__panel h1 { margin: 0 0 12px; font-size: 1.6rem; }
 .migration-recovery__panel p { margin: 0; color: var(--text-muted, #a8b1bd); line-height: 1.55; }
 .migration-recovery__action { width: 100%; margin-top: 24px; }
+.migration-recovery__secondary { margin-top: 10px; }
 
 /* ==========================================================================
    CORE MOBILE ERGONOMICS (roadmap R11)

@@ -50,6 +50,15 @@ class FakeDocument {
   }
 }
 
+function buttons(node) {
+  const found = [];
+  for (const child of node.children || []) {
+    if (child.tagName === 'BUTTON') found.push(child);
+    found.push(...buttons(child));
+  }
+  return found;
+}
+
 test('migration recovery copy distinguishes a future schema', () => {
   const copy = migrationRecoveryCopy({ fromVersion: 8, toVersion: 8 });
   assert.match(copy.message, /newer version/i);
@@ -76,4 +85,27 @@ test('migration recovery blocks startup with an accessible retry action', () => 
     dialog,
     'repeated failures must not stack recovery dialogs',
   );
+});
+
+test('corrupt recovery offers an export and a two-step fresh start', () => {
+  const document = new FakeDocument();
+  let fresh = 0;
+  const dialog = showMigrationRecovery(
+    { corrupt: true },
+    document,
+    () => {},
+    { getRawState: () => '{broken', onStartFresh: () => { fresh++; } },
+  );
+
+  assert.match(dialog.textContent, /could not read the saved file/i);
+  const controls = buttons(dialog);
+  assert.equal(controls.length, 3, 'Retry, export and fresh-start are all offered');
+  assert.equal(controls[1].textContent, 'Export a copy');
+
+  assert.equal(controls[2].textContent, 'Start fresh (erases this copy)');
+  controls[2].click();
+  assert.equal(fresh, 0, 'the first tap only arms the destructive action');
+  assert.match(controls[2].textContent, /Tap again/);
+  controls[2].click();
+  assert.equal(fresh, 1);
 });

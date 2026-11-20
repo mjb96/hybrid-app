@@ -32,7 +32,6 @@ import {
   pullEngineDataFromStorage,
   triggerCSVExport,
   triggerBodyweightCSVExport,
-  setImportSuccessCallback,
   showToast,
   savePersonalRating,
   getPersonalRating,
@@ -78,7 +77,7 @@ import {
   saveName, saveBodyWeight, setWeightUnit,
   setProgressionIncrement, setDistanceUnit, setTheme, setPalette, stepCurrentWeek, setAutoAdvanceWeek,
   saveThresholdPace as saveSettingsThresholdPace,
-  exportData, triggerImport, handleImportFile, confirmResetAllData,
+  exportData, triggerImport, handleImportFile, restoreImportBackup, confirmResetAllData,
   triggerExternalCsvImport, handleExternalCsvFile, triggerFitImport, handleFitFiles, toggleModule,
   selectEquipmentProfile, addEquipmentProfileFromUI, saveEquipmentProfileName,
   deleteActiveEquipmentProfile,
@@ -1227,6 +1226,7 @@ document.addEventListener('click', (e) => {
   else if (action === 'week-step') stepCurrentWeek(parseInt(target.getAttribute('data-delta'), 10));
   else if (action === 'export-data') exportData();
   else if (action === 'import-data') triggerImport();
+  else if (action === 'restore-import-backup') void restoreImportBackup();
   else if (action === 'import-external-csv') triggerExternalCsvImport();
   else if (action === 'import-fit-files') triggerFitImport();
   else if (action === 'equipment-profile-add') addEquipmentProfileFromUI();
@@ -1678,7 +1678,6 @@ initGarminGymImport(async (timeStr, stats) => {
   }
 });
 
-setImportSuccessCallback(() => hydrateCurrentView());
 
 async function exportProgramJson(programId) {
   const program = getProgramById(programId);

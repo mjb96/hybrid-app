@@ -12,10 +12,11 @@ export { showToast } from './toast.js';
 import { showToast } from './toast.js';
 import { secureRandomSuffix } from './util/secure-id.js';
 import { recomputeLoadMetrics } from './brain/load_models.js';
-import { initImportExport, triggerEngineExport, triggerCSVExport, triggerBodyweightCSVExport, triggerEngineImport, setImportSuccessCallback } from './state/import-export.js';
-import { migrateState, CURRENT_SCHEMA_VERSION } from './state/migrations.js';
+import { initImportExport, triggerCSVExport, triggerBodyweightCSVExport } from './state/import-export.js';
+import { migrateState } from './state/migrations.js';
 import { showMigrationRecovery } from './state/migration-recovery-ui.js';
-import { writeMirror, restoreStateMirror, mirrorSupported } from './state/mirror.js';
+import { preserveCorruptState, recoveryRawState } from './state/corrupt-state.js';
+import { writeMirror, restoreStateMirror, mirrorSupported, clearMirror } from './state/mirror.js';
 import {
   ensureActivation, beginActivation, archiveForeignWeeks,
 } from './state/activation-identity.js';
@@ -29,7 +30,7 @@ import {
   isRecoveryGatePending,
 } from './state/recovery-gate.js';
 
-export { triggerEngineExport, triggerCSVExport, triggerBodyweightCSVExport, triggerEngineImport, setImportSuccessCallback };
+export { triggerCSVExport, triggerBodyweightCSVExport };
 
 export const STORAGE_KEY = 'hybrid_engine_v2_state';
 // Written beside the state so the native mirror can tell which copy is newer.
@@ -664,6 +665,7 @@ function memoizedLoadMetrics(state) {
 // serialises the CURRENT appState, so it can never persist stale data.
 let _localTimer = null;
 let _localPending = false;
+let _persistenceSuspended = false;
 const LOCAL_DEBOUNCE_MS = 400;
 // Dev instrumentation: set localStorage.openhybridPersistDebug='1' to log slow writes.
 let _persistDebug = false;
@@ -687,10 +689,25 @@ function _notifyStorageFailure(mirrored) {
   );
 }
 
+// Import/reset are destructive writes that replace or remove the local key. A
+// debounced flush or a pagehide during their reload window would otherwise write
+// the OLD in-memory state back over the new bytes. Cancel the pending timer
+// before the write, and suspend persistence entirely for a reset.
+export function cancelPendingLocalSave() {
+  if (_localTimer) { clearTimeout(_localTimer); _localTimer = null; }
+  _localPending = false;
+}
+
+export function setPersistenceSuspended(suspended) {
+  _persistenceSuspended = !!suspended;
+  if (_persistenceSuspended) cancelPendingLocalSave();
+}
+
 // The one place that actually serialises + writes local state. Cancels any
 // pending debounce (it just wrote the latest), recomputes memoized load metrics,
 // and — in dev — warns when a single write blows the frame budget.
 function writeLocalNow() {
+  if (_persistenceSuspended) return false;
   if (_localTimer) { clearTimeout(_localTimer); _localTimer = null; }
   _localPending = false;
   // Do not turn boot's empty defaults into a "returning" local profile while
@@ -776,18 +793,44 @@ export async function pullEngineDataFromStorage() {
   } catch (e) {
     console.warn('State mirror restore failed:', e);
   }
+  let corruptRaw = null;
   try {
     rawLocal = localStorage.getItem(STORAGE_KEY);
     if (rawLocal) {
       localData = JSON.parse(rawLocal);
     }
   } catch (e) {
+    corruptRaw = rawLocal;
+    preserveCorruptState(localStorage, STORAGE_KEY, rawLocal);
     console.error('Failed to parse local storage:', e);
   }
   if (mirrorRestore && mirrorRestore.restored && mirrorRestore.state) {
     localData = mirrorRestore.state;
     rawLocal = JSON.stringify(localData);
     console.info('Restored app state from the Android private mirror.');
+  }
+  // No readable local copy and no valid mirror: stop before onboarding or any
+  // convenience save can overwrite bytes that may still be recoverable. The
+  // recovery screen can export the preserved blob.
+  if (corruptRaw && !(mirrorRestore && mirrorRestore.restored && mirrorRestore.state)) {
+    if (typeof document !== 'undefined') {
+      showMigrationRecovery({ corrupt: true }, document, () => location.reload(), {
+        getRawState: () => recoveryRawState(_defaultStorage(), STORAGE_KEY),
+        onStartFresh: () => {
+          cancelPendingLocalSave();
+          setPersistenceSuspended(true);
+          try {
+            localStorage.removeItem(STORAGE_KEY);
+            localStorage.removeItem(STORAGE_KEY + '_corrupt');
+            localStorage.removeItem(STORAGE_KEY + '_backup');
+            localStorage.removeItem(SAVED_AT_KEY);
+          } catch { /* recovery best-effort */ }
+          clearMirror();
+          location.reload();
+        },
+      });
+    }
+    throw new Error('The saved openHybrid data could not be read.');
   }
 
   const baseDefaults = {
@@ -904,11 +947,7 @@ export async function pullEngineDataFromStorage() {
   // Wire up sub-modules now that state is live
   initImportExport({
     getState:    () => appState,
-    setState:    (s) => { appState = s; },
-    saveState:   saveStateToLocalStorage,
     defaultDays: DEFAULT_DAYS,
-    migrate:     migrateState,
-    storageKey:  STORAGE_KEY,
   });
 
   try {
