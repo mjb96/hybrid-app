@@ -26,6 +26,7 @@ let _getState = null;
 let _saveState = null;
 let _filter = 'all';
 let _dateFilter = null;
+let _origin = 'all';
 let _activationFilter = null;
 let _activationLabel = null;
 let _selected = null;
@@ -72,6 +73,13 @@ function replacementPrescription(state, weekKey, day) {
 export function initActivities(getStateFn, saveStateFn) {
   _getState = getStateFn;
   _saveState = saveStateFn;
+
+  document.addEventListener('change', (event) => {
+    const select = /** @type {HTMLSelectElement|null} */ (event.target);
+    if (!select || select.id !== 'historySourceFilter') return;
+    _origin = select.value === 'app' || select.value === 'imported' ? select.value : 'all';
+    renderList();
+  });
 
   // Search is client-side and instant. Re-render preserves the caret so typing
   // never jumps to the end or loses focus.
@@ -236,7 +244,7 @@ function renderList() {
   if (actions) actions.innerHTML = '';
 
   const all = activityRows(state);
-  const typed = filterActivityHistory(all, _filter, _view === 'list' ? _dateFilter : null, _activationFilter);
+  const typed = filterActivityHistory(all, _filter, _view === 'list' ? _dateFilter : null, _activationFilter, _origin);
   const rows = _view === 'list' ? searchActivityHistory(typed, _search) : typed;
   const filterLabel = _view === 'calendar' ? 'All training history'
     : _search ? 'Search results'
@@ -244,10 +252,20 @@ function renderList() {
         : _activationFilter ? (_activationLabel || 'Previous program run')
           : 'All training history';
 
-  const filters = `<div class="activity-filter-bar" role="group" aria-label="Activity type">
-    ${[['all', 'All'], ['strength', 'Strength'], ['run', 'Runs']].map(([value, label]) =>
-      `<button class="activity-filter${_filter === value ? ' activity-filter--active' : ''}" data-action="filter-activities" data-filter="${value}" aria-pressed="${_filter === value}">${label}</button>`
-    ).join('')}
+  const filters = `<div class="activity-filter-row">
+    <div class="activity-filter-bar" role="group" aria-label="Activity type">
+      ${[['all', 'All'], ['strength', 'Strength'], ['run', 'Runs']].map(([value, label]) =>
+        `<button class="activity-filter${_filter === value ? ' activity-filter--active' : ''}" data-action="filter-activities" data-filter="${value}" aria-pressed="${_filter === value}">${label}</button>`
+      ).join('')}
+    </div>
+    <label class="activity-source-filter">
+      <span>Source</span>
+      <select id="historySourceFilter" aria-label="Activity source">
+        <option value="all"${_origin === 'all' ? ' selected' : ''}>All sources</option>
+        <option value="app"${_origin === 'app' ? ' selected' : ''}>Logged in app</option>
+        <option value="imported"${_origin === 'imported' ? ' selected' : ''}>Imported</option>
+      </select>
+    </label>
   </div>`;
 
   const search = `<label class="history-search">
@@ -257,7 +275,9 @@ function renderList() {
 
   const body = _view === 'calendar'
     ? historyCalendarHTML(state, typed)
-    : `${filters}${search}<div class="activity-history-list">${rows.length ? historyRowsHTML(rows) : historyEmptyHTML()}</div>`;
+    : `${filters}${search}<div class="activity-history-list">${rows.length ? historyRowsHTML(rows) : (_origin !== 'all'
+      ? `<div class="activity-history-empty"><span>○</span><strong>No ${_origin === 'imported' ? 'imported' : 'logged-in-app'} activities</strong><p>Change the source filter or clear the search.</p></div>`
+      : historyEmptyHTML())}</div>`;
 
   content.innerHTML = `
     <div class="activity-history-hero">

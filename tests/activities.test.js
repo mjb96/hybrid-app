@@ -217,3 +217,25 @@ test('deleting strength clears and restores session lifecycle', () => {
   assert.equal(week.sessionStatus.mon, 'finished');
   assert.deepEqual(week.sessionSummary.mon, { finishedAt: '2026-07-13T10:00:00Z' });
 });
+
+test('source filter separates logged-in-app work from imports', () => {
+  const state = fixture();
+  state.weeks['arch:import:upper'] = {
+    activationId: 'imported', programId: 'imported', sessionId: 'og_upper', source: 'csv-import',
+    dates: { tue: '2026-07-14' },
+    lifts: { tue: { 'Bench Press': [{ c: true, w: '80', r: '8' }] } },
+    runs: {}, runSessions: {},
+  };
+  state.weeks['arch:fit:run'] = {
+    activationId: 'imported', programId: 'imported', sessionId: 'fit_run',
+    dates: { wed: '2026-07-15' }, lifts: {},
+    runs: {}, runSessions: { wed: [{ sessionId: 'fit_run_1', source: 'fit', dist: '10', time: '50:00', localDate: '2026-07-15' }] },
+  };
+  const rows = buildActivityHistory(state);
+  assert.equal(rows.find((row) => row.sessionId === 'og_upper').origin, 'imported');
+  assert.equal(rows.find((row) => row.sessionId === 'fit_run_1').origin, 'imported');
+  assert.equal(rows.find((row) => row.sessionId === 'run_a').origin, 'app');
+  assert.equal(filterActivityHistory(rows, 'all', null, null, 'imported').length, 2);
+  assert.equal(filterActivityHistory(rows, 'all', null, null, 'app').length, 3);
+  assert.equal(filterActivityHistory(rows, 'all', null, null, 'all').length, 5);
+});

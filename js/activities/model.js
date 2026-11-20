@@ -32,6 +32,12 @@ function sourceLabel(source) {
   return 'Logged activity';
 }
 
+/** Coarse provenance used by the History source filter. */
+function activityOrigin(source) {
+  return source === 'csv-import' || source === 'fit' || source === 'garmin'
+    ? 'imported' : 'app';
+}
+
 function dateStamp(localDate, startTs, fallbackIndex) {
   const explicit = Number(startTs);
   if (Number.isFinite(explicit) && explicit > 0) return explicit;
@@ -124,6 +130,7 @@ export function buildActivityHistory(state, options = {}) {
           timestamp: dateStamp(localDate, null, ++fallbackIndex),
           title: week.sessionTitle || programTitle || 'Strength Workout',
           source: week.source || null,
+          origin: activityOrigin(week.source || null),
           provenance: week.source ? sourceLabel(week.source) : null,
           status: week.sessionStatus?.[day] || null,
           adherence: week.sessionSummary?.[day] || null,
@@ -159,6 +166,7 @@ export function buildActivityHistory(state, options = {}) {
           timestamp: dateStamp(localRunDate, run.startTs || run.updatedTs, ++fallbackIndex),
           title: runTitle || runName(run),
           source: run.source || null,
+          origin: activityOrigin(run.source || null),
           provenance: sourceLabel(run.source),
           subtitle: sourceLabel(run.source),
           metrics: [dist > 0 ? distanceLabel(dist, distanceUnit) : '', run.time || '', run.pace ? paceLabel(run.pace, distanceUnit) : ''].filter(Boolean),
@@ -170,11 +178,12 @@ export function buildActivityHistory(state, options = {}) {
   return rows.sort((a, b) => b.timestamp - a.timestamp || b.id.localeCompare(a.id));
 }
 
-export function filterActivityHistory(rows, kind = 'all', localDate = null, activationId = null) {
+export function filterActivityHistory(rows, kind = 'all', localDate = null, activationId = null, origin = 'all') {
   return (rows || []).filter((row) =>
     (kind === 'all' || row.kind === kind)
     && (!localDate || row.localDate === localDate)
     && (!activationId || row.activationId === activationId)
+    && (origin === 'all' || row.origin === origin)
   );
 }
 
