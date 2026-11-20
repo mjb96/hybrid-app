@@ -37,11 +37,18 @@ export function isValidWorkingSet(s) {
 
 /**
  * Tonnage for a single set (weight × reps), coercing string inputs.
+ *
+ * `basis: 'each'` means the entered dumbbell load is PER IMPLEMENT, so a pair
+ * contributes twice the tonnage. Absence (all legacy sets) means the entered
+ * number is the total load and is multiplied once — the old behaviour exactly.
+ * e1RM deliberately does NOT use this multiplier: it is a per-implement
+ * estimate, and doubling it would mint false PRs.
  * @param {any} s
  * @returns {number}
  */
 export function setVolume(s) {
-  return (parseFloat(s?.w) || 0) * (parseInt(s?.r, 10) || 0);
+  const multiplier = s?.basis === 'each' ? 2 : 1;
+  return (parseFloat(s?.w) || 0) * (parseInt(s?.r, 10) || 0) * multiplier;
 }
 
 /**

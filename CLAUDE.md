@@ -436,7 +436,11 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   detection. Tick, quick-log and log-all share the PR + per-set comparison
   (`↑`/`=`/`↓` vs the same set index last session). `set.failure` is an
   independent flag — `type:'F'` stays AMRAP — and the draft/prescription
-  predicates recognise it.
+  predicates recognise it. `set.basis` (`each`, `per-side`, absent/`total`)
+  affects VOLUME only: `each` doubles a dumbbell pair, `per-side` and legacy
+  sets count once, and e1RM stays per-implement. Blank dumbbell rows default to
+  Each (Per side when unilateral); legacy completed sets read as Both and are
+  never rewritten. `js/workout/load-basis.js` owns the helpers.
 - Session lifecycle: additive `weeks[key].sessionStatus[day]` (`in_progress|finished`)
   and `sessionSummary[day]` sidecars are owned by `js/workout/session-status.js`.
   Deliberate Finish marks the workout finished even below 100% plan adherence; deletion/

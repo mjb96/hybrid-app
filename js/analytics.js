@@ -2,7 +2,7 @@
 // PERFORMANCE MATRIX — analytics.js (orchestrator)
 // ==========================================
 import { getProgramById, saveStateToLocalStorage } from './state.js';
-import { isCompletedSet } from './set-utils.js';
+import { isCompletedSet, setVolume } from './set-utils.js';
 import { todayKey } from './dates.js';
 import { parsePaceSeconds } from './analytics/utils.js';
 import { renderStrengthAnalytics, setStrengthTab } from './analytics/views/view-strength.js';
@@ -276,7 +276,7 @@ function collectAnalyticsData() {
         dayLifts[lift].forEach(s => {
           const completed = isCompletedSet(s);
           if (completed && s.type !== 'W') {
-            weekVol += (parseFloat(s.w) || 0) * (parseInt(s.r, 10) || 0);
+            weekVol += setVolume(s);
             data.globalTotalSets++;
           }
           if (completed && s.rpe && s.type !== 'W') {

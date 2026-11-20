@@ -22,6 +22,21 @@ test('a real previous set still renders the persistent Last line', () => {
   assert.doesNotMatch(html, /set-cmp/, 'an unfinished set has no comparison result');
 });
 
+test('dumbbell rows expose the Each / Both basis; barbell rows do not', () => {
+  const dumbbell = buildSetRow(
+    { w: '', r: '', c: false }, 0, 'Dumbbell Bench Press', null,
+    'kg', 'Dumbbell Bench Press', 80, 8,
+  );
+  assert.match(dumbbell, /data-load-basis="each"/);
+  assert.match(dumbbell, /data-action="toggle-load-basis"/);
+
+  const barbell = buildSetRow(
+    { w: '', r: '', c: false }, 0, 'Barbell Bench Press', null,
+    'kg', 'Barbell Bench Press', 80, 8,
+  );
+  assert.doesNotMatch(barbell, /toggle-load-basis/);
+});
+
 test('failure is an independent set flag, not the AMRAP type', () => {
   const html = buildSetRow(
     { w: '90', r: '8', c: true, failure: true }, 0, 'Back Squat', null,

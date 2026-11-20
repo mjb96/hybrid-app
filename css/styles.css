@@ -2889,7 +2889,7 @@ html[data-theme="light"] .bm-h4 { stroke: #fff; }
 .btn-load.load-L  { opacity: 1; background: rgba(16,185,129,0.18); border-color: rgba(16,185,129,0.5); color: #34d399; }
 .btn-load.load-M  { opacity: 1; background: rgba(245,158,11,0.18); border-color: rgba(245,158,11,0.5); color: #fbbf24; }
 .btn-load.load-H  { opacity: 1; background: rgba(239,68,68,0.18);  border-color: rgba(239,68,68,0.5);  color: #f87171; }
-.btn-failure {
+.btn-failure, .btn-basis {
   font-size: 0.66rem; font-weight: 700; padding: 3px 12px;
   border-radius: 999px; border: 1px solid var(--border-medium);
   background: var(--overlay-sm); color: var(--text-faint);
@@ -2898,6 +2898,10 @@ html[data-theme="light"] .bm-h4 { stroke: #fff; }
 .btn-failure.is-failure {
   opacity: 1; background: rgba(239,68,68,0.18);
   border-color: rgba(239,68,68,0.5); color: #f87171;
+}
+.btn-basis.is-each {
+  opacity: 1; background: rgba(34,211,238,0.16);
+  border-color: rgba(34,211,238,0.45); color: #67e8f9;
 }
 
 /* ==========================================

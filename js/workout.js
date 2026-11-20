@@ -67,14 +67,14 @@ import {
 } from './workout/run-logging.js';
 import {
   appendCustomSetRow, appendWarmupSetRow, removeCustomSetRow, cycleSetType,
-  setSetLoadMode, cycleSetLoad, setPerSetRir, toggleSetFailure,
+  setSetLoadMode, cycleSetLoad, setPerSetRir, toggleSetFailure, toggleLoadBasis,
   currentBodyweight as _currentBodyweight,
 } from './workout/set-mutations.js';
 // Re-exported for js/app.js, which imports these from here.
 export { openConfirmResetModal, closeConfirmResetModal, executeResetActiveDayMetrics };
 export {
   appendCustomSetRow, appendWarmupSetRow, removeCustomSetRow, cycleSetType,
-  setSetLoadMode, cycleSetLoad, setPerSetRir, toggleSetFailure,
+  setSetLoadMode, cycleSetLoad, setPerSetRir, toggleSetFailure, toggleLoadBasis,
 };
 import {
   renderExerciseLibraryList,
@@ -1025,6 +1025,8 @@ export function executeOneTapQuickLog(labelNode, liftName, sIdx) {
     });
   }
   _setArr[sIdx] = { ..._prev, w: targetW, r: targetR, c: true };
+  const quickBasis = parentRow.getAttribute('data-load-basis');
+  if (quickBasis) _setArr[sIdx].basis = quickBasis;
   if (_tw != null && _prev.tw == null) _setArr[sIdx].tw = _tw;
   if (_tr != null && _prev.tr == null) _setArr[sIdx].tr = _tr;
   _ensureWorkoutDateStamp(appState, wk, selectedDay);
@@ -1257,6 +1259,11 @@ export function commitWorkoutUIState() {
           if (wIn && (isTicked || hasReps || hasStoredWeight)) storedSet.w = wIn.value;
           if (rIn && (isTicked || hasReps || String(storedSet.r ?? '').trim() !== '')) storedSet.r = rIn.value;
           if (cIn) storedSet.c = cIn.checked;
+          // Stamp the dumbbell basis only once there is real user data. A blank
+          // scaffold row must not gain `basis` and stop being recognised as
+          // untouched by the prescription reconciler.
+          const rowBasis = row.getAttribute('data-load-basis');
+          if (rowBasis && (isTicked || hasReps || hasStoredWeight)) storedSet.basis = rowBasis;
           if (row.classList.contains('is-pr')) appState.weeks[wk].lifts[selectedDay][liftName][idx].isPR = true;
         }
       });
@@ -1938,6 +1945,7 @@ document.addEventListener('click', (e) => {
   else if (action === 'jump-to-exercise') jumpToExercise(liftName);
   else if (action === 'set-rir') setPerSetRir(liftName, sIdx, parseInt(target.getAttribute('data-rir'), 10));
   else if (action === 'toggle-set-failure') toggleSetFailure(liftName, sIdx);
+  else if (action === 'toggle-load-basis') toggleLoadBasis(liftName, sIdx);
   else if (action === 'rest-adjust') adjustRestDuration(parseInt(target.getAttribute('data-delta'), 10));
   else if (action === 'open-add-exercise') openAddExerciseModal();
   else if (action === 'close-add-exercise') closeAddExerciseModal();

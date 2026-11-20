@@ -15,7 +15,7 @@ export {
 } from '../analytics/strength-calendar.js';
 import { estimatedE1rmForSet, isE1rmPr } from '../strength/e1rm.js';
 import { canonicalExerciseId, legacyMuscleMap, muscleCreditsForExercise, resolveExercise } from '../exercises/catalog.js';
-import { isValidWorkingSet } from '../set-utils.js';
+import { isValidWorkingSet, setVolume } from '../set-utils.js';
 import { collectCalendarWeek, localDayKey, weekStartOf } from '../analytics/weekly-aggregate.js';
 
 // ---- internal helpers -----------------------------------------------------
@@ -62,7 +62,7 @@ export function weeklyTonnageSeries(state, days, maxWeek) {
         for (const lift in dayLifts) {
           if (!Array.isArray(dayLifts[lift])) continue;
           dayLifts[lift].forEach(s => {
-            if (isWorkingSet(s)) ton += (parseFloat(s.w) || 0) * (parseInt(s.r, 10) || 0);
+            if (isWorkingSet(s)) ton += setVolume(s);
           });
         }
       });
@@ -160,9 +160,10 @@ export function workoutQuality(state, days, maxWeek, window = 3) {
           if (!isWorkingSet(s)) return;
           const tw = parseFloat(s.tw) || 0;
           const tr = parseInt(s.tr, 10) || 0;
-          const targetVol = tw * tr;
+          const basisMultiplier = s.basis === 'each' ? 2 : 1;
+          const targetVol = tw * tr * basisMultiplier;
           if (targetVol <= 0) return; // no prescription → not measurable
-          const actualVol = (parseFloat(s.w) || 0) * (parseInt(s.r, 10) || 0);
+          const actualVol = setVolume(s);
           sum += Math.max(0, Math.min(1, actualVol / targetVol));
           n++;
         });
