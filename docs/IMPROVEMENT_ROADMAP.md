@@ -1958,6 +1958,20 @@ testable on its own.
     assistance and a banded pushdown is resistance.
   - Validation: node tests, typecheck, smoke, set-row browser check proves a
     Band default shows the 20 kg band on the next blank row.
+- **2026-11-21 — Exercise drilldown: real chart, bests and session evidence.**
+  - `js/analytics/exercise-detail.js` is now the pure model behind the view.
+    It keeps each set's shape, reports the all-time best set (e1RM for reps,
+    longest time for holds, longest distance for carries) and marks a PR only
+    when a session beats every earlier one — the selected range filters the
+    chart/session list but never the PR baseline.
+  - The view leads with the latest set and its change, four summary cards, a
+    dependency-free SVG trend with PR dots and axis labels, then exact session
+    evidence. Bodyweight reps no longer disappear just because no load was
+    recorded.
+  - Validation: node tests (rep/hold/carry, out-of-range PR baseline), typecheck,
+    smoke, progress-hub browser check (chart points, four cards, session rows,
+    range switch, no overflow at 320/390/412px).
+  - Next: History copy/repeat and full exercise editing.
 - **2026-11-21 — Training Report: real session counts, 30 days or 12 months.**
   - `forEachLoggedDay` now exposes `sessionCount` (one strength session + every
     run in the slot). The Training Report sums sessions, not unique dates, so a
@@ -1968,7 +1982,7 @@ testable on its own.
   - The section is titled **Training Report** rather than “Monthly Report”.
   - Validation: node tests (same-day strength+2 runs = 3 sessions; year window),
     typecheck, smoke, progress-hub browser check (toggle + range + stats).
-  - Next: exercise drilldown.
+  - Next: History copy/repeat and full exercise editing.
 - **2026-11-20 — Progress overview: week hero, recent weeks, calendar heatmaps.**
   - The hub now leads with a this-week summary (sessions / planned, volume,
     distance, PRs, adherence bar) and a 12-week session strip, then the four
@@ -1992,7 +2006,7 @@ testable on its own.
     program-week series remain for the trend charts and are labelled as such.
   - Validation: 1,936 node tests, typecheck, smoke, progress-hub browser check
     (hero, 12 bars, Review Stats calendar/log), strength-volume check.
-  - Next: exercise drilldown.
+  - Next: History copy/repeat and full exercise editing.
 - **2026-11-20 — History overhaul: calendar-first imported history.**
   - Activities is presented as **History** and now has List | Calendar views.
     Calendar cells group the same row model History renders, so a day with two

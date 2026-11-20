@@ -2,43 +2,108 @@
 // Exercise and muscle drilldowns. Both retain links to the exact workouts that
 // underpin the aggregate so a trend is never a dead-end number.
 
-import { exercisePerformanceHistory } from '../../workout/exercise-history.js';
-import { isE1rmExercise } from '../../strength/e1rm.js';
 import { resolveExercise } from '../../exercises/catalog.js';
+import { buildExerciseDetailModel } from '../exercise-detail.js';
+import { SET_MODE, formatDistance, formatDuration } from '../../set-utils.js';
 import { buildWeeklyStrengthVolumeDetail } from '../strength-volume-detail.js';
-import { addDaysISO, localDayKey } from '../weekly-aggregate.js';
 import { comparePeriodValues } from '../period-comparison.js';
 import { VOLUME_LANDMARKS, zoneLabel, classifyVolume } from '../calculations/volume-landmarks.js';
 import { esc } from './screen-kit.js';
 import { buildVolumeGuideModel, musclePriorityLabel, muscleVolumeCorridor } from '../volume-guide.js';
 import { resolveProgramForState } from '../../state.js';
 
+/** @type {'12w'|'6m'|'all'} */
 let _exerciseRange = '12w';
 
 const fmtDate = (iso) => new Date(`${iso}T12:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
 const fmtVolume = (value, unit) => `${Math.round(value).toLocaleString()} ${unit}`;
 const muscleName = (id) => String(id || '').replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
-const activityIdFor = (row) => row.sessionId
-  ? `strength:${row.sessionId}`
-  : `strength:${encodeURIComponent(row.weekKey)}:${row.day}`;
+function fmtNumber(value) {
+  return Number.isInteger(value) ? String(value) : String(Math.round(value * 10) / 10);
+}
 
-function exerciseRows(state, name) {
-  const today = localDayKey(new Date());
-  const days = _exerciseRange === '12w' ? 84 : _exerciseRange === '6m' ? 183 : null;
-  const cutoff = days ? addDaysISO(today, -days) : null;
-  return exercisePerformanceHistory(state, name)
-    .filter(row => row.date <= today && (!cutoff || row.date >= cutoff))
-    .map(row => {
-      let volumeKg = 0, reps = 0, bestWeight = 0;
-      row.workingSets.forEach(set => {
-        const weight = parseFloat(set?.w) || 0;
-        const setReps = parseInt(set?.r, 10) || 0;
-        volumeKg += weight * setReps;
-        reps += setReps;
-        bestWeight = Math.max(bestWeight, weight);
-      });
-      return { ...row, volumeKg, reps, bestWeight, activityId: activityIdFor(row) };
-    });
+function chartValueLabel(model, value) {
+  if (model.chart.kind === 'time') return formatDuration(value);
+  if (model.chart.kind === 'distance') return `${formatDistance(value)}m`;
+  if (model.chart.unit === 'reps') return `${Math.round(value)} reps`;
+  return `${fmtNumber(value)} ${model.chart.unit}`;
+}
+
+// A small dependency-free SVG line chart. The evidence list below is the
+// accessible equivalent; this is the visual the athlete actually came for.
+function exerciseChartHTML(model) {
+  const points = model.series || [];
+  if (!points.length) return '';
+  const W = 340;
+  const H = 156;
+  const padL = 42;
+  const padR = 14;
+  const padT = 16;
+  const padB = 26;
+  const values = points.map((point) => point.value);
+  const max = Math.max(...values);
+  const min = Math.min(...values);
+  const spread = max - min || Math.max(1, max * 0.1);
+  const top = max + spread * 0.12;
+  const bottom = Math.max(0, min - spread * 0.18);
+  const x = (index) => padL + (points.length === 1
+    ? (W - padL - padR) / 2
+    : index * (W - padL - padR) / (points.length - 1));
+  const y = (value) => padT + (1 - (value - bottom) / ((top - bottom) || 1)) * (H - padT - padB);
+  const path = points.map((point, index) => `${index ? 'L' : 'M'}${x(index).toFixed(1)},${y(point.value).toFixed(1)}`).join(' ');
+  const area = `${path} L${x(points.length - 1).toFixed(1)},${H - padB} L${x(0).toFixed(1)},${H - padB} Z`;
+  const grid = [0, 0.5, 1].map((fraction) => {
+    const value = bottom + (top - bottom) * (1 - fraction);
+    const gy = y(value).toFixed(1);
+    return `<line x1="${padL}" y1="${gy}" x2="${W - padR}" y2="${gy}" class="an-ex-chart__grid"></line>
+      <text x="${padL - 6}" y="${Number(gy) + 4}" text-anchor="end" class="an-ex-chart__axis">${esc(chartValueLabel(model, value))}</text>`;
+  }).join('');
+  const dots = points.map((point, index) => `<circle cx="${x(index).toFixed(1)}" cy="${y(point.value).toFixed(1)}" r="${point.isPr ? 4.5 : 3.2}" class="an-ex-chart__dot${point.isPr ? ' is-pr' : ''}" data-exercise-point><title>${esc(point.dateLabel)}: ${esc(chartValueLabel(model, point.value))}${point.isPr ? ' · PR' : ''}</title></circle>`).join('');
+  const first = points[0];
+  const last = points[points.length - 1];
+  const title = model.chart.kind === 'time' ? 'Hold time'
+    : model.chart.kind === 'distance' ? 'Carry distance'
+      : model.chart.kind === 'e1rm' ? 'Estimated 1RM'
+        : model.chart.unit === 'reps' ? 'Best reps' : 'Top load';
+  return `<section class="an-volume-panel an-ex-chart-panel">
+    <div class="an-volume-panel__head"><h3>${title}</h3><span>${esc(chartValueLabel(model, last.value))}</span></div>
+    <svg class="an-ex-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(title)} across ${points.length} session${points.length === 1 ? '' : 's'}, from ${esc(chartValueLabel(model, first.value))} to ${esc(chartValueLabel(model, last.value))}">
+      <title>${esc(title)}</title>
+      <desc>${points.map((point) => `${point.dateLabel}: ${chartValueLabel(model, point.value)}`).join('. ')}</desc>
+      ${grid}
+      <path d="${area}" class="an-ex-chart__area"></path>
+      <path d="${path}" class="an-ex-chart__line"></path>
+      ${dots}
+      <text x="${x(0).toFixed(1)}" y="${H - 7}" text-anchor="start" class="an-ex-chart__axis">${esc(first.dateLabel)}</text>
+      ${points.length > 1 ? `<text x="${x(points.length - 1).toFixed(1)}" y="${H - 7}" text-anchor="end" class="an-ex-chart__axis">${esc(last.dateLabel)}</text>` : ''}
+    </svg>
+  </section>`;
+}
+
+function exerciseStatCards(model) {
+  const unit = model.unit;
+  if (model.shape === SET_MODE.TIME) {
+    return [
+      ['Sessions', String(model.totals.sessions)],
+      ['Best hold', model.bestText],
+      ['Total hold time', formatDuration(model.totals.holdSeconds)],
+      ['Working sets', String(model.totals.sets)],
+    ];
+  }
+  if (model.shape === SET_MODE.DISTANCE) {
+    return [
+      ['Sessions', String(model.totals.sessions)],
+      ['Best carry', model.bestText],
+      ['Total distance', `${formatDistance(model.totals.distanceM)}m`],
+      ['Working sets', String(model.totals.sets)],
+    ];
+  }
+  return [
+    ['Sessions', String(model.totals.sessions)],
+    ['Best set', model.bestText],
+    ['Total volume', model.totals.volume > 0 ? fmtVolume(model.totals.volume, unit) : '—'],
+    ['Total reps', String(model.totals.reps)],
+  ];
 }
 
 /** @param {any} state @param {{id?:string,name?:string}} entity */
@@ -47,42 +112,38 @@ export function renderExerciseDetail(state, entity = {}) {
   if (!root) return;
   const canonical = resolveExercise(entity.id || entity.name || '');
   const name = canonical?.name || entity.name || String(entity.id || '').replace(/^custom:/, '') || 'Exercise';
-  const unit = state?.settings?.weightUnit === 'lbs' ? 'lbs' : 'kg';
-  const rows = exerciseRows(state, name);
-  const latest = rows[0] || null;
-  const previous = rows[1] || null;
-  const bestWeight = Math.max(0, ...rows.map(row => row.bestWeight));
-  const bestE1rm = Math.max(0, ...rows.map(row => row.e1rm || 0));
-  const chosenWeight = latest?.bestWeight || bestWeight;
-  const bestRepsAtWeight = Math.max(0, ...rows.flatMap(row => row.workingSets)
-    .filter(set => (parseFloat(set?.w) || 0) === chosenWeight)
-    .map(set => parseInt(set?.r, 10) || 0));
-  const totalVolume = rows.reduce((sum, row) => sum + row.volumeKg, 0);
-  const totalSets = rows.reduce((sum, row) => sum + row.workingSets.length, 0);
-  const maxVolume = Math.max(1, ...rows.map(row => row.volumeKg));
-  const comparison = latest && previous
-    ? comparePeriodValues({ currentValue: latest.volumeKg, previousValue: previous.volumeKg, isCurrentWeek: false })
-    : null;
+  const model = buildExerciseDetailModel(state, name, { range: _exerciseRange });
   const rangeButton = (id, label) => `<button class="an-segment__button ${_exerciseRange === id ? 'is-active' : ''}" data-exercise-range="${id}" aria-pressed="${_exerciseRange === id}">${label}</button>`;
+  const comparisonTone = model.change?.direction === 'up' ? 'is-up' : model.change?.direction === 'down' ? 'is-down' : '';
+  const cards = model.hasData ? exerciseStatCards(model) : [];
 
   root.innerHTML = `<header class="an-detail-head"><div><span class="an-detail-kicker">Exercise analytics</span><h2>${esc(name)}</h2></div></header>
     <nav class="an-segment an-segment--three" aria-label="Exercise history range">${rangeButton('12w', '12 weeks')}${rangeButton('6m', '6 months')}${rangeButton('all', 'All time')}</nav>
-    ${!rows.length ? '<div class="an-empty-state"><strong>No completed history in this range</strong><span>Try a longer range or complete a working set for this exercise.</span></div>' : `
-      <section class="an-volume-summary" aria-label="Exercise summary">
-        <article><span>Latest performance</span><strong>${latest ? fmtVolume(latest.volumeKg, unit) : '—'}</strong></article>
-        <article><span>Best weight</span><strong>${bestWeight ? `${bestWeight} ${unit}` : '—'}</strong></article>
-        <article><span>${isE1rmExercise(name) ? 'Best estimated 1RM' : 'Best reps at latest weight'}</span><strong>${isE1rmExercise(name) && bestE1rm ? `${Math.round(bestE1rm)} ${unit}` : (bestRepsAtWeight || '—')}</strong></article>
-        <article><span>Frequency</span><strong>${rows.length} sessions</strong></article>
+    ${!model.hasData ? '<div class="an-empty-state"><strong>No completed history in this range</strong><span>Try a longer range or complete a working set for this exercise.</span></div>' : `
+      <article class="an-ex-hero">
+        <span class="an-ex-hero__k">Latest session · ${esc(model.latest.dateLabel)}</span>
+        <strong class="an-ex-hero__v">${esc(model.latest.top.text)}</strong>
+        <span class="an-ex-hero__sub">${model.change ? `<b class="${comparisonTone}">${model.change.direction === 'up' ? '↑' : model.change.direction === 'down' ? '↓' : '='} ${esc(model.change.text)}</b>` : 'First session in this range'} · ${model.latest.sets} working set${model.latest.sets === 1 ? '' : 's'}</span>
+      </article>
+      <section class="an-volume-summary an-ex-summary" aria-label="Exercise summary">
+        ${cards.map(([label, value]) => `<article><span>${esc(label)}</span><strong>${esc(value)}</strong></article>`).join('')}
       </section>
-      <article class="an-volume-compare"><div><span class="an-volume-compare__label">Latest vs previous session</span><strong class="an-volume-compare__value">${comparison?.isComparable ? `${comparison.percentageChange > 0 ? '+' : ''}${comparison.percentageChange}% volume` : (comparison?.message || 'First session in range')}</strong><span class="an-volume-compare__meta">Same exercise · aliases combined</span></div><div class="an-volume-compare__periods"><span>${totalSets} working sets</span><span>${fmtVolume(totalVolume, unit)} total</span></div></article>
-      <section class="an-volume-panel"><div class="an-volume-panel__head"><h3>Session history</h3><span>Tap a session for evidence</span></div>
-        <div class="an-exercise-trend" aria-label="Volume trend by session">${[...rows].reverse().map(row => `<span title="${esc(fmtDate(row.date))}: ${esc(fmtVolume(row.volumeKg, unit))}" style="height:${Math.max(5, Math.round(row.volumeKg / maxVolume * 100))}%"></span>`).join('')}</div>
-        <div class="an-evidence-list">${rows.map(row => `<button class="an-evidence-row" data-action="open-activity-detail" data-activity-id="${esc(row.activityId)}"><span class="an-evidence-row__date">${esc(fmtDate(row.date))}</span><span class="an-evidence-row__body"><span class="an-evidence-row__title">${row.bestWeight ? `${row.bestWeight} ${unit} top load · ${row.reps} total reps` : `${row.reps} total reps`}</span><span class="an-evidence-row__meta">${row.workingSets.length} sets · ${fmtVolume(row.volumeKg, unit)}${row.e1rm ? ` · ${Math.round(row.e1rm)} ${unit} e1RM` : ''}</span></span><span class="an-evidence-row__arrow" aria-hidden="true">›</span></button>`).join('')}</div>
+      ${exerciseChartHTML(model)}
+      <section class="an-volume-panel"><div class="an-volume-panel__head"><h3>Session history</h3><span>Tap a session for exact evidence</span></div>
+        <div class="an-evidence-list">${model.sessions.map((row) => `<button class="an-evidence-row" data-action="open-activity-detail" data-activity-id="${esc(row.activityId)}">
+          <span class="an-evidence-row__date">${esc(row.dateLabel)}</span>
+          <span class="an-evidence-row__body">
+            <span class="an-evidence-row__title">${esc(row.top.text)}${row.isPr ? ' <span class="an-ex-pr">PR</span>' : ''}</span>
+            <span class="an-evidence-row__meta">${row.sets} set${row.sets === 1 ? '' : 's'}${row.shape === SET_MODE.REPS ? ` · ${row.reps} reps${row.volume ? ` · ${fmtVolume(row.volume, model.unit)}` : ''}${row.e1rm ? ` · ${row.e1rm} ${model.unit} e1RM` : ''}` : row.shape === SET_MODE.TIME ? ` · ${formatDuration(row.holdSeconds)} total` : ` · ${formatDistance(row.distanceM)}m total`}</span>
+          </span>
+          <span class="an-evidence-row__arrow" aria-hidden="true">›</span>
+        </button>`).join('')}</div>
       </section>`}
-    <details class="an-method"><summary>How is this calculated?</summary><p>History follows this exercise across programs and merges only explicit catalogue aliases. Volume is weight × reps for completed working sets. Estimated 1RM is shown only for eligible loaded strength exercises; bodyweight, band and unsuitable high-rep sets are not forced into that estimate.</p></details>`;
+    <details class="an-method"><summary>How is this calculated?</summary><p>History follows this exercise across programs and merges only explicit catalogue aliases. A rep set reports its best estimated 1RM when eligible, a hold its longest time and a carry its longest distance. PRs compare against every earlier session; the chart is limited to the selected range. Volume is weight × reps for completed working sets, never invented for holds or carries.</p></details>`;
 
   root.querySelectorAll('[data-exercise-range]').forEach(button => button.addEventListener('click', () => {
-    _exerciseRange = button.getAttribute('data-exercise-range') || '12w';
+    const next = button.getAttribute('data-exercise-range');
+    _exerciseRange = next === '6m' || next === 'all' ? next : '12w';
     renderExerciseDetail(state, entity);
   }));
 }
