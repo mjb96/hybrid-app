@@ -1,7 +1,10 @@
 // ==========================================
 // SETTINGS
 // ==========================================
-import { saveStateToLocalStorage, STORAGE_KEY, SAVED_AT_KEY } from './state.js';
+import {
+  saveStateToLocalStorage, setAppState, cancelPendingLocalSave,
+  setPersistenceSuspended, STORAGE_KEY, SAVED_AT_KEY,
+} from './state.js';
 import { writeMirror, clearMirror } from './state/mirror.js';
 import { putRouteRecords, putRoutes, clearRouteDatabase, saveMapToDB } from './db.js';
 import { parseImport } from './state/route-portability.js';
@@ -255,6 +258,9 @@ function _syncSettingsUI() {
   const appState = _getState();
   const s = appState.settings || {};
   void _syncAutomaticBackupUI();
+
+  const restoreBackupBtn = document.getElementById('settingsRestoreBackupBtn');
+  if (restoreBackupBtn) restoreBackupBtn.style.display = hasImportBackup() ? '' : 'none';
 
   document.querySelectorAll('[data-module-toggle]').forEach((input) => {
     input.checked = moduleEnabled(appState, input.getAttribute('data-module-toggle'));
@@ -1246,67 +1252,104 @@ export async function handleExternalCsvFile(file) {
 export function handleImportFile(file) {
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = async (e) => {
-    let parsed;
-    const rawText = String(e.target?.result || '');
-    try { parsed = JSON.parse(rawText); }
-    catch { showToast('Import failed: not a valid file', true); return; }
+  reader.onload = (e) => { void _importRawText(String(e.target?.result || '')); };
+  reader.readAsText(file);
+}
 
-    // Accepts BOTH the versioned envelope (with routes) AND legacy raw-appState
-    // exports, and validates the shape before touching stored data.
-    const result = parseImport(parsed);
-    if (!result) { showToast('Import failed: unrecognised file', true); return; }
+/**
+ * Validate, migrate and atomically replace the live state. `skipConfirm` is for
+ * the explicit "restore previous import backup" action, which has its own
+ * confirmation. The pending debounce is cancelled first and the in-memory state
+ * is replaced before the reload, so a pagehide flush can only write the NEW data.
+ */
+async function _importRawText(rawText, { skipConfirm = false } = {}) {
+  let parsed;
+  try { parsed = JSON.parse(rawText); }
+  catch { showToast('Import failed: not a valid file', true); return false; }
 
-    try {
-      const checked = validateImport(result.state, {
-        currentSchemaVersion: CURRENT_SCHEMA_VERSION,
-        rawText,
-      });
-      if (!checked.ok) {
-        showToast(importReasonMessage(checked.reason), true);
-        return;
-      }
+  // Accepts BOTH the versioned envelope (with routes) AND legacy raw-appState
+  // exports, and validates the shape before touching stored data.
+  const result = parseImport(parsed);
+  if (!result) { showToast('Import failed: unrecognised file', true); return false; }
 
-      // Upgrade a detached in-memory copy before touching the live state key.
-      // A migration failure therefore leaves the user's current bytes intact.
-      const migratedState = migrateState(checked.state);
-      const routeCount = result.routeRecords.length || Object.keys(result.routes).length;
+  try {
+    const checked = validateImport(result.state, {
+      currentSchemaVersion: CURRENT_SCHEMA_VERSION,
+      rawText,
+    });
+    if (!checked.ok) {
+      showToast(importReasonMessage(checked.reason), true);
+      return false;
+    }
+
+    // Upgrade a detached in-memory copy before touching the live state key.
+    // A migration failure therefore leaves the user's current bytes intact.
+    const migratedState = migrateState(checked.state);
+    const routeCount = result.routeRecords.length || Object.keys(result.routes).length;
+    if (!skipConfirm) {
       const confirmed = await confirmModal({
         title: 'Import this backup?',
         message: importPreviewMessage(importCounts(migratedState), routeCount),
         confirmLabel: 'Import backup',
         cancelLabel: 'Cancel',
       });
-      if (!confirmed) return;
+      if (!confirmed) return false;
+    }
 
-      // Undo point before overwriting live data. NOTE: writes to STORAGE_KEY —
-      // the previous code wrote to a dead 'hybridAppState' key, so import was a
-      // silent no-op.
+    // Undo point before overwriting live data. NOTE: writes to STORAGE_KEY —
+    // the previous code wrote to a dead 'hybridAppState' key, so import was a
+    // silent no-op. A restore of that backup deliberately keeps the same copy
+    // rather than replacing it with the state being discarded.
+    if (!skipConfirm) {
       const current = localStorage.getItem(STORAGE_KEY);
       if (current) localStorage.setItem(STORAGE_KEY + '_backup', current);
-      const importedJson = JSON.stringify(migratedState);
-      localStorage.setItem(STORAGE_KEY, importedJson);
-      localStorage.setItem(SAVED_AT_KEY, new Date().toISOString());
-      await writeMirror(importedJson);
-
-      // Restore rich session-linked routes when present; v2 backups fall back to
-      // their legacy week/day map. Stable ids make either path idempotent.
-      let restoredRouteCount = 0;
-      try {
-        restoredRouteCount = result.routeRecords.length
-          ? await putRouteRecords(result.routeRecords)
-          : await putRoutes(result.routes);
-      } catch { /* routes best-effort */ }
-
-      showToast(restoredRouteCount ? `Import successful (${restoredRouteCount} routes) — reloading…` : 'Import successful — reloading…');
-      setTimeout(() => location.reload(), 1200);
-    } catch (error) {
-      showToast(isStateMigrationError(error)
-        ? 'Import stopped safely: this file could not be upgraded.'
-        : 'Import failed while saving', true);
     }
-  };
-  reader.readAsText(file);
+    cancelPendingLocalSave();
+    setAppState(migratedState);
+    const importedJson = JSON.stringify(migratedState);
+    localStorage.setItem(STORAGE_KEY, importedJson);
+    localStorage.setItem(SAVED_AT_KEY, new Date().toISOString());
+    await writeMirror(importedJson);
+
+    // Restore rich session-linked routes when present; v2 backups fall back to
+    // their legacy week/day map. Stable ids make either path idempotent.
+    let restoredRouteCount = 0;
+    try {
+      restoredRouteCount = result.routeRecords.length
+        ? await putRouteRecords(result.routeRecords)
+        : await putRoutes(result.routes);
+    } catch { /* routes best-effort */ }
+
+    showToast(restoredRouteCount ? `Import successful (${restoredRouteCount} routes) — reloading…` : 'Import successful — reloading…');
+    setTimeout(() => location.reload(), 1200);
+    return true;
+  } catch (error) {
+    showToast(isStateMigrationError(error)
+      ? 'Import stopped safely: this file could not be upgraded.'
+      : 'Import failed while saving', true);
+    return false;
+  }
+}
+
+/** True when an import/restore has left a previous copy behind. */
+export function hasImportBackup() {
+  try { return !!localStorage.getItem(STORAGE_KEY + '_backup'); } catch { return false; }
+}
+
+/** Restore the single rolling copy written before the last import. */
+export async function restoreImportBackup() {
+  let raw = null;
+  try { raw = localStorage.getItem(STORAGE_KEY + '_backup'); } catch { /* storage unavailable */ }
+  if (!raw) { showToast('No previous import backup was found', true); return; }
+  const ok = await confirmModal({
+    title: 'Restore the previous data?',
+    message: 'This replaces the current training data with the copy saved before your last import. Export a JSON backup first if you are unsure.',
+    confirmLabel: 'Restore previous data',
+    cancelLabel: 'Cancel',
+    danger: true,
+  });
+  if (!ok) return;
+  await _importRawText(raw, { skipConfirm: true });
 }
 
 export async function confirmResetAllData() {
@@ -1316,6 +1359,10 @@ export async function confirmResetAllData() {
     confirmLabel: 'Reset everything', danger: true,
   });
   if (!ok) return;
+  // Stop any pending debounce and block pagehide/visibility flushes from writing
+  // the old in-memory state back after the keys are removed. The reload below is
+  // the only path out of this state.
+  setPersistenceSuspended(true);
   // Clear the real state key (+ rolling backups) and the GPS-route IndexedDB.
   // The previous code removed a dead 'hybridAppState' key, so reset was a no-op.
   localStorage.removeItem(STORAGE_KEY);
