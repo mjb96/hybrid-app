@@ -1972,6 +1972,18 @@ testable on its own.
     smoke, progress-hub browser check (chart points, four cards, session rows,
     range switch, no overflow at 320/390/412px).
   - Next: History copy/repeat and full exercise editing.
+- **2026-11-21 — Edit a saved session's exercises, not just its numbers.**
+  - `edit-saved.js` now works on a cloned draft. Add exercise (catalogue search
+    or custom name), add/remove set, remove exercise and edit notes/weights/
+    reps/holds/carries, then Save once. Cancel is genuinely lossless.
+  - Committing preserves session id, date and route, stamps filled new sets as
+    completed, drops empty additions, keeps existing set metadata and refreshes
+    `sessionSummary.completedSets`/adherence. Later programme scaffolding on the
+    same day is preserved but not reordered or shown as history.
+  - New set rows are shape-aware (Plank opens Time, Farmer Carry opens Distance).
+  - Validation: 1,988 node tests, typecheck, smoke, edit-saved browser check
+    (Cancel untouched, add Back Squat, remove one set, summary, recap).
+  - Next: History source filter and day-sheet polish.
 - **2026-11-21 — Repeat a strength workout from History.**
   - The strength detail now leads with **Repeat this workout**. It force-closes
     History and creates a fresh one-off session from the source sets through the
@@ -1980,7 +1992,7 @@ testable on its own.
   - The same action is still reachable from Choose workout → Copy past workout.
   - Validation: typecheck, smoke, History browser check (copy is created, title
     kept, two sets, none completed, History dismissed).
-  - Next: full add/remove-exercise editing in saved sessions.
+  - Next: History source filter and day-sheet polish.
 - **2026-11-21 — Training Report: real session counts, 30 days or 12 months.**
   - `forEachLoggedDay` now exposes `sessionCount` (one strength session + every
     run in the slot). The Training Report sums sessions, not unique dates, so a
