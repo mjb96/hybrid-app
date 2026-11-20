@@ -189,6 +189,7 @@ try {
       await page.waitForSelector('.exercise-config');
       await page.click('.exercise-config [data-rest="off"]');
       await page.click('.exercise-config [data-warmup="off"]');
+      await page.click('.exercise-config [data-load-mode="banded"]');
       await page.fill('#exerciseConfigNote', 'Belt on');
       await page.click('.exercise-config [data-cm="ok"]');
       await page.waitForTimeout(350);
@@ -199,12 +200,18 @@ try {
           note: prefs.map((p) => p.note).find(Boolean) || '',
           warmup: prefs.map((p) => p.warmup).find(Boolean) || '',
           rest: s.settings?.restOverrides?.['Incline Barbell Press'],
+          loadMode: Object.values(s.settings?.exercisePrefs || {}).map((p) => p.loadMode).find(Boolean) || '',
           cardNote: document.querySelector('.cockpit-exercise:not(.collapsed) .cockpit-ex-note')?.textContent?.trim() || '',
+          blankLoad: document.querySelector('.cockpit-exercise:not(.collapsed) .cockpit-set-row[data-set-index="1"] .btn-load')?.textContent?.trim() || '',
+          blankWeight: document.querySelector('.cockpit-exercise:not(.collapsed) .cockpit-set-row[data-set-index="1"] .input-weight-node')?.value || '',
         };
       });
       if (cfg.note !== 'Belt on') fail(`${tag}: exercise note did not persist (${JSON.stringify(cfg)})`);
       if (cfg.warmup !== 'off') fail(`${tag}: exercise warm-up mode did not persist (${JSON.stringify(cfg)})`);
       if (cfg.rest !== 0) fail(`${tag}: exercise no-timer rest did not persist (${JSON.stringify(cfg)})`);
+      if (cfg.loadMode !== 'banded') fail(`${tag}: exercise load default did not persist (${JSON.stringify(cfg)})`);
+      if (!/Med band/.test(cfg.blankLoad)) fail(`${tag}: a blank row ignored the Band load default (${JSON.stringify(cfg)})`);
+      if (String(cfg.blankWeight) !== '20') fail(`${tag}: a Band row did not show the band load (${JSON.stringify(cfg)})`);
       if (!/Belt on/.test(cfg.cardNote)) fail(`${tag}: exercise note did not render on the card`);
     }
 

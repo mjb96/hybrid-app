@@ -578,8 +578,7 @@ gap in the journey, and is folded into the Phase 6 visual-system work.
 ## Phase 2D — Logger upgrade (planned)
 
 **Status: L0–L2 done; L3 rest overrides and L4 plate line done.** Remaining:
-per-exercise load defaults, the `+ Drop` shortcut, timer persistence and
-adaptive warm-up rounding. The openGym logger was inspected as a reference for
+the `+ Drop` shortcut, timer persistence and adaptive warm-up rounding. The openGym logger was inspected as a reference for
 CONCEPTS only. No openGym code, media or nested data shape is copied.
 
 **Outcome:** the number the athlete types means what they think it means, and a
@@ -671,8 +670,11 @@ options live in the `⋯` sheets. Nothing appears in two places.
 - Centralise `effectiveLoad(set, exerciseName)` and use it in `setVolume`,
   e1RM, history, weekly aggregation and progression. The weight column label
   becomes `Each (kg)` / `Both (kg)` / `Per side (kg)`.
-- Per-exercise setting lives with the exercise config, not only in Settings;
-  openGym plan prescriptions may carry it.
+- **DONE 2026-11-21 — per-exercise Load default and Weight meaning.** The
+  config sheet stores Weighted/Bodyweight/Assisted/Band and Each/Both/Per side;
+  a blank row renders that default, and completion stamps the load mode/basis
+  actually used. Logged sets are never rewritten. openGym plan prescriptions
+  carrying a basis remain future import work.
 
 ### L2 — Set shapes
 - **DONE 2026-11-21 — failure flag**; unrated failure reads as RIR 0.
@@ -1945,6 +1947,17 @@ testable on its own.
   - Validation: 1,974 node tests, typecheck, smoke, set-row browser check
     (Time → 1:30 and Distance → 20 m saved through the live cockpit).
   - Next: per-exercise load default / weight meaning, then the `+ Drop` link.
+- **2026-11-21 — Per-exercise load defaults and weight meaning.**
+  - The exercise settings sheet now owns **Load default** (Weighted /
+    Bodyweight / Assisted / Band) and **Weight meaning** (Each / Both / Per
+    side for dumbbells), alongside Set shape, rest, warm-up and note.
+  - Defaults shape a BLANK row on a display copy, so opening a workout never
+    writes preferences into the program scaffold. Completion stamps the load
+    mode (and `bw`/`band`) and basis actually used; stored sets are unchanged.
+  - Band defaults use the exercise's band ROLE, so a banded pull-up is
+    assistance and a banded pushdown is resistance.
+  - Validation: node tests, typecheck, smoke, set-row browser check proves a
+    Band default shows the 20 kg band on the next blank row.
 - **2026-11-20 — Progress overview: week hero, recent weeks, calendar heatmaps.**
   - The hub now leads with a this-week summary (sessions / planned, volume,
     distance, PRs, adherence bar) and a 12-week session strip, then the four

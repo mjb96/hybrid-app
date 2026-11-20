@@ -46,7 +46,7 @@ import { projectScore, projectionLine } from './brain/hybrid-score/project.js';
 import { hasRunData, newRunSessionId, upsertRunSession } from './state/run-sessions.js';
 import { completionPresentation, evaluateSessionCompletion } from './workout/completion-policy.js';
 import { rescheduledWorkoutContext } from './workout/program-session-picker.js';
-import { applyLoadMode, isBodyweightExercise } from './workout/load-mode.js';
+import { applyBandLoad, applyLoadMode } from './workout/load-mode.js';
 import { validateSetEntry, primarySetEntryMessage } from './workout/set-entry.js';
 import { deleteDayWorkoutData, hasDayWorkoutDraft, snapshotDayWorkoutData, restoreDayWorkoutData } from './workout/delete-day.js';
 import { explicitSessionStatus, finishSession, markSessionInProgress, SESSION_STATUS } from './workout/session-status.js';
@@ -55,7 +55,9 @@ import {
 } from './exercises/catalog.js';
 import { openExerciseDetail } from './exercises/detail.js';
 import { exerciseLoggerHistory } from './workout/exercise-history.js';
-import { getExerciseNote, shouldAutoWarmup } from './workout/exercise-config.js';
+import {
+  getExerciseNote, preferredLoadBasis, preferredLoadMode, shouldAutoWarmup,
+} from './workout/exercise-config.js';
 import { openExerciseOptions } from './workout/exercise-options.js';
 import { estimatedE1rmForSet, isE1rmExercise, isE1rmPr } from './strength/e1rm.js';
 import {
@@ -441,10 +443,33 @@ function _buildExerciseCardEl(liftName, loggedLiftsData, weekData, wk, selectedD
       }
     }
     const ghostSet = suggestedGhost;
+    // Per-exercise defaults shape a BLANK row only. They are applied to a
+    // display copy so opening a workout never writes settings into the program
+    // scaffold; completion stamps what the athlete actually used.
+    const isBlankRow = !sData.c && !String(sData.w ?? '').trim() && !sData.bw && !sData.band
+      && !sData.loadMode && !sData.basis && !sData.sec && !sData.dist;
+    let displaySet = sData;
+    if (isBlankRow) {
+      displaySet = { ...sData };
+      const prefLoad = preferredLoadMode(appState, displayLiftName);
+      if (prefLoad === 'banded') {
+        displaySet = applyBandLoad(displaySet, 'M', {
+          exercise: displayLiftName,
+          bodyweight: _currentBodyweight(appState),
+          bandWeights: appState.settings?.bandWeights,
+        });
+      } else if (prefLoad !== 'weighted') {
+        displaySet = applyLoadMode(displaySet, prefLoad, {
+          bodyweight: _currentBodyweight(appState),
+          bandWeights: appState.settings?.bandWeights,
+        });
+      }
+      displaySet.basis = preferredLoadBasis(appState, displayLiftName);
+    }
     return buildSetRow(
-      sData, sIdx, safeLiftName, ghostSet, wUnit, displayLiftName,
+      displaySet, sIdx, safeLiftName, ghostSet, wUnit, displayLiftName,
       _currentBodyweight(appState), target.reps, repGoalFromTarget(target.reps), previousSet, roleTag,
-      effectiveSetMode(sData, displayLiftName, appState),
+      effectiveSetMode(displaySet, displayLiftName, appState),
     );
   }).join('');
 
@@ -1079,11 +1104,12 @@ export function executeOneTapQuickLog(labelNode, liftName, sIdx) {
   const _setArr = appState.weeks[wk].lifts[selectedDay][liftName];
   let _prev = _setArr[sIdx] || {};
   const loadMode = parentRow.dataset?.loadMode;
-  // A blank Pull-Up/Dip/Push-Up row defaults visibly to Bodyweight. Persist
-  // that same mode when its labelled shortcut is used, so the first tap is
-  // honest metadata rather than an untyped numeric weight.
-  if (isBodyweightExercise(liftName) && loadMode === 'bodyweight' && !_prev.loadMode && !_prev.bw) {
-    _prev = applyLoadMode(_prev, 'bodyweight', {
+  // A blank row can carry an inferred or per-exercise default resistance
+  // (Bodyweight/Assisted/Band). Persist that same mode when its labelled
+  // shortcut is used, so the first tap is honest metadata rather than an
+  // untyped numeric weight.
+  if (loadMode && loadMode !== 'weighted' && !_prev.loadMode && !_prev.bw && !_prev.band) {
+    _prev = applyLoadMode(_prev, loadMode, {
       bodyweight: _currentBodyweight(appState),
       bandWeights: appState.settings?.bandWeights,
     });
@@ -1366,6 +1392,16 @@ export function commitWorkoutUIState() {
           // untouched by the prescription reconciler.
           const rowBasis = row.getAttribute('data-load-basis');
           if (rowBasis && (isTicked || hasValue || hasStoredWeight)) storedSet.basis = rowBasis;
+          // Stamp a non-weighted default only once real work exists. The row's
+          // effective load already reflects it; this keeps the set's stored
+          // meaning explicit instead of re-inferring it on every reader.
+          const rowLoadMode = row.getAttribute('data-load-mode');
+          if (rowLoadMode && rowLoadMode !== 'weighted' && !storedSet.loadMode
+            && !storedSet.bw && !storedSet.band && (isTicked || hasValue || hasStoredWeight)) {
+            storedSet.loadMode = rowLoadMode;
+            if (rowLoadMode === 'bodyweight') storedSet.bw = true;
+            else storedSet.band = storedSet.band || 'M';
+          }
           if (row.classList.contains('is-pr')) appState.weeks[wk].lifts[selectedDay][liftName][idx].isPR = true;
         }
       });
