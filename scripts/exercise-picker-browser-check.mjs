@@ -192,7 +192,7 @@ try {
   await page.click('.nav-item[data-target="workout"]');
   await page.waitForTimeout(250);
   // Train opens on its landing; step into the cockpit for cockpit assertions.
-  await page.click('#trainLanding [data-action="qs-workout"]');
+  await page.click('#trainLanding .tl-today__primary');
   await page.waitForSelector('#trainCockpit:not([hidden])');
   await page.click('#view-workout [data-action="open-add-exercise"]');
   await page.waitForSelector('#addExerciseModal.active', { timeout: 3000 });

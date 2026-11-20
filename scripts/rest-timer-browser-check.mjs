@@ -51,8 +51,8 @@ const fixture = (theme) => ({
 
 async function enterCockpit(page) {
   await page.click('.nav-item[data-target="workout"]');
-  await page.waitForSelector('#trainLanding [data-action="qs-workout"]');
-  await page.click('#trainLanding [data-action="qs-workout"]');
+  await page.waitForSelector('#trainLanding .tl-today__primary');
+  await page.click('#trainLanding .tl-today__primary');
   await page.waitForSelector('#trainCockpit:not([hidden])');
   await page.click('#cockpitDaySelectorBar .day-pill[data-day="thu"]');
   await page.waitForSelector('#cockpitExercisesContainer .cockpit-exercise');

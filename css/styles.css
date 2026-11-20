@@ -9431,6 +9431,120 @@ input[type="checkbox"].gym-check,
 }
 
 /* ==========================================
+   ACTIVE SESSION COCKPIT
+
+   Once a session is running, the full landing-style header, day selector,
+   "Exercises" heading and vertical outline step aside. A compact stats bar,
+   Finish and a numbered exercise rail keep the active card in view.
+   ========================================== */
+.cockpit-active-sticky { display: block; }
+.cockpit-session-active .cockpit-active-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  margin: 0 0 6px;
+  padding: 4px 0 6px;
+  background: var(--bg-deep, #080f1a);
+  box-shadow: 0 10px 18px rgba(0,0,0,.24);
+}
+.cockpit-active-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 8px;
+  padding: 9px 12px;
+  border: 1px solid var(--border-default, rgba(255,255,255,.09));
+  border-radius: 13px;
+  background: var(--surface-2, rgba(255,255,255,.04));
+}
+.cockpit-active-head[hidden] { display: none; }
+.cockpit-active-head__stats { display: flex; align-items: center; gap: 18px; min-width: 0; }
+.cockpit-active-head__stats span { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.cockpit-active-head__stats b {
+  color: var(--text-primary, #f8fafc);
+  font-size: .86rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.cockpit-active-head__stats small {
+  color: var(--text-muted, #94a3b8);
+  font-size: .5rem;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.cockpit-active-head__finish {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 0 15px;
+  border: 1px solid color-mix(in srgb, var(--color-cyan, #22d3ee) 35%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-cyan, #22d3ee) 8%, transparent);
+  color: var(--color-cyan, #22d3ee);
+  font: inherit;
+  font-size: .76rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+.cockpit-active-head__finish:active { transform: scale(.98); }
+
+.cockpit-exercise-rail {
+  display: flex;
+  gap: 6px;
+  margin: 0 0 10px;
+  padding: 0 0 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.cockpit-exercise-rail[hidden] { display: none; }
+.cockpit-exercise-rail::-webkit-scrollbar { display: none; }
+.cockpit-exercise-rail__item {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  width: 44px;
+  min-height: 44px;
+  padding: 4px 2px;
+  border: 1px solid var(--border-default, rgba(255,255,255,.09));
+  border-radius: 10px;
+  background: rgba(255,255,255,.02);
+  color: var(--text-muted, #94a3b8);
+  font: inherit;
+  cursor: pointer;
+}
+.cockpit-exercise-rail__item:active { transform: scale(.96); }
+.cockpit-exercise-rail__num { font-size: .72rem; font-weight: 850; }
+.cockpit-exercise-rail__count { font-size: .5rem; font-weight: 750; }
+.cockpit-exercise-rail__item.is-active {
+  border-color: color-mix(in srgb, var(--color-cyan, #22d3ee) 55%, transparent);
+  background: color-mix(in srgb, var(--color-cyan, #22d3ee) 9%, transparent);
+  color: var(--color-cyan, #22d3ee);
+}
+.cockpit-exercise-rail__item.is-done {
+  border-color: rgba(16,185,129,.35);
+  background: rgba(16,185,129,.07);
+  color: #6ee7b7;
+}
+
+.cockpit-session-active .workout-cockpit-header,
+.cockpit-session-active #cockpitDaySelectorBar,
+.cockpit-session-active .app-section-heading,
+.cockpit-session-active #cockpitSessionOutline,
+.cockpit-session-active #cockpitScheduleContext,
+.cockpit-session-active #cockpitScoreHook { display: none !important; }
+.cockpit-active-sticky .subview-back-btn { margin: 0 0 6px; }
+.cockpit-session-active .cockpit-exercise { scroll-margin-top: 245px; }
+
+html[data-theme="light"] .cockpit-session-active .cockpit-active-sticky { background: var(--bg-body, #f2f2f7); box-shadow: 0 10px 18px rgba(15,23,42,.08); }
+html[data-theme="light"] .cockpit-active-head { background: rgba(0,0,0,.02); border-color: rgba(0,0,0,.08); }
+html[data-theme="light"] .cockpit-exercise-rail__item { background: rgba(0,0,0,.02); border-color: rgba(0,0,0,.08); }
+
+/* ==========================================
    TRAIN LANDING (roadmap Phase 0/2)
 
    Train is a SESSION PREVIEW, not a second Home. The week rail and one session

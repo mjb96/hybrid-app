@@ -16,7 +16,7 @@ import {
 import { computeDiagnosticForLift, parseTargetFromDescription, prescribeSetsForLift, computeExercisePRs, liftTarget, repGoalFromTarget } from './engine.js';
 import { getWeekModifier } from './schema.js';
 import { jtLiftTarget, jtSetRoleTags, jtStoredRoleTag, jtBackoffFromTopSet } from './programs/jt-shed-model.js';
-import { isCompletedSet, isWarmupSet, setVolume } from './set-utils.js';
+import { isCompletedSet, isWarmupSet, isValidWorkingSet, setVolume } from './set-utils.js';
 import { triggerRestTimerEngine, adjustRestDuration, moveRestTimerToActiveExercise, dismissRestTimer, stopAndResetWorkoutTimer, getWorkoutElapsedSeconds, startWorkoutTimer, bindWorkoutTimerSession } from './timers.js';
 import { mountExerciseDragAndDropSystems } from './dragdrop.js';
 import { showToast, saveNewCustomExerciseToLibrary } from './state.js';
@@ -45,7 +45,7 @@ import { rescheduledWorkoutContext } from './workout/program-session-picker.js';
 import { applyLoadMode, isBodyweightExercise } from './workout/load-mode.js';
 import { validateSetEntry, primarySetEntryMessage } from './workout/set-entry.js';
 import { deleteDayWorkoutData, hasDayWorkoutDraft, snapshotDayWorkoutData, restoreDayWorkoutData } from './workout/delete-day.js';
-import { finishSession, markSessionInProgress } from './workout/session-status.js';
+import { explicitSessionStatus, finishSession, markSessionInProgress, SESSION_STATUS } from './workout/session-status.js';
 import {
   browseExercises, equipmentLabel, exerciseStatForName, EXERCISE_CATEGORY_LABELS,
 } from './exercises/catalog.js';
@@ -486,6 +486,71 @@ function renderSessionOutline(loggedLiftsData, orderedNames, activeLift) {
     </ol>`;
 }
 
+// ---- Active-session exercise rail -----------------------------------------
+// A compact, numbered index shown only while a session is under way. The full
+// vertical outline is hidden then; this keeps the active card at the top while
+// retaining one-tap access to every other exercise.
+function renderCockpitExerciseRail(loggedLiftsData, orderedNames, activeLift) {
+  const el = document.getElementById('cockpitExerciseRail');
+  if (!el) return;
+  el.innerHTML = orderedNames.map((name, index) => {
+    const sets = loggedLiftsData?.[name] || [];
+    const done = sets.filter(isCompletedSet).length;
+    const isDone = sets.length > 0 && done === sets.length;
+    const isActive = name === activeLift;
+    return `<button type="button" class="cockpit-exercise-rail__item${isActive ? ' is-active' : ''}${isDone ? ' is-done' : ''}" data-action="jump-to-exercise" data-liftname="${escapeHtml(name)}" aria-label="${escapeHtml(name)}: ${done} of ${sets.length} sets done" aria-current="${isActive ? 'step' : 'false'}">
+      <span class="cockpit-exercise-rail__num">${index + 1}</span>
+      <span class="cockpit-exercise-rail__count">${done}/${sets.length}</span>
+    </button>`;
+  }).join('');
+}
+
+/** Recompute the compact active-session stats and rail from stored state. */
+function refreshCockpitActiveStats() {
+  if (!workoutContextReady()) return;
+  const appState = _getState();
+  const selectedDay = activeWorkoutDay(appState, _getSelectedDay());
+  const weekData = appState.weeks?.[activeWorkoutWeekKey(appState)];
+  if (!weekData) return;
+  const logged = weekData.lifts?.[selectedDay] || {};
+  const active = document.querySelector('.cockpit-exercise:not(.collapsed)')?.getAttribute('data-liftname');
+  let totalSets = 0;
+  let doneSets = 0;
+  let volume = 0;
+  for (const sets of Object.values(logged)) {
+    if (!Array.isArray(sets)) continue;
+    totalSets += sets.length;
+    for (const set of sets) {
+      if (isCompletedSet(set)) doneSets += 1;
+      if (isValidWorkingSet(set)) volume += setVolume(set);
+    }
+  }
+  const unit = appState.settings?.weightUnit === 'lbs' ? 'lbs' : 'kg';
+  const volEl = document.getElementById('cockpitActiveVolume');
+  const setsEl = document.getElementById('cockpitActiveSets');
+  if (volEl) volEl.textContent = `${Math.round(volume).toLocaleString('en-AU')} ${unit}`;
+  if (setsEl) setsEl.textContent = `${doneSets}/${totalSets}`;
+  document.querySelectorAll('#cockpitExerciseRail .cockpit-exercise-rail__item').forEach((item) => {
+    const name = item.getAttribute('data-liftname');
+    const sets = logged[name] || [];
+    const done = sets.filter(isCompletedSet).length;
+    const isDone = sets.length > 0 && done === sets.length;
+    const isActive = name === active;
+    const count = item.querySelector('.cockpit-exercise-rail__count');
+    if (count) count.textContent = `${done}/${sets.length}`;
+    item.classList.toggle('is-done', isDone);
+    item.classList.toggle('is-active', isActive);
+    item.setAttribute('aria-current', isActive ? 'step' : 'false');
+  });
+}
+
+/** Bring the expanded exercise card into view after Start. */
+export function scrollCockpitToActiveExercise() {
+  const card = document.querySelector('#cockpitExercisesContainer .cockpit-exercise:not(.collapsed)')
+    || document.querySelector('#cockpitExercisesContainer .cockpit-exercise');
+  card?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+}
+
 export function renderWorkout() {
   // Bail before the app has wired the context. Once the accessors moved behind
   // wrapper functions they became permanently truthy, so this must ask whether
@@ -620,11 +685,19 @@ export function renderWorkout() {
   // day that actually has lifts. On a run-only or rest day it's hidden (the run
   // panel carries its own Start/Track), so "Start Workout" never sits above
   // "No lifting scheduled today".
+  const timerKey = workoutSessionKey(appState, wk, selectedDay);
+  const timerBound = bindWorkoutTimerSession(timerKey);
+  const timerRunning = timerBound && getWorkoutElapsedSeconds(timerKey) > 0;
+  const sessionActive = timerBound || explicitSessionStatus(weekData, selectedDay) === SESSION_STATUS.IN_PROGRESS;
+  document.getElementById('view-workout')?.classList.toggle('cockpit-session-active', sessionActive);
+  const activeHead = document.getElementById('cockpitActiveHead');
+  const activeRail = document.getElementById('cockpitExerciseRail');
+  if (activeHead) activeHead.hidden = !sessionActive;
+  if (activeRail) activeRail.hidden = !sessionActive;
+
   const startBtn = document.getElementById('startWorkoutBtn');
   if (startBtn) {
     const hasGymToday = Array.isArray(homeBlueprint.lifts) && homeBlueprint.lifts.length > 0;
-    const timerKey = workoutSessionKey(appState, wk, selectedDay);
-    const timerRunning = bindWorkoutTimerSession(timerKey) && getWorkoutElapsedSeconds(timerKey) > 0;
     startBtn.style.display = (hasGymToday && !timerRunning) ? '' : 'none';
   }
 
@@ -658,6 +731,12 @@ export function renderWorkout() {
   // Session outline. Rendered from the SAME ordered names the accordion below
   // uses, so the index can never list an exercise the session does not have.
   renderSessionOutline(loggedLiftsData, orderedNames, previouslyExpandedLift);
+
+  if (sessionActive) {
+    const activeLift = previouslyExpandedLift || orderedNames[0] || null;
+    renderCockpitExerciseRail(loggedLiftsData, orderedNames, activeLift);
+    refreshCockpitActiveStats();
+  }
 
   // Build superset group map only from exercises owned by this live session.
   // Quarantined historical rows remain stored for Activities/analytics but can
@@ -1055,6 +1134,11 @@ export function updateInputState(inputNode) {
 }
 
 export function commitWorkoutUIState() {
+  // The cockpit can be hidden behind the Train landing. Its blank scaffolding
+  // must never be committed as a draft — doing so marked the day in_progress
+  // before the athlete had started it.
+  const cockpit = typeof document !== 'undefined' ? document.getElementById('trainCockpit') : null;
+  if (cockpit && cockpit.hidden) return;
   const appState = _getState();
   const selectedDay = activeWorkoutDay(appState, _getSelectedDay());
   const wk = activeWorkoutWeekKey(appState);
@@ -1101,9 +1185,17 @@ export function commitWorkoutUIState() {
           const rIn = row.querySelector('.input-reps-node');
           const cIn = row.querySelector('.gym-check');
           
-          if (wIn) appState.weeks[wk].lifts[selectedDay][liftName][idx].w = wIn.value;
-          if (rIn) appState.weeks[wk].lifts[selectedDay][liftName][idx].r = rIn.value;
-          if (cIn) appState.weeks[wk].lifts[selectedDay][liftName][idx].c = cIn.checked;
+          const storedSet = appState.weeks[wk].lifts[selectedDay][liftName][idx];
+          // Do not persist the bodyweight/assisted DISPLAY prefill on a blank,
+          // unticked row. It is the athlete's mass shown as a convenience, not
+          // an entered load, and writing it made opening a workout look like a
+          // draft (and marked the session in_progress).
+          const hasReps = String(rIn?.value ?? '').trim() !== '';
+          const hasStoredWeight = String(storedSet.w ?? '').trim() !== '';
+          const isTicked = !!cIn?.checked;
+          if (wIn && (isTicked || hasReps || hasStoredWeight)) storedSet.w = wIn.value;
+          if (rIn && (isTicked || hasReps || String(storedSet.r ?? '').trim() !== '')) storedSet.r = rIn.value;
+          if (cIn) storedSet.c = cIn.checked;
           if (row.classList.contains('is-pr')) appState.weeks[wk].lifts[selectedDay][liftName][idx].isPR = true;
         }
       });
@@ -1321,11 +1413,17 @@ export function refreshSessionOutline() {
   const oneOff = activeOneOffSession(appState);
   const homeBlueprint = oneOffBlueprint(appState,
     getProgramById(appState.activeProgramId)?.days?.[selectedDay] || { lifts: [], runs: 'Rest' });
-  renderSessionOutline(
-    weekData.lifts?.[selectedDay] || {},
-    activeSessionLiftNames(weekData, selectedDay, homeBlueprint, { oneOff: !!oneOff }),
-    document.querySelector('.cockpit-exercise:not(.collapsed)')?.getAttribute('data-liftname'),
-  );
+  const logged = weekData.lifts?.[selectedDay] || {};
+  const activeLift = document.querySelector('.cockpit-exercise:not(.collapsed)')?.getAttribute('data-liftname');
+  const orderedNames = activeSessionLiftNames(weekData, selectedDay, homeBlueprint, { oneOff: !!oneOff });
+  renderSessionOutline(logged, orderedNames, activeLift);
+  // Keep the active rail and its stats in step with a completed/un-ticked set
+  // without re-rendering the whole cockpit.
+  const rail = document.getElementById('cockpitExerciseRail');
+  if (rail && !rail.hidden) {
+    renderCockpitExerciseRail(logged, orderedNames, activeLift || orderedNames[0] || null);
+    refreshCockpitActiveStats();
+  }
 }
 
 /**

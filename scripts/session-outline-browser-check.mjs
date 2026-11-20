@@ -50,8 +50,8 @@ function fixture(theme) {
 
 async function enterCockpit(page) {
   await page.click('.nav-item[data-target="workout"]');
-  await page.waitForSelector('#trainLanding [data-action="qs-workout"]');
-  await page.click('#trainLanding [data-action="qs-workout"]');
+  await page.waitForSelector('#trainLanding .tl-today__primary');
+  await page.click('#trainLanding .tl-today__primary');
   await page.waitForSelector('#trainCockpit:not([hidden])');
   // Thursday on the default programme is a full lifting day regardless of when
   // this check runs, so the assertions never depend on the real weekday.

@@ -151,6 +151,12 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   Run/Walk/Fast, and one recent row. Do not add a "Workout" quick start — it
   duplicates Start; a different or empty workout belongs to "Choose another
   workout". Start opens the cockpit directly; an active session is Resume.
+- Active cockpit: once a session is running, `view-workout.cockpit-session-active`
+  keeps a sticky compact block (Back, volume/sets, Finish, session clock and a
+  numbered exercise rail) and hides the full header, day selector, "Exercises"
+  heading and vertical outline. The active card is scrolled into view with
+  enough offset that its first set stays under the sticky block. The rail and
+  stats refresh after a set is ticked without re-rendering the cockpit.
 - Weekly analytics attribution: `state.currentWeek` is a PROGRAM-week counter that only
   advances on an explicit step / confirmed auto-advance — it is NOT the calendar week.
   So "this week" analytics must NOT read `weeks[currentWeek]` directly (that leaked a

@@ -544,7 +544,25 @@
 
       <div id="trainCockpit" hidden>
 
-      <button class="subview-back-btn" data-action="back-to-train-landing">← Back to Train</button>
+      <!-- Active session: compact stats + Finish, then a numbered exercise rail.
+           The full header/day selector/outline step aside so the first set is
+           visible (js/workout.js toggles cockpit-session-active). -->
+      <div class="cockpit-active-sticky">
+        <button class="subview-back-btn" data-action="back-to-train-landing">← Back to Train</button>
+        <div class="cockpit-active-head" id="cockpitActiveHead" hidden>
+          <div class="cockpit-active-head__stats">
+            <span><b id="cockpitActiveVolume">0 kg</b><small>Volume</small></span>
+            <span><b id="cockpitActiveSets">0/0</b><small>Sets</small></span>
+          </div>
+          <button type="button" class="cockpit-active-head__finish" data-action="open-finish-modal">Finish</button>
+        </div>
+        <div class="cockpit-exercise-rail" id="cockpitExerciseRail" role="group" aria-label="Exercise rail" hidden></div>
+
+        <div class="session-timer-bar" id="workoutDurationBar" role="timer">
+          <span class="timer-txt">⏱️ SESSION ACTIVE</span>
+          <span class="timer-clock" id="workoutDurationClock">00:00</span>
+        </div>
+      </div>
 
       <div class="workout-cockpit-header">
         <div class="wch-meta">
@@ -579,11 +597,6 @@
       </nav>
 
       <button id="startWorkoutBtn" class="btn-action-block btn-green mb-3" data-action="start-timer">Start Workout</button>
-
-      <div class="session-timer-bar" id="workoutDurationBar" role="timer">
-        <span class="timer-txt">⏱️ SESSION ACTIVE</span>
-        <span class="timer-clock" id="workoutDurationClock">00:00</span>
-      </div>
 
       <div class="global-timer-bar" id="cockpitTimerBar">
         <div class="rest-timer-body">

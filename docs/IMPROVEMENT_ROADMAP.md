@@ -594,6 +594,20 @@ set can be a rep set, a hold, a carry, or a failure without lying to volume,
 - A deliberate "Focus" mode may come later as an optional layout; it is not the
   default and is not part of the first slice.
 
+### Set-row contract
+- Five columns only: **SET | PREVIOUS | WEIGHT | REPS | ✓**. The set number is a
+  label, not a Log button; the tick is the single completion action. A blank row
+  takes its visible target/ghost and then validates, as the checkbox already
+  does.
+- PREVIOUS is the real prior set for that row (`60×8`), or an em dash when there
+  is none. It is never the prescription or a ghost.
+- Completed rows read as one compact line; the active row is the only one with
+  highlighted inputs. RIR/RPE appears after completion. Set type, load, rest
+  after this set, note and remove live in the `⋯` sheet.
+- Target: a working row no taller than ~52px, so a 390×844 cockpit shows the
+  active exercise, its previous values and at least the first working set under
+  the sticky session block.
+
 ### Settings model — simple but comprehensive
 Three levels only. Session defaults live in Settings; per-exercise and per-set
 options live in the `⋯` sheets. Nothing appears in two places.
@@ -1747,6 +1761,13 @@ testable on its own.
 
 ## 12. Session log
 
+- **2026-11-20 — Active cockpit gets a compact, sticky header.**
+  - Starting a session hides the full landing-style header, day selector,
+    "Exercises" heading and vertical outline. A sticky block keeps Back, volume,
+    sets, Finish, the session clock and a numbered exercise rail on screen.
+  - The active card scrolls into view with a 245px offset so its first working
+    set sits below the sticky block. Logging a set updates volume, set count and
+    the rail in place, without a cockpit re-render.
 - **2026-11-20 — Train is a session preview, not a second Home.**
   - The landing now shows the week rail and today's card with the actual
     exercises and `liftTarget` targets, then one Start/Resume. The card is the

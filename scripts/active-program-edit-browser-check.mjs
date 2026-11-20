@@ -334,7 +334,7 @@ try {
     await page.click('.nav-item[data-target="workout"]');
     await page.waitForSelector('#view-workout', { timeout: 6000 });
     // Train opens on its landing; step into the cockpit for the day selector.
-    await page.click('#trainLanding [data-action="qs-workout"]');
+    await page.click('#trainLanding .tl-today__primary');
     await page.waitForSelector('#trainCockpit:not([hidden])');
     await page.click(`#cockpitDaySelectorBar .day-pill[data-day="${builderDay}"]`);
     await page.waitForTimeout(300);
