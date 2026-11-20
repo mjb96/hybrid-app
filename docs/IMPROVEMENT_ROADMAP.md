@@ -1972,6 +1972,16 @@ testable on its own.
     smoke, progress-hub browser check (chart points, four cards, session rows,
     range switch, no overflow at 320/390/412px).
   - Next: History copy/repeat and full exercise editing.
+- **2026-11-21 — History source filter.**
+  - Activity rows now carry a coarse `origin` (`app` or `imported`) derived from
+    the stored source, not from display copy. Runs whose week was imported but
+    whose session came from GPS remain app-tracked.
+  - History gains an explicit **Source** selector (All / Logged in app /
+    Imported). It filters the list, the calendar dots and the same-day list,
+    with an honest no-results state.
+  - Validation: activities model tests (imported strength + FIT run vs app runs),
+    typecheck, smoke, History browser check (3 imported / 1 app / 4 all).
+  - Next: calendar day-sheet polish.
 - **2026-11-21 — Edit a saved session's exercises, not just its numbers.**
   - `edit-saved.js` now works on a cloned draft. Add exercise (catalogue search
     or custom name), add/remove set, remove exercise and edit notes/weights/
@@ -1983,7 +1993,7 @@ testable on its own.
   - New set rows are shape-aware (Plank opens Time, Farmer Carry opens Distance).
   - Validation: 1,988 node tests, typecheck, smoke, edit-saved browser check
     (Cancel untouched, add Back Squat, remove one set, summary, recap).
-  - Next: History source filter and day-sheet polish.
+  - Next: calendar day-sheet polish.
 - **2026-11-21 — Repeat a strength workout from History.**
   - The strength detail now leads with **Repeat this workout**. It force-closes
     History and creates a fresh one-off session from the source sets through the
@@ -1992,7 +2002,7 @@ testable on its own.
   - The same action is still reachable from Choose workout → Copy past workout.
   - Validation: typecheck, smoke, History browser check (copy is created, title
     kept, two sets, none completed, History dismissed).
-  - Next: History source filter and day-sheet polish.
+  - Next: calendar day-sheet polish.
 - **2026-11-21 — Training Report: real session counts, 30 days or 12 months.**
   - `forEachLoggedDay` now exposes `sessionCount` (one strength session + every
     run in the slot). The Training Report sums sessions, not unique dates, so a

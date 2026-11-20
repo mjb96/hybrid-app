@@ -111,6 +111,15 @@ try {
   check(titles.some((t) => t.includes('Treadmill')), 'imported run title is missing');
   check((await page.locator('.activity-source-badge').count()) >= 2, 'import provenance badges are missing');
 
+  await page.selectOption('#historySourceFilter', 'imported');
+  await page.waitForFunction(() => document.querySelectorAll('.activity-history-row').length === 3);
+  check((await page.locator('.activity-source-badge').count()) >= 2, 'Imported filter hides its provenance badges');
+  await page.selectOption('#historySourceFilter', 'app');
+  await page.waitForFunction(() => document.querySelectorAll('.activity-history-row').length === 1);
+  check(!(await page.locator('.activity-source-badge').count()), 'Logged-in-app filter shows an import badge');
+  await page.selectOption('#historySourceFilter', 'all');
+  await page.waitForFunction(() => document.querySelectorAll('.activity-history-row').length === 4);
+
   await page.fill('#historySearchInput', 'Treadmill');
   await page.waitForFunction(() => document.querySelectorAll('.activity-history-row').length === 1);
   check((await page.locator('.activity-history-row').count()) === 1, 'search did not narrow to the treadmill run');

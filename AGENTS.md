@@ -73,7 +73,8 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   but is not presented as part of the historical session.
 - History (formerly Activities): `js/activities.js` + `js/activities/model.js` +
   `js/activities/calendar.js` own the record/action destination — Calendar | List,
-  search, month headers, provenance, exact detail, edit/delete with Undo. The
+  search, month headers, provenance, source filter (Logged in app / Imported),
+  exact detail, edit/delete with Undo. The
   calendar is built from the same `buildActivityHistory` rows the list renders, so
   imported/archived and same-day sessions cannot disagree with the list. Programmed
   titles resolve through `getProgramById(activation.programId)`; imported titles
