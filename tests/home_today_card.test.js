@@ -239,6 +239,17 @@ test('a completed card never becomes a collapsed row', () => {
   assert.doesNotMatch(html, /is-collapsible|is-collapsed|toggle-today-card/);
 });
 
+test('an off-plan lift in the active slot does not fake an imported completion', () => {
+  const s = state();
+  s.weeks['1'].dates.mon = '2026-08-03';
+  s.weeks['1'].lifts.mon['Off Plan Curl'] = [{ w: '20', r: '10', c: true }];
+  const card = buildTodayCardModel({
+    state: s, program: PROGRAM, model, now: MONDAY, tz: DISPLAY_TZ,
+  });
+  assert.equal(card.state, 'ready');
+  assert.deepEqual(card.primary, { action: 'select-program-workout', day: 'mon', label: 'Start workout' });
+});
+
 test('an imported archived session today is the completed Today card', () => {
   const s = state();
   s.weeks['arch:import:x'] = {
