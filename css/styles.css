@@ -10306,9 +10306,10 @@ html[data-theme="dark"][data-palette="ember"] {
 .edit-saved-group h4 {
   margin: 0 0 6px; color: var(--text-primary);
   font-size: .8rem; font-weight: 800;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
 }
 .edit-saved-set {
-  display: grid; grid-template-columns: 48px minmax(0, 1fr) minmax(0, 1fr);
+  display: grid; grid-template-columns: 42px minmax(0, 1fr) minmax(0, 1fr) 44px;
   align-items: end; gap: 8px; padding: 6px 0;
   border-bottom: 1px solid var(--border-subtle, rgba(148,163,184,.10));
 }
@@ -10330,6 +10331,22 @@ html[data-theme="dark"][data-palette="ember"] {
 .edit-saved-actions { display: grid; gap: 4px; padding: 8px 0 2px; }
 .edit-saved-actions .btn-action-block { min-height: 44px; padding: 10px 14px; font-size: .76rem; }
 .edit-saved-empty { color: var(--text-muted); font-size: .8rem; padding: 18px 2px; }
+.edit-saved-remove, .edit-saved-remove-set, .edit-saved-add-set, .edit-saved-add-result {
+  min-height: 44px; border-radius: 10px; border: 1px solid var(--border-default);
+  background: var(--overlay-sm, rgba(255,255,255,.05)); color: var(--text-sub);
+  font: inherit; font-size: .68rem; font-weight: 750; cursor: pointer;
+}
+.edit-saved-remove { padding: 0 12px; color: var(--color-red, #ef4444); border-color: rgba(239,68,68,.3); }
+.edit-saved-remove-set { width: 44px; padding: 0; font-size: .9rem; }
+.edit-saved-add-set { margin-top: 6px; padding: 0 12px; }
+.edit-saved-add { margin-top: 16px; border-top: 1px solid var(--border-subtle, rgba(148,163,184,.10)); padding-top: 12px; }
+.edit-saved-add h4 { margin: 0 0 6px; color: var(--text-primary); font-size: .8rem; font-weight: 800; }
+.edit-saved-search { display: grid; gap: 4px; }
+.edit-saved-search span { color: var(--text-muted); font-size: .62rem; font-weight: 750; letter-spacing: .05em; text-transform: uppercase; }
+.edit-saved-search input { width: 100%; min-height: 44px; padding: 8px 10px; border: 1px solid var(--border-default); border-radius: 10px; background: var(--bg-input); color: var(--text-primary); font: inherit; font-size: .82rem; }
+.edit-saved-add-results { display: grid; gap: 5px; margin-top: 7px; }
+.edit-saved-add-result { padding: 8px 12px; text-align: left; }
+.edit-saved-add-result--custom { border-color: rgba(59,130,246,.35); color: var(--color-blue); }
 
 /* Train landing / Plans visual pass — one surface + action vocabulary. */
 html[data-theme="dark"] .tl-today__primary {

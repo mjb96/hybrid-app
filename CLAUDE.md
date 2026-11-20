@@ -64,8 +64,13 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   an explicit no-results state. Existing checks select the Training tab before
   touching equipment/modules.
 - Saved activity editing: `js/workout/edit-saved.js` edits a finished strength
-  workout's stored weights/reps/notes or a run's distance/time/HR/notes. It keeps
-  the session id, date and route; exercise add/remove is deliberately out of scope.
+  workout through a lossless DRAFT (weights, reps, holds, carries, notes) or a
+  run's distance/time/HR/notes. Cancel never touches stored state. Strength can
+  add an exercise (catalogue search or custom name), add/remove a set and remove
+  an exercise; Save commits them together, preserves the session id/date/route,
+  stamps filled new sets completed and refreshes the finished summary's set
+  count. Programme scaffolding that landed on the same day later is preserved
+  but is not presented as part of the historical session.
 - History (formerly Activities): `js/activities.js` + `js/activities/model.js` +
   `js/activities/calendar.js` own the record/action destination — Calendar | List,
   search, month headers, provenance, exact detail, edit/delete with Undo. The
