@@ -1920,10 +1920,13 @@ testable on its own.
   - Muscle Load no longer says “0 of 0 focus muscles in range” when no focus
     muscles are chosen; Bodyweight distinguishes “no recent weigh-ins” from
     “no weigh-ins at all”.
+  - Projections now read dated calendar weeks for strength and running, so
+    imported/archived sessions produce real ETAs. Legacy undated states still
+    fall back to the program-week series instead of losing their projection.
   - Validation: 1,936 node tests, typecheck, smoke, progress-hub browser check
     (hero, 12 bars, Review Stats calendar/log), strength-volume check.
-  - Next: Projections calendar source, load-model unification, exercise
-    drilldown and the monthly/year review surfaces.
+  - Next: load-model unification, exercise drilldown and the monthly/year
+    review surfaces.
 - **2026-11-20 — History overhaul: calendar-first imported history.**
   - Activities is presented as **History** and now has List | Calendar views.
     Calendar cells group the same row model History renders, so a day with two

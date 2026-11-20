@@ -5,6 +5,9 @@
 // Pure functions — no DOM or side effects.
 // ==========================================
 import { runDaySummary, runSessionsForDay } from '../state/run-sessions.js';
+import {
+  addDaysISO, indexSlotsByDate, localDayKey, weekStartOf,
+} from '../analytics/weekly-aggregate.js';
 
 function parseMinutes(timeStr) {
   if (!timeStr) return 0;
@@ -77,6 +80,47 @@ export function weeklyPaceSeries(state, days, maxWeek) {
 // signal. Unlike weekly *average* pace, this doesn't slow down when the athlete
 // adds easy Zone-2 volume, so improvement here reflects real speed, not run mix.
 // Walks excluded. Returns 0 for weeks with no run.
+/**
+ * Average pace per CALENDAR week, oldest → newest, for the trailing `weeks`.
+ * Exists so Projections can see imported/archived runs by their real date; the
+ * program-week `weeklyPaceSeries` is still the fallback for legacy undated data.
+ * Walks are excluded exactly like the program-week series.
+ */
+export function calendarWeekPaceSeries(state, opts = {}) {
+  const weeks = Math.max(1, Math.min(52, Number(opts.weeks) || 12));
+  const today = localDayKey(opts.today || new Date(), opts.tz);
+  const currentStart = weekStartOf(today);
+  const start = addDaysISO(currentStart, -(weeks - 1) * 7);
+  const end = addDaysISO(currentStart, 6);
+  const index = indexSlotsByDate(state, { tz: opts.tz });
+  const buckets = new Map();
+  for (let i = 0; i < weeks; i++) {
+    buckets.set(addDaysISO(start, i * 7), { dist: 0, weightedSecs: 0 });
+  }
+  for (const [date, slots] of index.allByDate) {
+    if (date < start || date > end) continue;
+    const bucket = buckets.get(weekStartOf(date));
+    if (!bucket) continue;
+    for (const slot of slots) {
+      const sessions = Array.isArray(slot.runSessions)
+        ? slot.runSessions
+        : (slot.run ? [slot.run] : []);
+      for (const run of sessions) {
+        if (run?.type === 'walk') continue;
+        const dist = parseFloat(run?.dist) || 0;
+        const pace = parsePaceSecs(dist, run?.time || '');
+        if (dist > 0 && pace > 0) {
+          bucket.dist += dist;
+          bucket.weightedSecs += pace * dist;
+        }
+      }
+    }
+  }
+  return [...buckets.values()].map((bucket) => (
+    bucket.dist > 0 ? bucket.weightedSecs / bucket.dist : 0
+  ));
+}
+
 export function weeklyBestPaceSeries(state, days, maxWeek) {
   return eachWeek(state, days, maxWeek, (wkData, days) => {
     let best = 0;

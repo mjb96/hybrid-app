@@ -44,6 +44,30 @@ test('strengthProjections: rising squat gets a next-plate ETA', () => {
   assert.ok(squat.etaWeeks === null || squat.etaWeeks > 0);
 });
 
+test('projections see imported archived weeks by their real dates', () => {
+  const iso = (d) => d.toISOString().slice(0, 10);
+  const older = new Date(); older.setDate(older.getDate() - 14);
+  const newer = new Date(); newer.setDate(newer.getDate() - 7);
+  const week = (date, weight, seconds) => ({
+    dates: { mon: date, wed: date },
+    lifts: { mon: { 'Back Squat': [{ w: String(weight), r: 5, c: true }] } },
+    runSessions: { wed: [{ sessionId: `run-${date}`, dist: '5', time: seconds, localDate: date }] },
+    runs: {},
+  });
+  const state = {
+    currentWeek: '1',
+    weeks: {
+      'arch:import:a': week(iso(older), 100, '30:00'),
+      'arch:import:b': week(iso(newer), 110, '28:00'),
+    },
+  };
+  const p = buildPredictions(state, DAYS);
+  assert.ok(p.strength.length > 0, 'archived strength reaches Projections');
+  assert.equal(p.strength[0].current >= 110, true);
+  assert.equal(p.running.hasData, true, 'archived runs reach Projections');
+  assert.ok(p.running.current5k);
+});
+
 test('runningProjection: threshold pace yields VDOT, races and a faster 5k ETA', () => {
   const weeks = {};
   for (let w = 1; w <= 5; w++) {
