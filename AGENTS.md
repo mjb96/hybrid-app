@@ -110,7 +110,10 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   12-week strip before the domain cards. Review Stats' Training Calendar and
   Consistency Log use the same calendar weeks (no `W1..Wn` program grid).
   `loggedSessionsByDate` counts sessions inside a slot — strength plus every
-  run — not slots, so a strength+run day is two sessions. Projections use the
+  run — not slots, so a strength+run day is two sessions. The Training Report
+  (`js/brain/monthly-report.js`) uses the same rule through
+  `forEachLoggedDay().sessionCount`, with a 30-day or 12-month window compared
+  against its own prior window. Projections use the
   same dated calendar series for strength and running, with a program-week
   fallback only for legacy undated states. Recovery/Strength current load
   (ATL/CTL/ACWR, monotony, strain, consistency) uses the same dated timeline;

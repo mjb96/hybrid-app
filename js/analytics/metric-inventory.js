@@ -248,7 +248,7 @@ const REVIEW_INVENTORY = group('review', 'js/brain/weekly-review.js + js/brain/m
   { id: 'review.longest-streak', label: 'Longest Streak', unit: 'days', surfaces: ['Review Stats'], currentInteractive: 'static', currentDestination: 'none' },
   { id: 'review.goal-progress', label: 'Goal Progress', unit: 'percent', surfaces: ['Review Stats'], timeScope: 'program-run', currentInteractive: 'static', currentDestination: 'none' },
   { id: 'review.consistency-log', label: 'Consistency Log', unit: 'mixed', surfaces: ['Review Stats'], timeScope: 'program-week', currentInteractive: 'static', currentDestination: 'none' },
-  { id: 'review.monthly-report', label: 'Monthly Report', unit: 'mixed', surfaces: ['Review Stats'], timeScope: 'calendar-month', currentInteractive: 'static', currentDestination: 'none' },
+  { id: 'review.monthly-report', label: 'Training Report', unit: 'mixed', surfaces: ['Review Stats'], timeScope: 'rolling-30d / 12m', currentInteractive: 'toggle', currentDestination: 'self' },
 ]);
 
 const PROFILE_INVENTORY = group('profile', 'js/profile-stats.js + js/athlete-profile.js', {

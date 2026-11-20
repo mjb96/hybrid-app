@@ -174,6 +174,23 @@ try {
     if (reviewStats.calendarCells < 2) failures.push(`${width}px: Review training calendar is empty`);
     if (!/[A-Za-z]{3}/.test(reviewStats.firstRow)) failures.push(`${width}px: Review log does not label calendar weeks`);
 
+    // The training report switches between a 30-day and a 12-month window and
+    // states its real date range + active-day count.
+    const report = await page.$eval('#monthlyReportContainer', (el) => ({
+      hasToggle: !!el.querySelector('[data-report-period="month"]') && !!el.querySelector('[data-report-period="year"]'),
+      range: el.querySelector('.an-detail-period')?.textContent?.trim() || '',
+      stats: el.querySelectorAll('.wrev-stat').length,
+    }));
+    if (!report.hasToggle) failures.push(`${width}px: Training Report has no 30-day/12-month toggle`);
+    if (!/active day/.test(report.range)) failures.push(`${width}px: Training Report does not state its range/active days`);
+    if (report.stats < 4) failures.push(`${width}px: Training Report is missing its summary stats`);
+    await page.click('#monthlyReportContainer [data-report-period="year"]');
+    await page.waitForTimeout(250);
+    const yearPressed = await page.$eval('#monthlyReportContainer [data-report-period="year"]', (el) => el.getAttribute('aria-pressed'));
+    if (yearPressed !== 'true') failures.push(`${width}px: 12-month report did not activate`);
+    await page.click('#monthlyReportContainer [data-report-period="month"]');
+    await page.waitForTimeout(200);
+
     if (errors.length) failures.push(`${width}px: browser errors: ${errors.join(' | ')}`);
     await context.close();
   }

@@ -4,10 +4,14 @@
 // Renders the 28-day rollup from the pure builder, with a share action. — R13
 // =============================================================================
 import { showToast } from '../../state.js';
-import { buildMonthlyReport, reportToText } from '../../brain/monthly-report.js';
+import { buildMonthlyReport, buildYearReport, reportToText } from '../../brain/monthly-report.js';
+import { addDaysISO } from '../../dates.js';
 import { weightUnitOf } from '../utils.js';
 
 const KM_TO_MI = 0.621371;
+let _reportPeriod = 'month';
+export function setReportPeriod(period) { _reportPeriod = period === 'year' ? 'year' : 'month'; }
+const fmtDay = (iso) => new Date(`${iso}T12:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
 function deltaChip(pct, suffix = 'vs prior 30d') {
   if (pct === null || pct === undefined) return '';
   const up = pct > 0;
@@ -19,13 +23,23 @@ export function renderMonthlyReport(getState, getDays, getProgram) {
   const el = document.getElementById('monthlyReportContainer');
   if (!el) return;
   const state = getState();
-  const r = buildMonthlyReport(state, getDays(), getProgram());
+  const r = _reportPeriod === 'year'
+    ? buildYearReport(state, getDays(), getProgram())
+    : buildMonthlyReport(state, getDays(), getProgram());
+  const periodToggle = `<div class="an-segment an-segment--two" role="group" aria-label="Report period">
+    <button type="button" class="an-segment__button ${_reportPeriod === 'month' ? 'is-active' : ''}" data-report-period="month" aria-pressed="${_reportPeriod === 'month'}">30 days</button>
+    <button type="button" class="an-segment__button ${_reportPeriod === 'year' ? 'is-active' : ''}" data-report-period="year" aria-pressed="${_reportPeriod === 'year'}">12 months</button>
+  </div>`;
 
   if (!r.hasData) {
-    el.innerHTML = `<article class="card-dark p-4 text-center">
+    el.innerHTML = `${periodToggle}<article class="card-dark p-4 text-center">
       <div style="font-size:2rem;margin-bottom:8px;">🗓️</div>
-      <p style="color:var(--text-muted);font-size:0.85rem;line-height:1.5;">Your 30-day report builds itself as you train. Check back after a few sessions.</p>
+      <p style="color:var(--text-muted);font-size:0.85rem;line-height:1.5;">Your ${_reportPeriod === 'year' ? '12-month' : '30-day'} report builds itself as you train. Check back after a few sessions.</p>
     </article>`;
+    el.querySelectorAll('[data-report-period]').forEach((button) => button.addEventListener('click', () => {
+      setReportPeriod(button.getAttribute('data-report-period'));
+      renderMonthlyReport(getState, getDays, getProgram);
+    }));
     return;
   }
 
@@ -41,7 +55,10 @@ export function renderMonthlyReport(getState, getDays, getProgram) {
 
   const trendWord = { rising: 'rising 📈', easing: 'easing 📉', steady: 'holding steady', building: 'building' }[r.fitness.trend] || r.fitness.trend;
 
+  const rangeEnd = addDaysISO(r.window.endISO, -1);
   el.innerHTML = `
+    ${periodToggle}
+    <p class="an-detail-period">${fmtDay(r.window.startISO)} – ${fmtDay(rangeEnd)} · ${r.totals.activeDays} active day${r.totals.activeDays === 1 ? '' : 's'}</p>
     <div class="wrev-stats mb-3">${stats}</div>
     <article class="card-dark p-3 mb-3 flex-between">
       <span class="wrev-label">Fitness (CTL ${r.fitness.ctl})</span>
@@ -55,9 +72,13 @@ export function renderMonthlyReport(getState, getDays, getProgram) {
       <div style="font-weight:800;color:var(--color-green);font-size:0.68rem;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">Looking ahead</div>
       <p style="color:var(--text-secondary);font-size:0.84rem;line-height:1.5;margin:0;">${r.projection}</p>
     </article>` : ''}
-    <button id="mrepShareBtn" class="btn-action-block btn-ghost" aria-label="Share your month">📤 Share your month</button>
+    <button id="mrepShareBtn" class="btn-action-block btn-ghost" aria-label="Share this training report">📤 Share this report</button>
   `;
 
+  el.querySelectorAll('[data-report-period]').forEach((button) => button.addEventListener('click', () => {
+    setReportPeriod(button.getAttribute('data-report-period'));
+    renderMonthlyReport(getState, getDays, getProgram);
+  }));
   const btn = el.querySelector('#mrepShareBtn');
   if (btn) btn.addEventListener('click', async () => {
     const text = reportToText(r, distUnit, weightUnitOf(state));

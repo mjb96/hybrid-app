@@ -1958,6 +1958,17 @@ testable on its own.
     assistance and a banded pushdown is resistance.
   - Validation: node tests, typecheck, smoke, set-row browser check proves a
     Band default shows the 20 kg band on the next blank row.
+- **2026-11-21 — Training Report: real session counts, 30 days or 12 months.**
+  - `forEachLoggedDay` now exposes `sessionCount` (one strength session + every
+    run in the slot). The Training Report sums sessions, not unique dates, so a
+    strength+run day no longer reports one session.
+  - `buildPeriodReport` drives both windows; the Review Stats toggle switches
+    between the rolling 30-day report and a 12-month report, each compared with
+    its own prior window. The card states its exact date range and active days.
+  - The section is titled **Training Report** rather than “Monthly Report”.
+  - Validation: node tests (same-day strength+2 runs = 3 sessions; year window),
+    typecheck, smoke, progress-hub browser check (toggle + range + stats).
+  - Next: exercise drilldown.
 - **2026-11-20 — Progress overview: week hero, recent weeks, calendar heatmaps.**
   - The hub now leads with a this-week summary (sessions / planned, volume,
     distance, PRs, adherence bar) and a 12-week session strip, then the four
@@ -1981,7 +1992,7 @@ testable on its own.
     program-week series remain for the trend charts and are labelled as such.
   - Validation: 1,936 node tests, typecheck, smoke, progress-hub browser check
     (hero, 12 bars, Review Stats calendar/log), strength-volume check.
-  - Next: exercise drilldown and the monthly/year review surfaces.
+  - Next: exercise drilldown.
 - **2026-11-20 — History overhaul: calendar-first imported history.**
   - Activities is presented as **History** and now has List | Calendar views.
     Calendar cells group the same row model History renders, so a day with two

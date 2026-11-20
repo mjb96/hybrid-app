@@ -39,7 +39,7 @@ export function renderReview(data, getState, getDays) {
     body.innerHTML = `
       <h2 class="section-header mt-2">Week in Review</h2>
       <div id="weeklyReviewContainer"></div>
-      <h2 class="section-header mt-4">Monthly Report</h2>
+      <h2 class="section-header mt-4">Training Report</h2>
       <div id="monthlyReportContainer"></div>
 
       <h2 class="section-header mt-4">Streak</h2>
