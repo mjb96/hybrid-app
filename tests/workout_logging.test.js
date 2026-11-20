@@ -328,9 +328,11 @@ test('quick log never imports another activation without Use previous values', (
   const row = {
     dataset: { loadMode: 'weighted' },
     classList: { contains: () => false },
+    getAttribute: (name) => name === 'data-set-mode' ? 'reps' : null,
     querySelector(selector) {
       if (selector === '.input-weight-node') return weight;
       if (selector === '.input-reps-node') return reps;
+      if (selector === '.input-set-value-node') return reps;
       if (selector === '.gym-check') return checkbox;
       return null;
     },
@@ -373,9 +375,11 @@ test('checking a blank set never imports another activation without explicit use
     // whether a blank weight is incomplete or simply a bodyweight set.
     dataset: { loadMode: 'weighted' },
     classList: rowClassList,
+    getAttribute: (name) => name === 'data-set-mode' ? 'reps' : null,
     querySelector(selector) {
       if (selector === '.input-weight-node') return weight;
       if (selector === '.input-reps-node') return reps;
+      if (selector === '.input-set-value-node') return reps;
       if (selector === '.gym-check') return checkbox;
       return null;
     },
@@ -415,7 +419,10 @@ test('Use previous values fills blank fields without overwriting or completing s
     querySelector(selector) {
       const match = selector.match(/data-set-index="(\d+)"/);
       const entry = inputs[Number(match?.[1])];
-      return entry ? { querySelector: (inner) => inner.includes('weight') ? entry.weight : entry.reps } : null;
+      return entry ? {
+        getAttribute: () => 'reps',
+        querySelector: (inner) => inner.includes('weight') || inner.includes('reps-node') ? (inner.includes('weight') ? entry.weight : entry.reps) : entry.reps,
+      } : null;
     },
   };
   const original = globalThis.document.querySelector;

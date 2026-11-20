@@ -8,7 +8,10 @@
 // buildSessionRecap() is pure (state, week, day) → structured summary — unit
 // tested. Rendering + show/hide touch the DOM.
 // ==========================================
-import { isCompletedSet, isWarmupSet, isValidWorkingSet, setVolume } from './set-utils.js';
+import {
+  SET_MODE, formatDistance, formatDuration, isCompletedSet, isRepSet, isWarmupSet,
+  isValidWorkingSet, setModeOf, setSummary, setVolume,
+} from './set-utils.js';
 import { renderRunMap } from './workout-map.js';
 import { runDaySummary, runSessionsForDay } from './state/run-sessions.js';
 import { insightsForSession } from './analytics/insights/build-insights.js';
@@ -104,9 +107,16 @@ export function buildSessionRecap(state, week, day, sessionId = null, activityKi
     if (!Array.isArray(sets)) continue;
     const done = sets.filter(isValidWorkingSet);
     if (!done.length) continue;
-    let liftVol = 0, bestE1 = 0, topSet = null, liftReps = 0;
+    let liftVol = 0, bestE1 = 0, topSet = null, liftReps = 0, topShape = null;
+    const shape = done.every((s) => !isRepSet(s)) ? setModeOf(done[0]) : SET_MODE.REPS;
     done.forEach((s) => {
       liftVol += setVolume(s);
+      if (shape !== SET_MODE.REPS) {
+        const value = shape === SET_MODE.TIME ? Number(s.sec) || 0 : Number(s.dist) || 0;
+        if (!topShape || value > topShape.value) {
+          topShape = { mode: shape, value, weight: parseFloat(s.w) || 0 };
+        }
+      }
       liftReps += parseInt(s.r, 10) || 0;
       const setWeight = parseFloat(s.w) || 0;
       const setReps = parseInt(s.r, 10) || 0;
@@ -125,6 +135,7 @@ export function buildSessionRecap(state, week, day, sessionId = null, activityKi
       .filter((s) => isCompletedSet(s))
       .map((s) => ({
         w: parseFloat(s.w) || 0, r: parseInt(s.r, 10) || 0,
+        mode: setModeOf(s), sec: Number(s.sec) || 0, dist: Number(s.dist) || 0,
         warmup: isWarmupSet(s), type: s.type || '', failure: s.failure === true,
         note: String(s.note || '').trim(),
         rir: s.rir != null ? s.rir : (s.rpe != null ? 10 - s.rpe : null),
@@ -167,11 +178,14 @@ export function buildSessionRecap(state, week, day, sessionId = null, activityKi
     const previous = (priorRow?.workingSets || []).slice(0, 4).map((set) => ({
       w: parseFloat(set?.w) || 0,
       r: parseInt(set?.r, 10) || 0,
+      mode: setModeOf(set),
+      sec: Number(set?.sec) || 0,
+      dist: Number(set?.dist) || 0,
     }));
 
     lifts.push({
       name, sets: done.length, reps: liftReps, volume: Math.round(liftVol),
-      topSet, e1rm: Math.round(bestE1), pr, setList, previous, next,
+      shape, topSet, topShape, e1rm: Math.round(bestE1), pr, setList, previous, next,
     });
   }
   lifts.sort((a, b) => b.volume - a.volume);
@@ -291,7 +305,7 @@ function _liftSummaryRows(r) {
   return r.lifts.map((l) => {
     const previous = Array.isArray(l.previous) && l.previous.length
       ? `<div class="recap-lift__prev">Last time: ${l.previous
-        .map((set) => `${set.w}${unit} × ${set.r}`).join(' · ')}</div>`
+        .map((set) => setSummary(set, unit)).join(' · ')}</div>`
       : '';
     const next = l.next
       ? `<div class="recap-lift__next">Next time: <b>${l.next.weight}${unit} × ${l.next.reps}</b>${l.next.rationale ? `<small>${esc(l.next.rationale)}</small>` : ''}</div>`
@@ -300,7 +314,10 @@ function _liftSummaryRows(r) {
     <div class="recap-lift">
       <div class="recap-lift__name">${esc(l.name)}${l.pr ? ` <span class="recap-pr" title="New estimated 1RM best">🏆 PR</span>` : ''}</div>
       <div class="recap-lift__detail">
-        ${l.topSet ? `${l.topSet.w} ${unit} × ${l.topSet.r}` : `${l.sets} sets`}
+        ${l.topSet ? `${l.topSet.w} ${unit} × ${l.topSet.r}`
+          : l.topShape
+            ? `${l.topShape.weight > 0 ? `${l.topShape.weight} ${unit} · ` : ''}best ${l.topShape.mode === SET_MODE.TIME ? formatDuration(l.topShape.value) : `${formatDistance(l.topShape.value)}m`}`
+            : `${l.sets} sets`}
         ${l.e1rm > 0 ? `<span class="recap-lift__e1rm">est. 1RM ${l.e1rm} ${unit}</span>` : ''}
       </div>
       ${previous}
@@ -349,10 +366,10 @@ function _liftSetGrid(r) {
           <div class="rc-set${s.warmup ? ' rc-set--warm' : ''}">
             <span class="rc-set__n">${i + 1}</span>
             ${tag ? `<span class="rc-set__role rc-set__role--${esc(tag.role)}" data-set-role="${esc(tag.role)}">${esc(tag.label)}</span>` : ''}
-            <span class="rc-set__wr">${s.w} ${unit} × ${s.r}</span>
+            <span class="rc-set__wr">${setSummary(s, unit)}</span>
             ${_setTag(s)}
             ${s.rir != null ? `<span class="rc-set__rir">RIR ${s.rir}</span>` : ''}
-            <span class="rc-set__vol">${s.vol.toLocaleString()} ${unit}</span>
+            ${s.vol > 0 ? `<span class="rc-set__vol">${s.vol.toLocaleString()} ${unit}</span>` : ''}
             ${s.note ? `<span class="rc-set__note">${esc(s.note)}</span>` : ''}
           </div>`;
     }).join('');
@@ -360,7 +377,7 @@ function _liftSetGrid(r) {
     <div class="rc-exercise">
       <div class="rc-exercise__head">
         <span class="rc-exercise__name">${esc(l.name)}${l.pr ? ' 🏆' : ''}</span>
-        <span class="rc-exercise__meta">${l.sets} sets · ${l.reps} reps · ${l.volume.toLocaleString()} ${unit}</span>
+        <span class="rc-exercise__meta">${l.sets} sets${l.shape === SET_MODE.TIME ? ' · timed holds' : l.shape === SET_MODE.DISTANCE ? ' · carries' : ` · ${l.reps} reps · ${l.volume.toLocaleString()} ${unit}`}</span>
       </div>
       <div class="rc-sets">${rows}</div>
     </div>`;

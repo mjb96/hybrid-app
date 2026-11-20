@@ -16,7 +16,11 @@ import {
 import { computeDiagnosticForLift, parseTargetFromDescription, prescribeSetsForLift, computeExercisePRs, liftTarget, repGoalFromTarget } from './engine.js';
 import { getWeekModifier } from './schema.js';
 import { jtLiftTarget, jtSetRoleTags, jtStoredRoleTag, jtBackoffFromTopSet } from './programs/jt-shed-model.js';
-import { isCompletedSet, isWarmupSet, isValidWorkingSet, setVolume } from './set-utils.js';
+import {
+  SET_MODE, formatDistance, formatDuration, isCompletedSet, isRepSet, isWarmupSet,
+  isValidWorkingSet, parseDuration, setModeOf, setSummary, setVolume,
+} from './set-utils.js';
+import { effectiveSetMode } from './workout/set-shape.js';
 import { triggerRestTimerEngine, adjustRestDuration, moveRestTimerToActiveExercise, dismissRestTimer, stopAndResetWorkoutTimer, getWorkoutElapsedSeconds, startWorkoutTimer, bindWorkoutTimerSession } from './timers.js';
 import { mountExerciseDragAndDropSystems } from './dragdrop.js';
 import { showToast, saveNewCustomExerciseToLibrary } from './state.js';
@@ -68,7 +72,7 @@ import {
   commitRunLogging, handleRunLoggingInput,
 } from './workout/run-logging.js';
 import {
-  appendCustomSetRow, appendWarmupSetRow, removeCustomSetRow, cycleSetType,
+  appendCustomSetRow, appendWarmupSetRow, removeCustomSetRow, cycleSetType, cycleSetMode,
   setSetLoadMode, cycleSetLoad, setPerSetRir, toggleSetFailure, toggleLoadBasis,
   editSetRest, clearSetRest, editSetNote,
   currentBodyweight as _currentBodyweight,
@@ -76,7 +80,7 @@ import {
 // Re-exported for js/app.js, which imports these from here.
 export { openConfirmResetModal, closeConfirmResetModal, executeResetActiveDayMetrics };
 export {
-  appendCustomSetRow, appendWarmupSetRow, removeCustomSetRow, cycleSetType,
+  appendCustomSetRow, appendWarmupSetRow, removeCustomSetRow, cycleSetType, cycleSetMode,
   setSetLoadMode, cycleSetLoad, setPerSetRir, toggleSetFailure, toggleLoadBasis,
   editSetRest, clearSetRest, editSetNote,
 };
@@ -129,17 +133,34 @@ function _prescribedRepGoal(inputNode) {
 // delegate to the pure `pickInheritedSet` — the nearest earlier completed set of
 // the same kind fills the value only (never the placeholder), so an inherited set
 // is never banked as a "prescribed target" and true-adherence stays honest.
+function _setValueInput(row) {
+  return row?.querySelector('.input-set-value-node') || null;
+}
+
+/** The numeric value of a row's second input, in its own shape. */
+function _setRowValue(mode, value) {
+  if (mode === SET_MODE.TIME) return parseDuration(value) || 0;
+  if (mode === SET_MODE.DISTANCE) return parseFloat(value) || 0;
+  return parseInt(value, 10) || 0;
+}
+
 function _inheritedSetFromSession(exCard, parentRow) {
   if (!exCard || !parentRow) return null;
   const rows = Array.from(exCard.querySelectorAll('.cockpit-set-row'));
   const idx = rows.indexOf(parentRow);
   if (idx < 0) return null;
-  const sets = rows.map(row => ({
-    type: row.classList.contains('type-warmup') ? 'W' : '',
-    w: row.querySelector('.input-weight-node')?.value || '',
-    r: row.querySelector('.input-reps-node')?.value || '',
-    done: !!row.querySelector('.gym-check')?.checked,
-  }));
+  const sets = rows.map(row => {
+    const mode = row.getAttribute('data-set-mode') || SET_MODE.REPS;
+    const value = _setValueInput(row)?.value || '';
+    return {
+      type: row.classList.contains('type-warmup') ? 'W' : '',
+      mode,
+      w: row.querySelector('.input-weight-node')?.value || '',
+      r: mode === SET_MODE.REPS ? value : '',
+      value: mode === SET_MODE.REPS ? '' : value,
+      done: !!row.querySelector('.gym-check')?.checked,
+    };
+  });
   return pickInheritedSet(sets, idx);
 }
 
@@ -423,6 +444,7 @@ function _buildExerciseCardEl(liftName, loggedLiftsData, weekData, wk, selectedD
     return buildSetRow(
       sData, sIdx, safeLiftName, ghostSet, wUnit, displayLiftName,
       _currentBodyweight(appState), target.reps, repGoalFromTarget(target.reps), previousSet, roleTag,
+      effectiveSetMode(sData, displayLiftName, appState),
     );
   }).join('');
 
@@ -918,12 +940,18 @@ function _ensureWorkoutDateStamp(appState, wk, day) {
 
 // Per-set comparison against the same set index last session. Shared by the
 // manual tick and the one-tap/log-all paths so a quick log cannot skip it.
-function applySetComparison(parentRow, w, r) {
+function applySetComparison(parentRow, value, mode = SET_MODE.REPS, weight = 0) {
   const prevEl = parentRow?.querySelector('.set-prev');
   const priorW = parseFloat(prevEl?.getAttribute('data-prev-w') || '');
-  const priorR = parseInt(prevEl?.getAttribute('data-prev-r') || '', 10);
-  if (!prevEl || !Number.isFinite(priorW) || priorW <= 0 || !Number.isFinite(priorR) || priorR <= 0) return;
-  const delta = w - priorW || r - priorR;
+  const priorMode = prevEl?.getAttribute('data-prev-mode') || SET_MODE.REPS;
+  const priorValue = mode === SET_MODE.REPS
+    ? parseInt(prevEl?.getAttribute('data-prev-r') || '', 10)
+    : parseFloat(prevEl?.getAttribute('data-prev-value') || '');
+  if (!prevEl || priorMode !== mode || !Number.isFinite(priorValue) || priorValue <= 0) return;
+  // A hold/carry compares seconds/metres first; a rep set keeps weight first.
+  const delta = mode === SET_MODE.REPS
+    ? ((Number.isFinite(weight) ? weight : 0) - (Number.isFinite(priorW) ? priorW : 0)) || value - priorValue
+    : (value - priorValue) || ((Number.isFinite(weight) ? weight : 0) - (Number.isFinite(priorW) ? priorW : 0));
   const tone = delta > 0 ? 'up' : delta < 0 ? 'down' : 'same';
   const glyph = delta > 0 ? '↑' : delta < 0 ? '↓' : '=';
   const label = delta > 0 ? 'better than last time'
@@ -979,45 +1007,60 @@ export function executeOneTapQuickLog(labelNode, liftName, sIdx) {
   if (!parentRow) return;
 
   const wInput = parentRow.querySelector('.input-weight-node');
-  const rInput = parentRow.querySelector('.input-reps-node');
+  const valueInput = _setValueInput(parentRow);
   const checkbox = parentRow.querySelector('.gym-check');
+  const setShape = parentRow.getAttribute('data-set-mode') || SET_MODE.REPS;
 
   let targetW = wInput.value;
-  let targetR = rInput.value;
+  let targetV = valueInput?.value || '';
 
   // Fall back to the on-screen ghost (the placeholder) — it now carries the
   // auto-progression suggestion, so one-tap logs exactly what the coach shows.
-  // The default placeholders ("kg"/"reps") are non-numeric and ignored.
+  // The default placeholders ("kg"/"reps"/"0:00"/"m") are non-numeric and ignored.
   if (!targetW) {
     const ph = wInput.getAttribute('placeholder');
     if (ph && !isNaN(parseFloat(ph))) targetW = ph;
   }
-  if (!targetR) {
-    const ph = _numericPlaceholder(rInput);
-    if (ph != null) targetR = String(ph);
+  if (!targetV && valueInput) {
+    const ph = valueInput.getAttribute('placeholder');
+    if (setShape === SET_MODE.TIME) {
+      const seconds = parseDuration(ph);
+      if (seconds != null) targetV = formatDuration(seconds);
+    } else if (setShape === SET_MODE.DISTANCE) {
+      if (ph && !isNaN(parseFloat(ph))) targetV = ph;
+    } else {
+      const reps = _numericPlaceholder(valueInput);
+      if (reps != null) targetV = String(reps);
+    }
   }
 
   // Carry forward the athlete's own earlier set this session (straight sets), so
   // one-tapping S2–S3 copies S1 instead of inventing numbers.
-  if (!targetW || !targetR) {
+  if (!targetW || !targetV) {
     const inh = _inheritedSetFromSession(parentRow.closest('.cockpit-exercise'), parentRow);
     if (inh) {
       if (!targetW) targetW = inh.w;
-      if (!targetR) targetR = inh.r;
+      if (inh.mode && inh.mode !== SET_MODE.REPS) {
+        if (!targetV) targetV = inh.value || '';
+      } else if (!targetV) {
+        targetV = inh.r || '';
+      }
     }
   }
 
   // Nothing honest to log (no typed value, active target, or prior set) —
   // ask for the numbers rather than fabricating a 40×10. Matches the manual-tick
   // path, which bounces the same way instead of inventing a load.
-  if (!targetW || !targetR) {
-    showToast('Enter weight & reps first', true);
-    (!targetW ? wInput : rInput).focus();
+  if (!targetW || !targetV) {
+    const wanted = setShape === SET_MODE.TIME ? 'time'
+      : setShape === SET_MODE.DISTANCE ? 'distance' : 'reps';
+    showToast(`Enter weight & ${wanted} first`, true);
+    (!targetW ? wInput : valueInput)?.focus();
     return;
   }
 
   wInput.value = targetW;
-  rInput.value = targetR;
+  if (valueInput) valueInput.value = targetV;
   if (checkbox) checkbox.checked = true;
 
   if (!appState.weeks[wk].lifts[selectedDay]) appState.weeks[wk].lifts[selectedDay] = {};
@@ -1029,23 +1072,27 @@ export function executeOneTapQuickLog(labelNode, liftName, sIdx) {
   // different number. Additive + never overwritten: default "kg"/"reps" ghosts are
   // non-numeric and skipped, and an existing target is preserved.
   const _tw = _numericPlaceholder(wInput);
-  const _tr = _prescribedRepGoal(rInput);
+  const _tr = setShape === SET_MODE.REPS ? _prescribedRepGoal(valueInput) : null;
 
   // Merge — never replace: preserve any existing set metadata (type, rpe, isPR)
   // so quick-logging a warmup/drop set doesn't silently demote it to a working set.
   const _setArr = appState.weeks[wk].lifts[selectedDay][liftName];
   let _prev = _setArr[sIdx] || {};
-  const rowMode = parentRow.dataset?.loadMode;
+  const loadMode = parentRow.dataset?.loadMode;
   // A blank Pull-Up/Dip/Push-Up row defaults visibly to Bodyweight. Persist
   // that same mode when its labelled shortcut is used, so the first tap is
   // honest metadata rather than an untyped numeric weight.
-  if (isBodyweightExercise(liftName) && rowMode === 'bodyweight' && !_prev.loadMode && !_prev.bw) {
+  if (isBodyweightExercise(liftName) && loadMode === 'bodyweight' && !_prev.loadMode && !_prev.bw) {
     _prev = applyLoadMode(_prev, 'bodyweight', {
       bodyweight: _currentBodyweight(appState),
       bandWeights: appState.settings?.bandWeights,
     });
   }
-  _setArr[sIdx] = { ..._prev, w: targetW, r: targetR, c: true };
+  const quickSet = { ..._prev, w: targetW, c: true, mode: setShape };
+  if (setShape === SET_MODE.TIME) quickSet.sec = parseDuration(targetV) || 0;
+  else if (setShape === SET_MODE.DISTANCE) quickSet.dist = parseFloat(targetV) || 0;
+  else quickSet.r = targetV;
+  _setArr[sIdx] = quickSet;
   const quickBasis = parentRow.getAttribute('data-load-basis');
   if (quickBasis) _setArr[sIdx].basis = quickBasis;
   if (_tw != null && _prev.tw == null) _setArr[sIdx].tw = _tw;
@@ -1065,9 +1112,13 @@ export function executeOneTapQuickLog(labelNode, liftName, sIdx) {
   } catch(e) { console.warn(e); }
 
   const quickW = parseFloat(targetW);
-  const quickR = parseInt(targetR, 10);
-  detectSetPR(parentRow, liftName, sIdx, quickW, quickR, appState, wk, selectedDay);
-  applySetComparison(parentRow, quickW, quickR);
+  if (setShape === SET_MODE.REPS) {
+    const quickR = parseInt(targetV, 10);
+    detectSetPR(parentRow, liftName, sIdx, quickW, quickR, appState, wk, selectedDay);
+    applySetComparison(parentRow, quickR, setShape, quickW);
+  } else {
+    applySetComparison(parentRow, _setRowValue(setShape, targetV), setShape, quickW);
+  }
 
   _saveState(true);
   evaluateAccordionAutoFlowTransitions();
@@ -1140,13 +1191,21 @@ export function usePreviousValues(liftName) {
     if (!prior) return;
     const row = card.querySelector(`.cockpit-set-row[data-set-index="${setIndex}"]`);
     const weightInput = row?.querySelector('.input-weight-node');
-    const repsInput = row?.querySelector('.input-reps-node');
+    const valueInput = row ? _setValueInput(row) : null;
+    const rowMode = row?.getAttribute('data-set-mode') || SET_MODE.REPS;
+    const priorMode = setModeOf(prior);
     let changed = false;
     if (!String(set?.w || '').trim() && String(prior?.w || '').trim()) {
       set.w = prior.w; if (weightInput) weightInput.value = String(prior.w); changed = true;
     }
-    if (!String(set?.r || '').trim() && String(prior?.r || '').trim()) {
-      set.r = prior.r; if (repsInput) repsInput.value = String(prior.r); changed = true;
+    if (priorMode === rowMode) {
+      if (rowMode === SET_MODE.TIME && !String(set?.sec ?? '').trim() && Number(prior.sec) > 0) {
+        set.sec = prior.sec; if (valueInput) valueInput.value = formatDuration(prior.sec); changed = true;
+      } else if (rowMode === SET_MODE.DISTANCE && !String(set?.dist ?? '').trim() && Number(prior.dist) > 0) {
+        set.dist = prior.dist; if (valueInput) valueInput.value = formatDistance(prior.dist); changed = true;
+      } else if (rowMode === SET_MODE.REPS && !String(set?.r || '').trim() && String(prior?.r || '').trim()) {
+        set.r = prior.r; if (valueInput) valueInput.value = String(prior.r); changed = true;
+      }
     }
     if (changed) filled++;
   });
@@ -1184,7 +1243,8 @@ export function updateInputState(inputNode) {
   // additively, so a manually-typed set still records what it was measured against.
   const setObj = appState.weeks[wk].lifts[selectedDay][liftName][sIdx];
   markSessionInProgress(appState.weeks[wk], selectedDay);
-  const ph = inputNode.classList.contains('input-reps-node')
+  const isRepInput = inputNode.classList.contains('input-reps-node');
+  const ph = isRepInput
     ? _prescribedRepGoal(inputNode)
     : _numericPlaceholder(inputNode);
   if (inputNode.classList.contains('input-weight-node')) {
@@ -1207,6 +1267,11 @@ export function updateInputState(inputNode) {
         }
       }
     }
+  } else if (inputNode.classList.contains('input-time-node')) {
+    const seconds = parseDuration(inputNode.value);
+    setObj.sec = inputNode.value.trim() === '' ? '' : (seconds != null ? seconds : setObj.sec);
+  } else if (inputNode.classList.contains('input-dist-node')) {
+    setObj.dist = inputNode.value;
   } else {
     setObj.r = inputNode.value;
     if (ph != null && setObj.tr == null) setObj.tr = ph;
@@ -1267,25 +1332,40 @@ export function commitWorkoutUIState() {
       exCard.querySelectorAll('.cockpit-set-row').forEach((row, idx) => {
         if (appState.weeks[wk].lifts[selectedDay]?.[liftName]?.[idx]) {
           const wIn = row.querySelector('.input-weight-node');
-          const rIn = row.querySelector('.input-reps-node');
+          const valueIn = _setValueInput(row);
           const cIn = row.querySelector('.gym-check');
+          const mode = row.getAttribute('data-set-mode') || SET_MODE.REPS;
           
           const storedSet = appState.weeks[wk].lifts[selectedDay][liftName][idx];
           // Do not persist the bodyweight/assisted DISPLAY prefill on a blank,
           // unticked row. It is the athlete's mass shown as a convenience, not
           // an entered load, and writing it made opening a workout look like a
           // draft (and marked the session in_progress).
-          const hasReps = String(rIn?.value ?? '').trim() !== '';
+          const hasValue = String(valueIn?.value ?? '').trim() !== '';
           const hasStoredWeight = String(storedSet.w ?? '').trim() !== '';
           const isTicked = !!cIn?.checked;
-          if (wIn && (isTicked || hasReps || hasStoredWeight)) storedSet.w = wIn.value;
-          if (rIn && (isTicked || hasReps || String(storedSet.r ?? '').trim() !== '')) storedSet.r = rIn.value;
+          if (wIn && (isTicked || hasValue || hasStoredWeight)) storedSet.w = wIn.value;
+          const hadStoredValue = storedSet.sec != null || storedSet.dist != null || String(storedSet.r ?? '').trim() !== '';
+          if (valueIn && (isTicked || hasValue || hadStoredValue)) {
+            if (mode === SET_MODE.TIME) {
+              // Clearing the field clears the stored hold; invalid partial text
+              // is not committed (the tick is refused until it parses).
+              storedSet.sec = parseDuration(valueIn.value) ?? '';
+            } else if (mode === SET_MODE.DISTANCE) {
+              storedSet.dist = valueIn.value.trim() === '' ? '' : (parseFloat(valueIn.value) || '');
+            } else {
+              storedSet.r = valueIn.value;
+            }
+            // Persist the shape only once there is real user data, so a blank
+            // scaffold row stays untouched for the prescription reconciler.
+            if (isTicked || hasValue) storedSet.mode = mode;
+          }
           if (cIn) storedSet.c = cIn.checked;
           // Stamp the dumbbell basis only once there is real user data. A blank
           // scaffold row must not gain `basis` and stop being recognised as
           // untouched by the prescription reconciler.
           const rowBasis = row.getAttribute('data-load-basis');
-          if (rowBasis && (isTicked || hasReps || hasStoredWeight)) storedSet.basis = rowBasis;
+          if (rowBasis && (isTicked || hasValue || hasStoredWeight)) storedSet.basis = rowBasis;
           if (row.classList.contains('is-pr')) appState.weeks[wk].lifts[selectedDay][liftName][idx].isPR = true;
         }
       });
@@ -1316,9 +1396,10 @@ export function toggleGymCheckLoggingState(checkboxNode) {
     if (parentRow) parentRow.classList.add('is-complete');
 
     const wInput = parentRow ? parentRow.querySelector('.input-weight-node') : null;
-    const rInput = parentRow ? parentRow.querySelector('.input-reps-node') : null;
+    const valueInput = parentRow ? _setValueInput(parentRow) : null;
+    const rowMode = parentRow?.getAttribute('data-set-mode') || SET_MODE.REPS;
     
-    if (wInput && rInput && (!wInput.value || !rInput.value)) {
+    if (wInput && valueInput && (!wInput.value || !valueInput.value)) {
       const appState = _getState();
       const selectedDay = activeWorkoutDay(appState, _getSelectedDay());
       const wk = activeWorkoutWeekKey(appState);
@@ -1328,19 +1409,33 @@ export function toggleGymCheckLoggingState(checkboxNode) {
       // 1) Carry forward the athlete's own earlier set this session —
       //    straight-set logging (3×8 at one weight) without re-typing, and the
       //    only fill a brand-new user with no coach target/history can get.
-      if (!wInput.value || !rInput.value) {
+      if (!wInput.value || !valueInput.value) {
         const inh = _inheritedSetFromSession(exCard, parentRow);
         if (inh) {
           if (!wInput.value) wInput.value = inh.w;
-          if (!rInput.value) rInput.value = inh.r;
+          if (inh.mode && inh.mode !== SET_MODE.REPS) {
+            if (!valueInput.value) valueInput.value = inh.value || '';
+          } else if (!valueInput.value) {
+            valueInput.value = inh.r || '';
+          }
         }
       }
       // 2) Otherwise fall back to the visible active target shown in the field —
       //    but only when it's an actual number. Never invent an arbitrary load.
       const wGhost = parseFloat(wInput.placeholder);
-      const rGhost = parseInt(rInput.placeholder, 10);
       if (!wInput.value && Number.isFinite(wGhost)) wInput.value = String(wGhost);
-      if (!rInput.value && Number.isFinite(rGhost)) rInput.value = String(rGhost);
+      if (!valueInput.value) {
+        if (rowMode === SET_MODE.REPS) {
+          const rGhost = parseInt(valueInput.placeholder, 10);
+          if (Number.isFinite(rGhost)) valueInput.value = String(rGhost);
+        } else if (rowMode === SET_MODE.TIME) {
+          const secGhost = parseDuration(valueInput.placeholder);
+          if (secGhost != null) valueInput.value = formatDuration(secGhost);
+        } else {
+          const distGhost = parseFloat(valueInput.placeholder);
+          if (Number.isFinite(distGhost)) valueInput.value = String(distGhost);
+        }
+      }
 
     }
 
@@ -1352,10 +1447,11 @@ export function toggleGymCheckLoggingState(checkboxNode) {
     //    from analytics. The message lands on the row rather than in a toast —
     //    a toast appears away from the offending field and is gone before you
     //    look up (roadmap 2A: "invalid or incomplete input explained inline").
-    if (wInput && rInput) {
+    if (wInput && valueInput) {
       const verdict = validateSetEntry({
         weight: wInput.value,
-        reps: rInput.value,
+        value: valueInput.value,
+        mode: rowMode,
         // Defaults to 'weighted', the strictest mode: absent the attribute this
         // can only over-require a weight, never under-require one — and that is
         // exactly the behaviour this check had before the exemption existed.
@@ -1366,7 +1462,7 @@ export function toggleGymCheckLoggingState(checkboxNode) {
       if (!verdict.ok) {
         checkboxNode.checked = false;
         parentRow.classList.remove('is-complete');
-        (verdict.firstErrorField === 'reps' ? rInput : wInput).focus();
+        (verdict.firstErrorField === 'weight' ? wInput : valueInput).focus();
         return;
       }
     }
@@ -1398,11 +1494,13 @@ export function toggleGymCheckLoggingState(checkboxNode) {
       // cannot silently skip the feedback a manual tick gets.
       if (liftName && _sIdx >= 0) {
         const wIn = parentRow?.querySelector('.input-weight-node');
-        const rIn = parentRow?.querySelector('.input-reps-node');
+        const valueIn = parentRow ? _setValueInput(parentRow) : null;
         const w = parseFloat(wIn?.value) || 0;
-        const r = parseInt(rIn?.value, 10) || 0;
-        detectSetPR(parentRow, liftName, _sIdx, w, r, _appState, _wk, _selDay);
-        applySetComparison(parentRow, w, r);
+        if (rowMode === SET_MODE.REPS) {
+          const r = parseInt(valueIn?.value, 10) || 0;
+          detectSetPR(parentRow, liftName, _sIdx, w, r, _appState, _wk, _selDay);
+        }
+        applySetComparison(parentRow, _setRowValue(rowMode, valueIn?.value), rowMode, w);
       }
     } catch(e) { console.warn(e); }
   } else {
@@ -1448,18 +1546,36 @@ function _achievedLabel(n, weights, reps, unit) {
     ? `✓ ${n} × ${reps[0]} @ ${weights[0]}${unit}`
     : `✓ ${n} sets · top ${Math.max(...weights)}${unit}`;
 }
+function _shapeSummary(shape, values) {
+  const best = Math.max(0, ...values);
+  return shape === SET_MODE.TIME
+    ? `✓ ${values.length} holds · best ${formatDuration(best)}`
+    : `✓ ${values.length} carries · best ${formatDistance(best)}m`;
+}
 function _achievedSummaryFromSets(setsArr, unit) {
   const working = (setsArr || []).filter(s => isCompletedSet(s) && !isWarmupSet(s));
   if (!working.length) return '✓ Complete';
+  const shapes = new Set(working.map((s) => setModeOf(s)));
+  if (shapes.size > 1) return `✓ ${working.length} sets`;
+  if (!working.some(isRepSet)) {
+    const shape = setModeOf(working[0]);
+    return _shapeSummary(shape, working.map(s => shape === SET_MODE.TIME ? Number(s.sec) || 0 : Number(s.dist) || 0));
+  }
   return _achievedLabel(working.length, working.map(s => parseFloat(s.w) || 0), working.map(s => parseInt(s.r, 10) || 0), unit);
 }
 function _achievedSummaryFromCard(card, unit) {
   const done = Array.from(card.querySelectorAll('.cockpit-set-row'))
     .filter(r => !r.classList.contains('type-warmup') && r.querySelector('.gym-check')?.checked);
   if (!done.length) return '✓ Complete';
+  const shapes = new Set(done.map((r) => r.getAttribute('data-set-mode') || SET_MODE.REPS));
+  if (shapes.size > 1) return `✓ ${done.length} sets`;
+  const shape = done[0].getAttribute('data-set-mode');
+  if (shape && shape !== SET_MODE.REPS) {
+    return _shapeSummary(shape, done.map(r => _setRowValue(shape, _setValueInput(r)?.value)));
+  }
   return _achievedLabel(done.length,
     done.map(r => parseFloat(r.querySelector('.input-weight-node')?.value) || 0),
-    done.map(r => parseInt(r.querySelector('.input-reps-node')?.value, 10) || 0), unit);
+    done.map(r => parseInt(_setValueInput(r)?.value, 10) || 0), unit);
 }
 
 /**
@@ -1959,6 +2075,7 @@ document.addEventListener('click', (e) => {
   else if (action === 'remove-set') removeCustomSetRow(liftName, sIdx);
   else if (action === 'toggle-set-adv') target.closest('.cockpit-set-row')?.classList.toggle('adv-open');
   else if (action === 'cycle-set-type') cycleSetType(liftName, sIdx);
+  else if (action === 'cycle-set-mode') cycleSetMode(liftName, sIdx);
   else if (action === 'set-load-mode') setSetLoadMode(liftName, sIdx, target.getAttribute('data-mode'));
   else if (action === 'cycle-load') cycleSetLoad(liftName, sIdx);
   else if (action === 'show-ss-panel') showSupersetLinkPanel(exCard);
@@ -1997,7 +2114,7 @@ document.addEventListener('change', (e) => {
   const target = e.target;
   if (target.id === 'elCategoryFilter' || target.id === 'elEquipmentFilter' || target.id === 'elMuscleFilter') {
     renderExerciseLibraryList(document.getElementById('elSearchInput')?.value || '');
-  } else if (target.classList.contains('input-weight-node') || target.classList.contains('input-reps-node')) {
+  } else if (target.classList.contains('input-weight-node') || target.classList.contains('input-set-value-node')) {
     updateInputState(target);
   } else if (target.classList.contains('gym-check')) {
     toggleGymCheckLoggingState(target);
@@ -2006,7 +2123,7 @@ document.addEventListener('change', (e) => {
 
 document.addEventListener('focusout', (e) => {
   const target = e.target;
-  if (target.matches('.input-weight-node, .input-reps-node, #sessionNotesInput, #sessionGymRpeCockpit, #runInputDist, #runInputTime, #runInputRpeCockpit, #runInputPace, #runInputNotes')) {
+  if (target.matches('.input-weight-node, .input-set-value-node, #sessionNotesInput, #sessionGymRpeCockpit, #runInputDist, #runInputTime, #runInputRpeCockpit, #runInputPace, #runInputNotes')) {
     commitWorkoutUIState();
   }
 });
@@ -2018,7 +2135,7 @@ document.addEventListener('input', (e) => {
   // blur — the complaint would otherwise sit there through the whole retype.
   // It only CLEARS; re-validating per keystroke would flag "-" and "1." as the
   // number is still being typed. The verdict is re-taken when they tick.
-  if (target.classList?.contains('input-weight-node') || target.classList?.contains('input-reps-node')) {
+  if (target.classList?.contains('input-weight-node') || target.classList?.contains('input-set-value-node')) {
     setRowMessage(target.closest?.('.cockpit-set-row'), null);
   }
   // Live T1 Block-2 back-off recalculation: editing a top-set (rep-max) weight
