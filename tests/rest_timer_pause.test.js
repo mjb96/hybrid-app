@@ -53,7 +53,7 @@ globalThis.document = /** @type {any} */ ({
 });
 
 const { triggerRestTimerEngine, toggleRestPause, isRestPaused, dismissRestTimer,
-  adjustRestDuration, setRestTimerEnabled, setRestTiers } = await import('../js/timers.js');
+  adjustRestDuration, setRestTimerEnabled, setRestTiers, setRestOverrides } = await import('../js/timers.js');
 
 const bar = () => nodes.cockpitTimerBar;
 const pauseBtn = () => nodes.restPauseBtn;
@@ -67,6 +67,7 @@ beforeEach(() => {
   };
   if (typeof setRestTimerEnabled === 'function') setRestTimerEnabled(true);
   setRestTiers({ warmup: 45, compound: 180, accessory: 120, isolation: 90 });
+  setRestOverrides({});
   dismissRestTimer();
 });
 
@@ -164,6 +165,17 @@ test('a per-set rest of zero suppresses the timer entirely', () => {
   triggerRestTimerEngine('Back Squat', null, '', 180, 0);
   assert.equal(bar().classList.contains('active'), false);
   dismissRestTimer();
+});
+
+test('a per-exercise rest override outranks the tier and supports no timer', () => {
+  setRestOverrides({ 'Back Squat': 60 });
+  triggerRestTimerEngine('Back Squat', null, '');
+  assert.equal(nodes.cockpitTimerClock.textContent, '1:00');
+  dismissRestTimer();
+
+  setRestOverrides({ 'Back Squat': 0 });
+  triggerRestTimerEngine('Back Squat', null, '');
+  assert.equal(bar().classList.contains('active'), false);
 });
 
 test('an imported plan rest overrides the exercise-type default', () => {

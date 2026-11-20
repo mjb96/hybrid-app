@@ -69,6 +69,7 @@ export interface AppSettings {
   restAlertSound?: boolean;
   restAlertVolume?: number;
   restOverrides?: Record<string, number>;
+  exercisePrefs?: Record<string, { warmup?: 'inherit' | 'auto' | 'off'; note?: string }>;
   progressionIncrement?: number;
   fitnessGoal?: string;
   weightGoal?: 'cut' | 'maintain' | 'bulk';

@@ -846,7 +846,7 @@ export async function pullEngineDataFromStorage() {
     wellnessLog: [],
     fastingSession: { active: false, startTime: null, goal: 16, history: [] },
     programLibrary: { bookmarks: [], completions: [], recentlyViewed: [], personalRatings: {}, activeFilters: {} },
-    settings: { name: '', weightUnit: 'kg', distanceUnit: 'km', progressionIncrement: 2.5, defaultBodyWeight: null, autoAdvanceWeek: true, theme: 'dark', onboardingComplete: false, fitnessGoal: 'hybrid', weightGoal: 'maintain', fitnessLevel: 'intermediate', equipmentTier: 'gym', weekStartDay: 'mon', fastingDefault: 16, reminderTime: { hour: 7, minute: 30 }, notifWeeklySummary: false, notifStreak: false, streakAlertTime: { hour: 20, minute: 0 }, notifMissedWorkout: false, notifFastingStage: true, musclePriorities: {}, equipment: { barbell: true, rack: true, dumbbells: true, cables: true, pullupBar: true, bands: false, kettlebells: false, ezBar: false, treadmill: false }, bandWeights: { L: 10, M: 20, H: 30 }, equipmentProfiles: [], activeEquipmentProfileId: null, restPeriods: { warmup: 45, compound: 180, accessory: 120, isolation: 90 }, restTimerEnabled: true, restAlertSound: true, restAlertVolume: 0.4, restOverrides: {}, previousValuesScope: 'all', showPlateHints: false, autoWarmupRamp: false, targetWeight: null, rateGoal: null, palette: 'midnight', avatarDataUrl: null },
+    settings: { name: '', weightUnit: 'kg', distanceUnit: 'km', progressionIncrement: 2.5, defaultBodyWeight: null, autoAdvanceWeek: true, theme: 'dark', onboardingComplete: false, fitnessGoal: 'hybrid', weightGoal: 'maintain', fitnessLevel: 'intermediate', equipmentTier: 'gym', weekStartDay: 'mon', fastingDefault: 16, reminderTime: { hour: 7, minute: 30 }, notifWeeklySummary: false, notifStreak: false, streakAlertTime: { hour: 20, minute: 0 }, notifMissedWorkout: false, notifFastingStage: true, musclePriorities: {}, equipment: { barbell: true, rack: true, dumbbells: true, cables: true, pullupBar: true, bands: false, kettlebells: false, ezBar: false, treadmill: false }, bandWeights: { L: 10, M: 20, H: 30 }, equipmentProfiles: [], activeEquipmentProfileId: null, restPeriods: { warmup: 45, compound: 180, accessory: 120, isolation: 90 }, restTimerEnabled: true, restAlertSound: true, restAlertVolume: 0.4, restOverrides: {}, exercisePrefs: {}, previousValuesScope: 'all', showPlateHints: false, autoWarmupRamp: false, targetWeight: null, rateGoal: null, palette: 'midnight', avatarDataUrl: null },
     profileSections: { order: null, hidden: [] },
     dashboardTiles: { order: null, hidden: null },   // hidden:null = focused default set (R4)
     hybridScore: { history: [], xp: 0, lastRecordedDate: null },
@@ -922,6 +922,7 @@ export async function pullEngineDataFromStorage() {
   if (appState.settings.restTimerEnabled === undefined) appState.settings.restTimerEnabled = true;
   if (appState.settings.weightGoal === undefined) appState.settings.weightGoal = 'maintain';
   if (!appState.settings.restOverrides) appState.settings.restOverrides = {};
+  if (!appState.settings.exercisePrefs || typeof appState.settings.exercisePrefs !== 'object') appState.settings.exercisePrefs = {};
   if (appState.settings.previousValuesScope !== 'program') appState.settings.previousValuesScope = 'all';
 
   // Run versioned schema migrations before any save-capable sub-module starts.

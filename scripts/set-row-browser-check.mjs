@@ -184,6 +184,30 @@ try {
     console.log(`${tag} plate-line:`, JSON.stringify(plateLine));
     if (!/\/ side/.test(plateLine)) fail(`${tag}: per-set plate line is missing (got "${plateLine}")`);
 
+    if (width === 412 && theme === 'dark') {
+      await page.click('.cockpit-exercise:not(.collapsed) .btn-ex-config');
+      await page.waitForSelector('.exercise-config');
+      await page.click('.exercise-config [data-rest="off"]');
+      await page.click('.exercise-config [data-warmup="off"]');
+      await page.fill('#exerciseConfigNote', 'Belt on');
+      await page.click('.exercise-config [data-cm="ok"]');
+      await page.waitForTimeout(350);
+      const cfg = await page.evaluate(() => {
+        const s = JSON.parse(localStorage.getItem('hybrid_engine_v2_state') || '{}');
+        const prefs = Object.values(s.settings?.exercisePrefs || {});
+        return {
+          note: prefs.map((p) => p.note).find(Boolean) || '',
+          warmup: prefs.map((p) => p.warmup).find(Boolean) || '',
+          rest: s.settings?.restOverrides?.['Incline Barbell Press'],
+          cardNote: document.querySelector('.cockpit-exercise:not(.collapsed) .cockpit-ex-note')?.textContent?.trim() || '',
+        };
+      });
+      if (cfg.note !== 'Belt on') fail(`${tag}: exercise note did not persist (${JSON.stringify(cfg)})`);
+      if (cfg.warmup !== 'off') fail(`${tag}: exercise warm-up mode did not persist (${JSON.stringify(cfg)})`);
+      if (cfg.rest !== 0) fail(`${tag}: exercise no-timer rest did not persist (${JSON.stringify(cfg)})`);
+      if (!/Belt on/.test(cfg.cardNote)) fail(`${tag}: exercise note did not render on the card`);
+    }
+
     const comparison = await page.evaluate(() => {
       const cmp = document.querySelector('.cockpit-exercise:not(.collapsed) .cockpit-set-row .set-cmp');
       return cmp ? { text: cmp.textContent, cls: cmp.className } : null;

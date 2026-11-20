@@ -51,6 +51,8 @@ import {
 } from './exercises/catalog.js';
 import { openExerciseDetail } from './exercises/detail.js';
 import { exerciseLoggerHistory } from './workout/exercise-history.js';
+import { getExerciseNote, shouldAutoWarmup } from './workout/exercise-config.js';
+import { openExerciseOptions } from './workout/exercise-options.js';
 import { estimatedE1rmForSet, isE1rmExercise, isE1rmPr } from './strength/e1rm.js';
 import {
   activeOneOffSession, activeWorkoutDay, activeWorkoutWeekKey,
@@ -442,6 +444,17 @@ function _buildExerciseCardEl(liftName, loggedLiftsData, weekData, wk, selectedD
 
   try {
     exCard.innerHTML = buildExerciseCard({ displaySafeName, safeLiftName, isCompleted, diagnostic, blueprintLabel, targetLabel, historicalLineText, historyPanelHTML, setsMarkup, groupId, ssColor, plates, weightUnit: wUnit });
+    // The athlete's own note is inserted as DOM text, never HTML: it is free
+    // text they typed, so it must not be able to become markup.
+    const exerciseNote = getExerciseNote(appState, displayLiftName);
+    if (exerciseNote) {
+      const noteEl = document.createElement('div');
+      noteEl.className = 'cockpit-ex-note';
+      noteEl.textContent = exerciseNote;
+      const history = exCard.querySelector('.cockpit-history-line, .previous-session');
+      if (history) history.insertAdjacentElement('afterend', noteEl);
+      else exCard.querySelector('.cockpit-body')?.prepend(noteEl);
+    }
     if (showPlates && plates) applyPlateHint(exCard, plates);
     if (showPlates && resolveExercise(displayLiftName)?.equipment?.includes('barbell')) {
       refreshCardSetPlateLines(exCard, {
@@ -1180,7 +1193,7 @@ export function updateInputState(inputNode) {
     // Opt-in auto ramp: after the first working weight is entered, add an
     // editable ladder above it once. The liftMeta stamp means deleting a
     // warm-up does not bring it back on the next edit.
-    if (appState.settings?.autoWarmupRamp === true
+    if (shouldAutoWarmup(appState, liftName)
       && resolveExercise(liftName)?.equipment?.includes('barbell')) {
       const sets = appState.weeks[wk].lifts[selectedDay][liftName];
       const firstWorking = sets.findIndex((set) => !isWarmupSet(set));
@@ -1949,6 +1962,7 @@ document.addEventListener('click', (e) => {
   else if (action === 'set-load-mode') setSetLoadMode(liftName, sIdx, target.getAttribute('data-mode'));
   else if (action === 'cycle-load') cycleSetLoad(liftName, sIdx);
   else if (action === 'show-ss-panel') showSupersetLinkPanel(exCard);
+  else if (action === 'open-exercise-options') openExerciseOptions(liftName);
   else if (action === 'link-superset') pairAsSuperset(liftName, target.getAttribute('data-partner'));
   else if (action === 'unlink-superset') unpairSuperset(liftName);
   else if (action === 'toggle-accordion') toggleAccordionManual(exCard);

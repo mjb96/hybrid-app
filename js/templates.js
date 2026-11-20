@@ -227,6 +227,7 @@ export function buildExerciseCard({ displaySafeName, safeLiftName, isCompleted, 
       <div class="cockpit-ex-status">${isCompleted ? 'DONE' : 'LOG'}</div>
     </div>
     <button class="${ssBtnClass}" ${ssBtnStyle} data-action="show-ss-panel" data-liftname="${safeLiftName}">${ssBtnLabel}</button>
+    <button type="button" class="btn-ex-config tactile-scale" data-action="open-exercise-options" data-liftname="${safeLiftName}" aria-label="Settings for ${displaySafeName}" title="Exercise settings">⚙</button>
   </div>
   <div class="cockpit-body">
     <div class="local-timer-placeholder"></div>
