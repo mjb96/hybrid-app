@@ -1914,6 +1914,20 @@
     <main id="activitiesContent"></main>
   </section>
 
+  <!-- History day sheet — one calendar day's sessions without leaving the month -->
+  <div id="historyDayBackdrop" class="sheet-backdrop" data-action="close-history-day"></div>
+  <div id="historyDaySheet" class="bottom-sheet history-day-sheet" role="dialog" aria-labelledby="historyDayTitle" data-modal-root data-modal-close-action="close-history-day" data-modal-companion="#historyDayBackdrop" inert aria-hidden="true">
+    <div class="bottom-sheet-handle"></div>
+    <div class="bottom-sheet-header">
+      <h3 id="historyDayTitle" class="bottom-sheet-title">Day</h3>
+      <button class="sheet-close-btn" data-action="close-history-day" aria-label="Close">✕</button>
+    </div>
+    <div id="historyDayBody" class="history-day-body"></div>
+    <div class="edit-saved-actions">
+      <button class="btn-action-block btn-ghost" data-action="history-day-full">View full day</button>
+    </div>
+  </div>
+
   <div id="activityUndoBar" class="activity-undo-bar" role="status" aria-live="polite" hidden>
     <span id="activityUndoMessage">Activity deleted</span>
     <button data-action="undo-activity-delete">Undo</button>

@@ -112,33 +112,43 @@ try {
   check((await page.locator('.activity-source-badge').count()) >= 2, 'import provenance badges are missing');
 
   await page.selectOption('#historySourceFilter', 'imported');
-  await page.waitForFunction(() => document.querySelectorAll('.activity-history-row').length === 3);
+  await page.waitForFunction(() => document.querySelectorAll('#activitiesContent .activity-history-row').length === 3);
   check((await page.locator('.activity-source-badge').count()) >= 2, 'Imported filter hides its provenance badges');
   await page.selectOption('#historySourceFilter', 'app');
-  await page.waitForFunction(() => document.querySelectorAll('.activity-history-row').length === 1);
+  await page.waitForFunction(() => document.querySelectorAll('#activitiesContent .activity-history-row').length === 1);
   check(!(await page.locator('.activity-source-badge').count()), 'Logged-in-app filter shows an import badge');
   await page.selectOption('#historySourceFilter', 'all');
-  await page.waitForFunction(() => document.querySelectorAll('.activity-history-row').length === 4);
+  await page.waitForFunction(() => document.querySelectorAll('#activitiesContent .activity-history-row').length === 4);
 
   await page.fill('#historySearchInput', 'Treadmill');
-  await page.waitForFunction(() => document.querySelectorAll('.activity-history-row').length === 1);
-  check((await page.locator('.activity-history-row').count()) === 1, 'search did not narrow to the treadmill run');
+  await page.waitForFunction(() => document.querySelectorAll('#activitiesContent .activity-history-row').length === 1);
+  check((await page.locator('#activitiesContent .activity-history-row').count()) === 1, 'search did not narrow to the treadmill run');
   await page.fill('#historySearchInput', '');
-  await page.waitForFunction(() => document.querySelectorAll('.activity-history-row').length >= 3);
+  await page.waitForFunction(() => document.querySelectorAll('#activitiesContent .activity-history-row').length >= 3);
 
   await page.click('[data-action="set-history-view"][data-view="calendar"]');
   await page.waitForSelector('.history-calendar-grid');
   check((await page.locator('.cal-has-activity').count()) >= 3, 'calendar does not mark imported training days');
   await page.click('[data-action="history-calendar-day"][data-date="2026-11-04"]');
+  await page.waitForSelector('#historyDaySheet.active');
+  check((await page.locator('#historyDayBody .activity-history-row').count()) === 2, 'the day sheet did not show both same-day sessions');
+  check(/November/.test(await page.locator('#historyDayTitle').textContent()), 'the day sheet does not name its date');
+  await page.click('#historyDaySheet [data-action="close-history-day"]');
+  await page.waitForFunction(() => !document.getElementById('historyDaySheet')?.classList.contains('active'));
+  check(await page.locator('.history-calendar-grid').isVisible(), 'closing the day sheet left the calendar');
+
+  await page.click('[data-action="history-calendar-day"][data-date="2026-11-04"]');
+  await page.waitForSelector('#historyDaySheet.active');
+  await page.click('#historyDaySheet [data-action="history-day-full"]');
   await page.waitForFunction(() => {
     const input = document.getElementById('historySearchInput');
-    return input && document.querySelectorAll('.activity-history-row').length === 2;
+    return input && document.querySelectorAll('#activitiesContent .activity-history-row').length === 2;
   });
-  check((await page.locator('.activity-history-row').count()) === 2, 'same-day sessions did not both survive the day filter');
+  check((await page.locator('#activitiesContent .activity-history-row').count()) === 2, 'same-day sessions did not both survive the day filter');
 
   await page.click('[data-action="clear-activity-date"]');
-  await page.waitForFunction(() => document.querySelectorAll('.activity-history-row').length >= 3);
-  await page.click('.activity-history-row:has-text("Treadmill")');
+  await page.waitForFunction(() => document.querySelectorAll('#activitiesContent .activity-history-row').length >= 3);
+  await page.click('#activitiesContent .activity-history-row:has-text("Treadmill")');
   await page.waitForSelector('.recap-no-route');
   check((await page.locator('.recap-no-route').textContent()).includes('No GPS route'), 'missing-route copy is not shown');
   check((await page.locator('.activity-detail-source').textContent()).includes('Imported from CSV'), 'detail provenance is missing');
@@ -147,8 +157,8 @@ try {
   // in the cockpit, and the logged sets are not re-completed in the copy.
   await page.click('#activitiesBack');
   await page.fill('#historySearchInput', 'Imported Lower');
-  await page.waitForFunction(() => document.querySelectorAll('.activity-history-row').length === 1);
-  await page.click('.activity-history-row:has-text("Imported Lower")');
+  await page.waitForFunction(() => document.querySelectorAll('#activitiesContent .activity-history-row').length === 1);
+  await page.click('#activitiesContent .activity-history-row:has-text("Imported Lower")');
   await page.waitForSelector('.activity-repeat');
   await page.click('.activity-repeat');
   await page.waitForSelector('#trainCockpit:not([hidden])');

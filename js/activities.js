@@ -21,6 +21,7 @@ import { getProgramById, showToast } from './state.js';
 import { getWeekModifier } from './schema.js';
 import { prescribeSetsForLift } from './engine.js';
 import { showUndo as showUndoBar, runUndo } from './ui/undo-bar.js';
+import { openManagedModal, closeManagedModal } from './ui/modal-stack.js';
 
 let _getState = null;
 let _saveState = null;
@@ -34,6 +35,7 @@ let _detailTab = 'summary';
 let _view = 'list';
 let _search = '';
 let _calendar = null;
+let _dayDate = null;
 
 function esc(value) {
   return String(value ?? '').replace(/[&<>"']/g, (c) => ({
@@ -128,6 +130,7 @@ export function openActivities(options = {}) {
   if (options.directIfSingle && _dateFilter) {
     _selected = activityDestinationForDate(activityRows(), _dateFilter).activity;
   }
+  closeHistoryDaySheet();
   screen.setAttribute('aria-label', 'History');
   screen.style.display = 'block';
   screen.scrollTop = 0;
@@ -135,6 +138,7 @@ export function openActivities(options = {}) {
 }
 
 export function closeActivities(options = {}) {
+  closeHistoryDaySheet();
   if (_selected && !options.force) {
     _selected = null;
     renderList();
@@ -173,6 +177,50 @@ function todayISO() {
 function historyViewToggle() {
   const button = (value, label) => `<button type="button" class="history-view-btn${_view === value ? ' is-active' : ''}" data-action="set-history-view" data-view="${value}" aria-pressed="${_view === value}">${label}</button>`;
   return `<div class="history-view-toggle" role="group" aria-label="History view">${button('list', 'List')}${button('calendar', 'Calendar')}</div>`;
+}
+
+function fullDayLabel(date) {
+  if (!date) return 'Day';
+  const parsed = new Date(`${date}T12:00:00`);
+  return Number.isNaN(parsed.getTime())
+    ? date
+    : parsed.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+function dayRowsFor(date) {
+  const all = activityRows();
+  const typed = filterActivityHistory(all, _filter, null, _activationFilter, _origin);
+  return typed.filter((row) => row.localDate === date);
+}
+
+/** Open one calendar day's sessions without leaving the month. */
+export function openHistoryDaySheet(date) {
+  const sheet = document.getElementById('historyDaySheet');
+  const body = document.getElementById('historyDayBody');
+  const title = document.getElementById('historyDayTitle');
+  if (!sheet || !body || !date) return false;
+  const rows = dayRowsFor(date);
+  _dayDate = date;
+  if (title) title.textContent = fullDayLabel(date);
+  body.innerHTML = rows.length
+    ? `<div class="activity-history-list">${rows.map(renderRow).join('')}</div>`
+    : `<div class="activity-history-empty"><span>○</span><strong>No activities on this day</strong><p>Training logged on this date with the current filters would appear here.</p></div>`;
+  const full = sheet.querySelector('[data-action="history-day-full"]');
+  if (full) full.toggleAttribute('hidden', rows.length === 0);
+  sheet.classList.add('active');
+  document.getElementById('historyDayBackdrop')?.classList.add('active');
+  openManagedModal(sheet, { initialFocus: sheet.querySelector('[data-action="close-history-day"]') });
+  return true;
+}
+
+export function closeHistoryDaySheet() {
+  const sheet = document.getElementById('historyDaySheet');
+  if (!sheet || !sheet.classList.contains('active')) return false;
+  sheet.classList.remove('active');
+  document.getElementById('historyDayBackdrop')?.classList.remove('active');
+  closeManagedModal(sheet);
+  _dayDate = null;
+  return true;
 }
 
 function historyCalendarHTML(state, rows) {
@@ -433,6 +481,13 @@ export function handleActivityAction(action, element) {
   }
   if (action === 'history-calendar-day') {
     const date = element.getAttribute('data-date');
+    if (date) openHistoryDaySheet(date);
+    return true;
+  }
+  if (action === 'close-history-day') { closeHistoryDaySheet(); return true; }
+  if (action === 'history-day-full') {
+    const date = _dayDate;
+    closeHistoryDaySheet();
     if (date) {
       _dateFilter = date;
       _search = '';
@@ -446,6 +501,7 @@ export function handleActivityAction(action, element) {
     renderList(); return true;
   }
   if (action === 'open-activity-detail') {
+    closeHistoryDaySheet();
     const found = findSelected(element.getAttribute('data-activity-id'));
     if (found) {
       const screen = document.getElementById('activitiesScreen');

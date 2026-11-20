@@ -76,7 +76,9 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   search, month headers, provenance, source filter (Logged in app / Imported),
   exact detail, edit/delete with Undo. The
   calendar is built from the same `buildActivityHistory` rows the list renders, so
-  imported/archived and same-day sessions cannot disagree with the list. Programmed
+  imported/archived and same-day sessions cannot disagree with the list. Tapping a
+  calendar day opens a managed day sheet with that day's sessions; "View full day"
+  switches to the filtered list. Programmed
   titles resolve through `getProgramById(activation.programId)`; imported titles
   keep `sessionTitle` and a source badge. Deleting strength clears and restores
   `sessionStatus`/`sessionSummary` with the set snapshot. A strength detail has
