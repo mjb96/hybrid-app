@@ -87,7 +87,8 @@ import {
   saveReminderTime, setNotifToggle, saveStreakAlertTime, toggleEquipment, saveBandWeights,
   savePlateSetup, savePlateCounts, resetPlateSetup, setShowPlateHints, setAutoWarmupRamp,
   saveDumbbells, saveMachineStack, removeMachineStack,
-  saveRestPeriods, applyRestPreset, setRestTimerEnabledSetting, resetRestOverrides,
+  saveRestPeriods, applyRestPreset, setRestTimerEnabledSetting, setRestAlertSoundSetting,
+  setRestAlertVolumeSetting, resetRestOverrides,
   openAvatarPicker, handleAvatarFile,
   selectAutomaticBackupFolder, backupNow, turnOffAutomaticBackup,
 } from './settings.js';
@@ -1424,8 +1425,10 @@ document.addEventListener('change', (e) => {
   if (target.getAttribute?.('data-plate-count')) { savePlateCounts(); return; }
   if (target.id === 'settingsDumbbells') { saveDumbbells(); return; }
   if (target.id === 'settingsShowPlateHints') { setShowPlateHints(target.checked); return; }
-  if (target.id === 'settingsRestCompound' || target.id === 'settingsRestAccessory' || target.id === 'settingsRestIsolation') { saveRestPeriods(); return; }
+  if (target.id === 'settingsRestWarmup' || target.id === 'settingsRestCompound' || target.id === 'settingsRestAccessory' || target.id === 'settingsRestIsolation') { saveRestPeriods(); return; }
   if (target.id === 'settingsRestEnabled') { setRestTimerEnabledSetting(target.checked); return; }
+  if (target.id === 'settingsRestAlertSound') { setRestAlertSoundSetting(target.checked); return; }
+  if (target.id === 'settingsRestAlertVolume') { setRestAlertVolumeSetting(Number(target.value) / 100); return; }
   if (target.id === 'settingsAutoWarmup') { setAutoWarmupRamp(target.checked); return; }
   if (target.id === 'settingsNotifications') {
     if (target.checked) {

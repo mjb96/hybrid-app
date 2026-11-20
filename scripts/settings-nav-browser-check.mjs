@@ -71,14 +71,18 @@ try {
   // Logging settings used to be hidden power-user markup. They are now a
   // first-class group: rest tiers, presets, progression step and last-performed
   // scope must all be reachable.
+  ok(await page.locator('#settingsRestWarmup').isVisible(), 'warm-up rest tier is visible');
   ok(await page.locator('#settingsRestCompound').isVisible(), 'compound rest tier is visible');
   ok(await page.locator('#settingsRestAccessory').isVisible(), 'accessory rest tier is visible');
   ok(await page.locator('#settingsRestIsolation').isVisible(), 'isolation rest tier is visible');
+  ok(await page.locator('#settingsRestAlertSound').isVisible(), 'rest alert sound toggle is visible');
+  ok(await page.locator('#settingsRestAlertVolume').isVisible(), 'rest alert volume is visible');
   ok(await page.locator('[data-action="set-progression"][data-kg="2.5"]').isVisible(), 'progression step is visible');
   ok(await page.locator('[data-action="set-previous-scope"][data-scope="program"]').isVisible(), 'previous-values scope is visible');
 
   await page.click('[data-action="rest-preset"][data-preset="efficient"]');
   ok((await page.inputValue('#settingsRestCompound')) === '2:00', 'rest preset updates the compound tier');
+  ok((await page.inputValue('#settingsRestWarmup')) === '0:30', 'rest preset updates the warm-up tier');
   await page.click('[data-action="set-previous-scope"][data-scope="program"]');
   ok(await page.locator('[data-action="set-previous-scope"][data-scope="program"]').evaluate((el) => el.classList.contains('active')), 'previous-values scope persists its active state');
 

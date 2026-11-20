@@ -1896,6 +1896,9 @@ testable on its own.
   - Added a per-set **plate line** for barbell lifts, using the entered/ghost
     weight and the active equipment profile, plus the load change since the
     previous set. It updates live while typing and respects `showPlateHints`.
+  - Rest settings now include a configurable warm-up tier (0 disables it), an
+    alert sound on/off switch and a volume control. Presets update all four
+    tiers.
   - Validation: node tests, typecheck, smoke, settings-nav browser check
     (visible Logging controls/preset/scope), set-row and quick-log tests.
   - Next: timed/distance sets, per-exercise config sheet and the load

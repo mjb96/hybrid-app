@@ -27,8 +27,10 @@ let _restTotalDuration = 90;  // total for progress bar calculation
 // and fall back to the user's configured default for anything unrecognised.
 // Tier defaults (seconds), tunable from Settings (settings.restPeriods). Pushed
 // in via setRestTiers on boot/change so this leaf module needs no state import.
-let _restTiers = { compound: 180, accessory: 120, isolation: 90 };
+let _restTiers = { warmup: 45, compound: 180, accessory: 120, isolation: 90 };
 let _restTimerEnabled = true;
+let _restAlertSound = true;
+let _restAlertVolume = 0.4;
 let _restOverrides = {};       // { liftName: seconds } — remembered ± adjustments
 let _currentLift = null;       // exercise whose rest is currently running
 let _currentWorking = false;   // is that set a working set (override-eligible)?
@@ -42,7 +44,9 @@ const _clampRest = (v, fallback) => {
 
 export function setRestTiers(t) {
   if (!t || typeof t !== 'object') return;
+  const warmup = parseInt(t.warmup, 10);
   _restTiers = {
+    warmup: Number.isFinite(warmup) && warmup >= 0 && warmup <= 600 ? warmup : _restTiers.warmup,
     compound:  _clampRest(t.compound,  _restTiers.compound),
     accessory: _clampRest(t.accessory, _restTiers.accessory),
     isolation: _clampRest(t.isolation, _restTiers.isolation),
@@ -50,6 +54,11 @@ export function setRestTiers(t) {
 }
 export function getRestTiers() { return { ..._restTiers }; }
 export function setRestTimerEnabled(b) { _restTimerEnabled = b !== false; }
+export function setRestAlertConfig({ sound, volume } = {}) {
+  if (typeof sound === 'boolean') _restAlertSound = sound;
+  const v = Number(volume);
+  if (Number.isFinite(v)) _restAlertVolume = Math.max(0, Math.min(1, v));
+}
 export function setRestOverrides(o) { _restOverrides = (o && typeof o === 'object') ? { ...o } : {}; }
 export function initRestPersistence(cb) { _onOverridesChange = typeof cb === 'function' ? cb : null; }
 
@@ -108,6 +117,7 @@ export function moveRestTimerToActiveExercise() {
 }
 
 function playRestDoneBeep() {
+  if (!_restAlertSound || _restAlertVolume <= 0) return;
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     [0, 0.18, 0.36].forEach(offset => {
@@ -117,7 +127,7 @@ function playRestDoneBeep() {
       gain.connect(ctx.destination);
       osc.type = 'sine';
       osc.frequency.value = 880;
-      gain.gain.setValueAtTime(0.4, ctx.currentTime + offset);
+      gain.gain.setValueAtTime(_restAlertVolume, ctx.currentTime + offset);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + offset + 0.14);
       osc.start(ctx.currentTime + offset);
       osc.stop(ctx.currentTime + offset + 0.15);
@@ -197,8 +207,13 @@ export function triggerRestTimerEngine(liftName, setRpe, setType, planRestSec = 
     }
     duration = Math.min(600, Math.max(0, explicit));
   } else if (setType === 'W') {
-    // 1. Warmup sets always get a short 45s rest, regardless of lift type.
-    duration = 45;
+    // 1. Warm-up rest is its own configured tier (default 45s). 0 means no
+    // timer for warm-ups, which is a deliberate choice for rushed sessions.
+    if (_restTiers.warmup <= 0) {
+      dismissRestTimer();
+      return;
+    }
+    duration = _restTiers.warmup;
   } else if (setType === 'F') {
     // AMRAP sets get a fixed 2-minute rest
     duration = 120;

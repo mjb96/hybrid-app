@@ -53,7 +53,7 @@ globalThis.document = /** @type {any} */ ({
 });
 
 const { triggerRestTimerEngine, toggleRestPause, isRestPaused, dismissRestTimer,
-  adjustRestDuration, setRestTimerEnabled } = await import('../js/timers.js');
+  adjustRestDuration, setRestTimerEnabled, setRestTiers } = await import('../js/timers.js');
 
 const bar = () => nodes.cockpitTimerBar;
 const pauseBtn = () => nodes.restPauseBtn;
@@ -66,6 +66,7 @@ beforeEach(() => {
     restPauseBtn: makeNode('restPauseBtn'),
   };
   if (typeof setRestTimerEnabled === 'function') setRestTimerEnabled(true);
+  setRestTiers({ warmup: 45, compound: 180, accessory: 120, isolation: 90 });
   dismissRestTimer();
 });
 
@@ -135,6 +136,21 @@ test('adjusting while paused keeps it paused', () => {
   adjustRestDuration(30);
   assert.equal(isRestPaused(), true, 'adjusting must not secretly resume');
   dismissRestTimer();
+});
+
+test('warm-up rest follows its own tier and can be disabled', () => {
+  triggerRestTimerEngine('Back Squat', null, 'W');
+  assert.equal(nodes.cockpitTimerClock.textContent, '0:45');
+  dismissRestTimer();
+
+  setRestTiers({ warmup: 30, compound: 180, accessory: 120, isolation: 90 });
+  triggerRestTimerEngine('Back Squat', null, 'W');
+  assert.equal(nodes.cockpitTimerClock.textContent, '0:30');
+  dismissRestTimer();
+
+  setRestTiers({ warmup: 0, compound: 180, accessory: 120, isolation: 90 });
+  triggerRestTimerEngine('Back Squat', null, 'W');
+  assert.equal(bar().classList.contains('active'), false);
 });
 
 test('a per-set rest outranks the plan and the exercise-type default', () => {

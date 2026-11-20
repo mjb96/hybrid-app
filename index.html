@@ -1541,10 +1541,22 @@
               <button class="settings-toggle-btn" data-action="rest-preset" data-preset="hypertrophy">Standard</button>
               <button class="settings-toggle-btn" data-action="rest-preset" data-preset="strength">Strength</button>
             </div>
+            <div class="settings-row">
+              <label class="settings-row-label" for="settingsRestWarmup">Warm-up rest</label>
+              <input type="text" class="settings-input settings-input-short" id="settingsRestWarmup" inputmode="numeric" placeholder="0:45" style="text-align:center;">
+            </div>
             <div class="run-grid-inputs" style="grid-template-columns: repeat(3, 1fr);">
               <label><span class="set-num-lbl block mb-1 text-accent-red">Compound</span><input type="text" id="settingsRestCompound" inputmode="numeric" placeholder="3:00" style="text-align:center;"></label>
               <label><span class="set-num-lbl block mb-1 text-accent-amber">Accessory</span><input type="text" id="settingsRestAccessory" inputmode="numeric" placeholder="2:00" style="text-align:center;"></label>
               <label><span class="set-num-lbl block mb-1 text-accent-green">Isolation</span><input type="text" id="settingsRestIsolation" inputmode="numeric" placeholder="1:30" style="text-align:center;"></label>
+            </div>
+            <label class="hc-data-toggle"><input type="checkbox" id="settingsRestAlertSound" checked><span>Rest alert sound</span></label>
+            <div class="settings-row">
+              <label class="settings-row-label" for="settingsRestAlertVolume">Alert volume</label>
+              <div class="settings-input-unit-row">
+                <input type="range" id="settingsRestAlertVolume" min="0" max="100" step="5" value="40" style="flex:1;">
+                <span class="settings-unit-badge" id="settingsRestAlertVolumeValue">40%</span>
+              </div>
             </div>
             <button class="settings-toggle-btn" data-action="reset-rest-overrides">Reset remembered rests</button>
           </div>
