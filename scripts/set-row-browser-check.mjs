@@ -51,7 +51,7 @@ function fixture(theme) {
   const done = (w, r) => ({ w: String(w), r: String(r), c: true });
   return {
     schemaVersion: 5, currentWeek: '1', activeProgramId: 'hybrid_engine', activeActivationId: 'current',
-    settings: { name: 'Row', theme, weightUnit: 'kg', distanceUnit: 'km', weekStartDay: 'mon', onboardingComplete: true },
+    settings: { name: 'Row', theme, weightUnit: 'kg', distanceUnit: 'km', weekStartDay: 'mon', onboardingComplete: true, showPlateHints: true },
     weeks: {
       'arch:old:1': {
         activationId: 'old', programId: 'hybrid_engine',
@@ -134,6 +134,8 @@ try {
     if (prev[0] && !/60kg\s*×\s*8/.test(prev[0])) fail(`${tag}: first row shows "${prev[0]}", expected last time's 60kg × 8`);
     if (prev.some((t) => /undefined|NaN|--/.test(t))) fail(`${tag}: previous-values line rendered a placeholder: ${prev.join(' , ')}`);
 
+
+
     // ---- a negative weight is refused, and never reaches state --------------
     await attemptLog(page, '-50', '5');
     await page.waitForTimeout(250);
@@ -177,6 +179,11 @@ try {
     if (!stored?.c || String(stored.w) !== '62.5' || String(stored.r) !== '8') {
       fail(`${tag}: stored set does not match what was logged: ${JSON.stringify(stored)}`);
     }
+    const plateLine = await page.evaluate(() =>
+      document.querySelector('.cockpit-exercise:not(.collapsed) .set-plate-line:not([hidden])')?.textContent?.trim() || '');
+    console.log(`${tag} plate-line:`, JSON.stringify(plateLine));
+    if (!/\/ side/.test(plateLine)) fail(`${tag}: per-set plate line is missing (got "${plateLine}")`);
+
     const comparison = await page.evaluate(() => {
       const cmp = document.querySelector('.cockpit-exercise:not(.collapsed) .cockpit-set-row .set-cmp');
       return cmp ? { text: cmp.textContent, cls: cmp.className } : null;

@@ -1893,6 +1893,9 @@ testable on its own.
     (0 = no timer) → plan prescription → remembered per-exercise override →
     exercise tier; note is a 140-character cue shown in the logger and recap.
     Both are additive fields and are recognised by the draft predicates.
+  - Added a per-set **plate line** for barbell lifts, using the entered/ghost
+    weight and the active equipment profile, plus the load change since the
+    previous set. It updates live while typing and respects `showPlateHints`.
   - Validation: node tests, typecheck, smoke, settings-nav browser check
     (visible Logging controls/preset/scope), set-row and quick-log tests.
   - Next: timed/distance sets, per-exercise config sheet and the load

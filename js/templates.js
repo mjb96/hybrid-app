@@ -142,6 +142,7 @@ export function buildSetRow(sData, sIdx, safeLiftName, historicalSetData = null,
     <div class="set-row-msg" role="status" aria-live="polite" hidden></div>
     ${prevHtml}
     ${noteHtml}
+    <div class="set-plate-line" data-set-plate hidden></div>
 
     <div class="set-adv-row">
       <button class="type-pill tactile-scale"
