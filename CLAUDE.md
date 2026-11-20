@@ -118,6 +118,13 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   fallback only for legacy undated states. Recovery/Strength current load
   (ATL/CTL/ACWR, monotony, strain, consistency) uses the same dated timeline;
   program-week series remain for the chart trends.
+- Exercise drilldown: `js/analytics/exercise-detail.js` is the pure model behind
+  `renderExerciseDetail` (`js/analytics/views/view-strength-entity.js`). It
+  reads same-exercise history across programs and aliases, keeps each set's
+  shape (rep / hold / carry), reports the all-time best set, and marks a PR only
+  when a session beats EVERY earlier one — the visible range filters the chart
+  and evidence list, never the PR baseline. The view leads with the latest set
+  and its change, then summary cards, an SVG trend and exact session evidence.
 - Progression styles: `js/programs/progression-style.js` defines `double`
   (default), `linear` and `rep-first`. Custom programs store `progressionStyle`;
   `computeDiagnosticForLift(..., { progressionStyle })` forwards it to

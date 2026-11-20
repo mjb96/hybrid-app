@@ -467,6 +467,21 @@
 .an-detail-period { color:var(--text-muted); font-size:0.78rem; margin:0 0 16px; }
 .an-period-status { background:var(--overlay-md); border:1px solid var(--border-default); border-radius:999px; color:var(--text-muted); font-size:0.66rem; font-weight:750; padding:6px 9px; white-space:nowrap; }
 .an-period-status.is-live { background:rgba(16,185,129,.1); border-color:rgba(16,185,129,.25); color:var(--color-green); }
+.an-ex-hero { background:linear-gradient(145deg,rgba(59,130,246,.14),var(--bg-card)); border:1px solid rgba(59,130,246,.26); border-radius:16px; margin-bottom:10px; padding:16px; }
+.an-ex-hero__k { color:var(--color-blue); display:block; font-size:.64rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
+.an-ex-hero__v { color:var(--text-primary); display:block; font-size:1.55rem; font-variant-numeric:tabular-nums; font-weight:850; letter-spacing:-.02em; margin:6px 0 4px; }
+.an-ex-hero__sub { color:var(--text-muted); display:block; font-size:.7rem; line-height:1.45; }
+.an-ex-hero__sub b { font-weight:800; }
+.an-ex-hero__sub b.is-up { color:var(--color-green); }
+.an-ex-hero__sub b.is-down { color:var(--color-red); }
+.an-ex-chart { display:block; height:auto; width:100%; }
+.an-ex-chart__grid { stroke:var(--border-subtle); stroke-width:1; }
+.an-ex-chart__axis { fill:var(--text-muted); font-size:9px; font-variant-numeric:tabular-nums; }
+.an-ex-chart__area { fill:rgba(59,130,246,.12); }
+.an-ex-chart__line { fill:none; stroke:var(--color-blue); stroke-linecap:round; stroke-linejoin:round; stroke-width:2.2; }
+.an-ex-chart__dot { fill:var(--bg-card); stroke:var(--color-blue); stroke-width:2; }
+.an-ex-chart__dot.is-pr { fill:var(--color-amber); stroke:var(--color-amber); }
+.an-ex-pr { background:rgba(245,158,11,.16); border-radius:999px; color:var(--color-amber); display:inline-block; font-size:.56rem; font-weight:850; margin-left:4px; padding:1px 5px; vertical-align:middle; }
 .an-volume-summary { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin-bottom:10px; }
 .an-volume-summary article { background:var(--bg-card); border:1px solid var(--border-default); border-radius:12px; padding:12px; min-width:0; }
 .an-volume-summary span { color:var(--text-muted); display:block; font-size:.68rem; margin-bottom:5px; }

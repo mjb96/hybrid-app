@@ -156,6 +156,37 @@ try {
       failures.push(`${width}px: Strength domain card did not open the Strength screen`);
     });
 
+    // An exercise drilldown carries a real chart, stat cards and session evidence.
+    await page.click('#analytics-strength [data-an-tab="stats"]');
+    await page.waitForTimeout(250);
+    const exerciseLink = await page.$('#analytics-strength [data-action="open-analytics"][data-context="exercise"]');
+    if (!exerciseLink) {
+      failures.push(`${width}px: Strength has no exercise drilldown link`);
+    } else {
+      await exerciseLink.click();
+      await page.waitForSelector('#analytics-strength-entity.active', { timeout: 4000 }).catch(() => {
+        failures.push(`${width}px: exercise link did not open the exercise detail`);
+      });
+      const detail = await page.$eval('#analytics-strength-entity', (el) => ({
+        hero: el.querySelector('.an-ex-hero__v')?.textContent?.trim() || '',
+        stats: el.querySelectorAll('.an-ex-summary article').length,
+        points: el.querySelectorAll('[data-exercise-point]').length,
+        rows: el.querySelectorAll('.an-evidence-row').length,
+        chartTitle: el.querySelector('.an-ex-chart-panel h3')?.textContent?.trim() || '',
+        overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+      }));
+      if (!detail.hero) failures.push(`${width}px: exercise detail has no latest-set hero`);
+      if (detail.stats < 4) failures.push(`${width}px: exercise detail is missing summary cards`);
+      if (detail.points < 1) failures.push(`${width}px: exercise detail has no trend points`);
+      if (detail.rows < 1) failures.push(`${width}px: exercise detail has no session evidence`);
+      if (!detail.chartTitle) failures.push(`${width}px: exercise chart has no title`);
+      if (detail.overflow) failures.push(`${width}px: exercise detail overflows horizontally`);
+      await page.click('#analytics-strength-entity [data-exercise-range="all"]');
+      await page.waitForTimeout(250);
+      const allPressed = await page.$eval('#analytics-strength-entity [data-exercise-range="all"]', (el) => el.getAttribute('aria-pressed'));
+      if (allPressed !== 'true') failures.push(`${width}px: exercise range did not switch to All time`);
+    }
+
     // Review → Stats must show a twelve-week calendar log, not a program-week
     // grid that hides imported/archived sessions.
     await openHub(page);
