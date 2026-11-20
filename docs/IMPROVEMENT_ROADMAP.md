@@ -1785,6 +1785,31 @@ testable on its own.
 
 ## 12. Session log
 
+- **2026-11-20 — P0 data correctness: every surface reads the real date.**
+  - Week in Review totals, sessions, distance and PRs come from the calendar-week
+    engine. Imported/archived `arch:*` weeks count on their stamped date; a frozen
+    program week can no longer stand in for this calendar week.
+  - Home's rail and Today card use `indexSlotsByDate`. Imported archived work
+    today is the completed card; a frozen week cannot fake today; work in the
+    active slot keeps Start/Resume (an off-plan lift there must not read as an
+    imported completion). Run-only days open a recap and distance uses the
+    athlete's unit.
+  - Activities no longer invents a strength row from a cardio-only import's note;
+    FIT strength keeps duration/HR/calories with no exercise names; provenance and
+    kg/lbs/km/mi agree with the rest of the app.
+  - Training load falls back to per-set RPE/RIR at read time and never writes
+    derived effort; the memo signature includes set effort. Hybrid Score no longer
+    scores imported-only history as 1.
+  - Week in Review adherence is session-based, the same unit as the Progress hub,
+    so it can no longer show "6% · 5/81" beside "4 of 4 planned".
+  - Release review additionally made the score arc follow the reviewed day (a
+    date-dependent test would have expired on 2026-11-22) and restored Start/
+    Resume for work in the active slot; both were caught before merge.
+  - Verified: 1,918 tests, typecheck, smoke, full 42-check browser suite, and a
+    seeded real-UI trace with archived imports in mi/lbs.
+  - Next: the data-safety "protect the bytes" PR 0, then Phase B History
+    (calendar-first, delete/restore clearing `sessionStatus`/`sessionSummary`),
+    then the audit's P1 list.
 - **2026-11-20 — Release quality gate and PR template.**
   - Every product PR now states the gap-matrix rows it closes and a parity claim
     against the bar (a tier above openGym, on par with Hevy) for logging,
