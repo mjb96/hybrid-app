@@ -2076,6 +2076,10 @@ body.sheet-scroll-locked {
 .home-week-day--missed .home-week-day__dot { background: var(--color-red, #ef4444); }
 .home-week-day--planned .home-week-day__dot { background: var(--text-muted); }
 .home-week-day--rest { opacity: 0.60; }
+.home-week-day.is-selected {
+  border-color: var(--color-cyan, #22d3ee);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-cyan, #22d3ee) 16%, transparent);
+}
 .home-week-day.is-today { color: var(--text-primary); }
 .home-week-day.is-today .home-week-day__name { color: var(--color-orange, #ff6b00); }
 

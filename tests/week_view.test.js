@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { HOME_WEEK_HISTORY, buildPastWeekView, weekOffsetLabel, weekRecapHTML } from '../js/home/week-view.js';
+import { HOME_WEEK_HISTORY, buildDayRecap, buildPastWeekView, dayRecapHTML, weekOffsetLabel, weekRecapHTML } from '../js/home/week-view.js';
 
 function state() {
   return {
@@ -64,4 +64,31 @@ test('a rest week recap explains itself instead of rendering an empty map', () =
   const html = weekRecapHTML(view, { weightUnit: 'kg' });
   assert.match(html, /No training logged/);
   assert.doesNotMatch(html, /session-map/);
+});
+
+test('a day recap drills into one date with its own muscle map', () => {
+  const recap = buildDayRecap(state(), '2026-07-27');
+  assert.equal(recap.sets, 1);
+  assert.equal(recap.volume, 400);
+  assert.equal(recap.muscles.hasData, true);
+  const html = dayRecapHTML({ date: '2026-07-27', recap }, { weightUnit: 'kg' });
+  assert.match(html, /Workout recap/);
+  assert.match(html, /400 kg/);
+  assert.match(html, /Front body map/);
+  assert.match(html, /data-action="home-week-recap"/);
+  assert.match(html, /data-action="home-open-day-activity"/);
+});
+
+test('an untrained date has no day recap', () => {
+  const recap = buildDayRecap(state(), '2026-07-29');
+  assert.equal(recap.hasData, false);
+  assert.equal(dayRecapHTML({ date: '2026-07-29', recap }), '');
+});
+
+test('a day recap uses the stored program day title when available', () => {
+  const lookup = (id) => id === 'test'
+    ? { days: { mon: { title: 'Push Strength' } } }
+    : null;
+  const recap = buildDayRecap(state(), '2026-07-27', undefined, lookup);
+  assert.equal(recap.title, 'Push Strength');
 });

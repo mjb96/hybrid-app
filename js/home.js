@@ -21,7 +21,7 @@ import { initFastingCard } from './home/fasting-card.js';
 import { setHTML } from './ui/render.js';
 import { escapeHtml } from './util.js';
 import { buildHomeWeekStrip } from './home/week-strip.js';
-import { HOME_WEEK_HISTORY, buildPastWeekView, weekOffsetLabel, weekRecapHTML } from './home/week-view.js';
+import { HOME_WEEK_HISTORY, buildDayRecap, buildPastWeekView, dayRecapHTML, weekOffsetLabel, weekRecapHTML } from './home/week-view.js';
 import { renderHomeBodyweight } from './home/bodyweight-card.js';
 import { reportHandledError, renderSafely } from './monitoring/report-error.js';
 import { addDaysISO, todayKey } from './dates.js';
@@ -41,6 +41,9 @@ let _todayCardExpandedDate = null;
 let _homeWeekOffset = 0;
 let _homeWeekDate = null;
 let _lastPastWeekView = null;
+// A completed day selected inside the week rail. Presentation-only; cleared
+// when the week changes or the athlete returns to Today.
+let _homeSelectedDate = null;
 
 export function initHome(getStateFn, getSelectedDayFn, getDaysFn) {
   _getState = getStateFn;
@@ -292,6 +295,7 @@ function renderHomeWeek(appState, activeProgram) {
     pastView = buildPastWeekView(appState, {
       startISO: addDaysISO(currentStart, _homeWeekOffset * 7),
       offset: _homeWeekOffset,
+      programLookup: getProgramById,
     });
   }
   _lastPastWeekView = pastView;
@@ -301,6 +305,7 @@ function renderHomeWeek(appState, activeProgram) {
     const disabled = !cell.date || (cell.date && cell.date > today);
     const classes = ['home-week-day', `home-week-day--${cell.status}`];
     if (cell.isToday) classes.push('is-today');
+    if (cell.date && cell.date === _homeSelectedDate) classes.push('is-selected');
     const dateLabel = cell.date ? shortDate(cell.date) : '';
     const statusLabel = cell.status === 'done' ? 'completed'
       : cell.status === 'missed' ? 'missed'
@@ -399,18 +404,27 @@ function _syncTodayCardToggle(card, expanded) {
 function _setHomeWeekOffset(offset) {
   const next = Math.max(-HOME_WEEK_HISTORY, Math.min(0, Number(offset) || 0));
   if (next === _homeWeekOffset) return;
+  _homeSelectedDate = null;
   _homeWeekOffset = next;
   renderHome();
 }
 
 document.addEventListener('click', (e) => {
-  const weekNav = e.target.closest?.('[data-action="home-week-prev"], [data-action="home-week-next"], [data-action="home-week-today"]');
-  if (weekNav) {
+  const nav = e.target.closest?.('[data-action="home-week-prev"], [data-action="home-week-next"], [data-action="home-week-today"], [data-action="home-week-recap"], [data-action="home-open-day-activity"]');
+  if (nav) {
     e.preventDefault();
-    const action = weekNav.getAttribute('data-action');
+    const action = nav.getAttribute('data-action');
     if (action === 'home-week-prev') _setHomeWeekOffset(_homeWeekOffset - 1);
     else if (action === 'home-week-next') _setHomeWeekOffset(_homeWeekOffset + 1);
-    else _setHomeWeekOffset(0);
+    else if (action === 'home-week-recap') { _homeSelectedDate = null; renderHome(); }
+    else if (action === 'home-week-today') {
+      _homeSelectedDate = null;
+      if (_homeWeekOffset === 0) renderHome();
+      else _setHomeWeekOffset(0);
+    } else if (action === 'home-open-day-activity') {
+      const date = nav.getAttribute('data-date');
+      if (date) document.dispatchEvent(new CustomEvent('app:open-activities', { detail: { date } }));
+    }
     return;
   }
   const toggle = e.target.closest?.('[data-action="toggle-today-card"]');
@@ -422,13 +436,33 @@ document.addEventListener('click', (e) => {
   const cell = e.target.closest?.('.home-week-day[data-home-date]');
   if (!cell || cell.disabled) return;
   const date = cell.getAttribute('data-home-date');
-  // Today's cell opens the decision panel it points at. Other dates keep the
-  // existing history behaviour; a completed Today still has its Review action.
-  if (date === todayKey() && _todayCardIsCollapsible()) {
-    _toggleTodayCard();
+  if (!date) return;
+
+  // Today's cell is the Today decision, never a link. A ready day toggles its
+  // details; a completed/in-progress/rest day scrolls to the card that already
+  // carries the plan or summary.
+  if (date === todayKey()) {
+    if (_homeSelectedDate) {
+      _homeSelectedDate = null;
+      renderHome();
+      if (_todayCardIsCollapsible()) _setTodayCardExpanded(true);
+      document.getElementById('homeTodayCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    if (_todayCardIsCollapsible()) { _toggleTodayCard(); return; }
+    document.getElementById('homeTodayCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     return;
   }
-  if (date) document.dispatchEvent(new CustomEvent('app:open-activities', { detail: { date } }));
+
+  // A completed day opens its own recap in the week surface. Nothing in the
+  // rail navigates away; the recap's explicit Open full activity does.
+  if (!cell.classList.contains('home-week-day--done')) return;
+  const cached = _lastPastWeekView?.cells.find((entry) => entry.date === date)?.recap;
+  const recap = cached || buildDayRecap(_getState(), date, undefined, getProgramById);
+  if (!recap?.hasData) return;
+  _homeSelectedDate = date;
+  renderHome();
+  document.getElementById('homeTodayCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
 function applyHomeCardVisibility(appState) {
@@ -442,7 +476,10 @@ function applyHomeCardVisibility(appState) {
       el.closest('.home-week')?.classList.toggle('home-week--strip-hidden', hidden);
       // With no rail there is no way back to this week; never leave a past
       // recap pinned in the Today slot.
-      if (hidden && _homeWeekOffset !== 0) _homeWeekOffset = 0;
+      if (hidden) {
+        _homeWeekOffset = 0;
+        _homeSelectedDate = null;
+      }
     }
   });
 }
@@ -453,6 +490,7 @@ export function renderHome() {
   if (_homeWeekDate !== renderDay) {
     _homeWeekDate = renderDay;
     _homeWeekOffset = 0;
+    _homeSelectedDate = null;
   }
   applyHomeCardVisibility(appState);
   // Home is a calendar-today surface. The cockpit's selected day is navigation
@@ -536,7 +574,20 @@ export function renderHome() {
       _todayCardExpandedDate = todayISO;
       _todayCardExpanded = false;
     }
-    if (_homeWeekOffset < 0 && _lastPastWeekView) {
+    let selectedRecap = null;
+    if (_homeSelectedDate) {
+      const cached = _lastPastWeekView?.cells.find((entry) => entry.date === _homeSelectedDate)?.recap;
+      selectedRecap = cached || buildDayRecap(appState, _homeSelectedDate, undefined, getProgramById);
+      if (!selectedRecap?.hasData) _homeSelectedDate = null;
+    }
+    if (selectedRecap?.hasData) {
+      setHTML(todayMount, dayRecapHTML({ date: _homeSelectedDate, recap: selectedRecap }, {
+        weightUnit: appState.settings?.weightUnit,
+        backAction: _homeWeekOffset < 0 ? 'home-week-recap' : 'home-week-today',
+        backLabel: _homeWeekOffset < 0 ? '← Back to week' : '← Back to today',
+      }));
+      _syncTodayCardToggle(null, false);
+    } else if (_homeWeekOffset < 0 && _lastPastWeekView) {
       setHTML(todayMount, weekRecapHTML(_lastPastWeekView, {
         weightUnit: appState.settings?.weightUnit,
       }));
