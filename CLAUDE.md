@@ -109,7 +109,9 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   12-week strip before the domain cards. Review Stats' Training Calendar and
   Consistency Log use the same calendar weeks (no `W1..Wn` program grid).
   `loggedSessionsByDate` counts sessions inside a slot — strength plus every
-  run — not slots, so a strength+run day is two sessions.
+  run — not slots, so a strength+run day is two sessions. Projections use the
+  same dated calendar series for strength and running, with a program-week
+  fallback only for legacy undated states.
 - Progression styles: `js/programs/progression-style.js` defines `double`
   (default), `linear` and `rep-first`. Custom programs store `progressionStyle`;
   `computeDiagnosticForLift(..., { progressionStyle })` forwards it to

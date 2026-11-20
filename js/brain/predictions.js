@@ -11,7 +11,8 @@
 // trend over enough data; returns null otherwise (never invents progress).
 // =============================================================================
 import { weeklyE1rmByLift } from '../metrics/metrics-strength.js';
-import { weeklyPaceSeries, weeklyDistanceSeries } from '../metrics/metrics-running.js';
+import { calendarWeekPaceSeries, weeklyPaceSeries, weeklyDistanceSeries } from '../metrics/metrics-running.js';
+import { calendarWeekE1rmSeriesForLift, liftE1rmByCalendarWeek } from '../analytics/strength-calendar.js';
 import { racePredictors, effectiveVdot } from '../analytics/calculations/running-calcs.js';
 
 const MIN_POINTS = 3;     // need at least this many data points to trust a trend
@@ -116,14 +117,29 @@ const TRACKED_LIFTS = [
 ];
 
 export function strengthProjections(state, days, maxWeek) {
-  const byLift = weeklyE1rmByLift(state, days, maxWeek);
+  // Dated/imported history first: the program-week series has no column for an
+  // archived or CSV/FIT session. Legacy states with no dates still fall back to
+  // the program-week series, so old data keeps its projection.
+  const calendar = liftE1rmByCalendarWeek(state);
+  const program = weeklyE1rmByLift(state, days, maxWeek);
   const out = [];
   for (const spec of TRACKED_LIFTS) {
-    const key = Object.keys(byLift).find(l => spec.match.test(l) && !/romanian|stiff|split|goblet/i.test(l));
-    if (!key) continue;
-    const series = byLift[key];
-    const current = Math.max(0, ...series);
-    if (current <= 0) continue;
+    const matches = (lift) => spec.match.test(lift) && !/romanian|stiff|split|goblet/i.test(lift);
+    const calendarKey = Object.keys(calendar).find(matches);
+    let key = calendarKey;
+    let series;
+    let current;
+    if (calendarKey) {
+      const weeks = calendar[calendarKey];
+      current = Math.max(0, ...[...weeks.values()].map((record) => record.best));
+      series = calendarWeekE1rmSeriesForLift(state, calendarKey, { weeks: 12 });
+    } else {
+      key = Object.keys(program).find(matches);
+      if (!key) continue;
+      series = program[key];
+      current = Math.max(0, ...series);
+    }
+    if (!key || current <= 0) continue;
     const target = nextPlate(current);
     const eta = weeksToTarget(series, target, true);
     const quality = trendQuality(series);
@@ -152,11 +168,22 @@ export function runningProjection(state, days, maxWeek) {
   const vdot = ev?.vdot || null;
   const races = thresholdSecs ? racePredictors(thresholdSecs) : null;
 
-  // Current predicted 5k time (seconds) from threshold, if available.
-  const current5kSec = thresholdSecs ? Math.round(thresholdSecs * 0.88 * 5) : null;
+  // Trend of weekly average pace (sec/km); improving = decreasing. Dated runs
+  // (including imports/archives) win; legacy undated states fall back to the
+  // program-week series.
+  const calendarPace = calendarWeekPaceSeries(state, { weeks: 12 });
+  const paceSeries = calendarPace.some((pace) => pace > 0)
+    ? calendarPace
+    : weeklyPaceSeries(state, days, maxWeek);
+  const latestPace = [...paceSeries].reverse().find((pace) => pace > 0) || 0;
 
-  // Trend of weekly average pace (sec/km); improving = decreasing.
-  const paceSeries = weeklyPaceSeries(state, days, maxWeek);
+  // Current predicted 5k time (seconds) from the manual threshold when present,
+  // otherwise from the latest dated pace. This keeps imported-only history from
+  // reading as “no data”.
+  const current5kSec = thresholdSecs
+    ? Math.round(thresholdSecs * 0.88 * 5)
+    : latestPace > 0 ? Math.round(latestPace * 0.88 * 5) : null;
+
   // Map each weekly pace to an implied 5k time so we can project in "5k seconds".
   const implied5k = paceSeries.map(p => (p > 0 ? p * 0.88 * 5 : 0));
 
@@ -172,7 +199,7 @@ export function runningProjection(state, days, maxWeek) {
   const paceQuality = trendQuality(implied5k);
   const fmt = (sec) => sec == null ? null : `${Math.floor(sec / 60)}:${String(Math.round(sec) % 60).padStart(2, '0')}`;
   return {
-    hasData: !!thresholdSecs,
+    hasData: !!thresholdSecs || current5kSec != null,
     vdot,
     races,
     current5k: fmt(current5kSec),
