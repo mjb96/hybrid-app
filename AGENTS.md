@@ -73,9 +73,11 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   imported/archived and same-day sessions cannot disagree with the list. Programmed
   titles resolve through `getProgramById(activation.programId)`; imported titles
   keep `sessionTitle` and a source badge. Deleting strength clears and restores
-  `sessionStatus`/`sessionSummary` with the set snapshot. Train and Progress link
-  here; they do not keep a competing calendar. The old
-  `js/home/activity-calendar.js` was removed.
+  `sessionStatus`/`sessionSummary` with the set snapshot. A strength detail has
+  **Repeat this workout**: it force-closes History and clones the source sets
+  into a fresh one-off session (values kept, completion cleared) via
+  `createOneOffStrengthSession`. Train and Progress link here; they do not keep
+  a competing calendar. The old `js/home/activity-calendar.js` was removed.
 - Plans library: Discover is one searchable all-programs list (12 initial, Show
   all expands); saved, completed, custom and imported plans share My Plans.
   `js/programs/program-json.js` exports/imports `openhybrid-plan` JSON; imported

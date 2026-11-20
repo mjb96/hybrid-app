@@ -126,12 +126,13 @@ export function openActivities(options = {}) {
   renderActivities();
 }
 
-export function closeActivities() {
-  if (_selected) {
+export function closeActivities(options = {}) {
+  if (_selected && !options.force) {
     _selected = null;
     renderList();
     return;
   }
+  _selected = null;
   const screen = document.getElementById('activitiesScreen');
   if (screen) screen.style.display = 'none';
 }
@@ -301,6 +302,7 @@ function paintDetail() {
       <button data-action="edit-activity">Edit ${_selected.kind === 'run' ? 'run' : 'strength workout'}</button>
       <button data-action="delete-activity" class="activity-action-delete">Delete ${_selected.kind === 'run' ? _selected.title.toLowerCase() : 'strength workout'}</button>
     </div>
+    ${_selected.kind === 'strength' ? `<button type="button" class="btn-action-block activity-repeat" data-action="copy-past-workout" data-activity-id="${esc(_selected.id)}">🔁 Repeat this workout</button>` : ''}
     <div class="activity-detail-shell">${provenance}${renderSessionRecapHTML(recap, [], state.thresholdPaceSeconds || null, _detailTab)}</div>`;
   content.querySelectorAll('[data-recap-tab]').forEach((button) => {
     button.addEventListener('click', () => {

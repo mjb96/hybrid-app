@@ -9153,6 +9153,7 @@ input[type="text"],
 .activity-history-empty p { margin: 7px auto 0; max-width: 300px; font-size: 0.8rem; line-height: 1.5; }
 .activity-detail-shell { padding-bottom: 34px; }
 .activity-detail-shell .an-tab { min-height: 44px; }
+.activity-repeat { margin-bottom: 10px; }
 .activity-action-menu {
   position: absolute;
   z-index: 6;
