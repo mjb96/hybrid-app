@@ -22,7 +22,8 @@
 // =============================================================================
 import { computeDashboardModel } from '../home/dashboard-model.js';
 import { bestE1rmByLiftForWeek, liftE1rmByCalendarWeek } from '../analytics/strength-calendar.js';
-import { collectCalendarWeek, weekStartOf, addDaysISO, localDayKey, DAY_KEYS } from '../analytics/weekly-aggregate.js';
+import { collectCalendarWeek, weekStartOf, addDaysISO, localDayKey, DAY_KEYS, loggedSessionsByDate } from '../analytics/weekly-aggregate.js';
+import { plannedTrainingDays } from '../analytics/progress-landing.js';
 import { isE1rmPr } from '../strength/e1rm.js';
 import { isProgramDeloadWeek } from './day-verdict.js';
 import { todayKey } from '../dates.js';
@@ -113,9 +114,11 @@ function comparisonWindow(totals, today, weekStart) {
   return totals.days.slice(0, elapsed || totals.days.length);
 }
 
-// The Hybrid Score arc across the last 7 recorded days.
-function scoreArc(state) {
-  const cutoffISO = addDaysISO(todayKey(), -6);
+// The Hybrid Score arc across the last 7 recorded days, ending on the review's
+// day. It must follow `opts.today` (fixtures, notification previews), never the
+// system clock, or the same review reports a different arc when replayed.
+function scoreArc(state, today = todayKey()) {
+  const cutoffISO = addDaysISO(today, -6);
   const entries = (state?.hybridScore?.history || [])
     .filter((h) => h.date >= cutoffISO)
     .sort((a, b) => a.date.localeCompare(b.date));
@@ -177,12 +180,25 @@ export function buildWeeklyReview(state, days, program, opts = {}) {
   const volumeDeltaPct = pctDelta(current.volumeKg, prevVolume);
   const distanceDeltaPct = pctDelta(current.distanceKm, prevDistance);
   const prs = calendarWeekPRs(state, weekStart, today);
-  const arc = scoreArc(state);
+  const arc = scoreArc(state, today);
   const isCurrentWeek = weekStart === weekStartOf(today);
 
+  // Adherence is SESSION-based, the unit the Progress hub uses (and the unit
+  // "4 of 4 planned" speaks). The old set-based count rendered "6% · 5/81" on
+  // a normal part-finished session while the hub said 4 of 4. Imported/archived
+  // slots count by their real date, through the same deduplicated index.
+  const plannedSessions = plannedTrainingDays(program) || 0;
+  const { counts: sessionsByDate } = loggedSessionsByDate(state);
+  const sessionsLogged = DAY_KEYS.reduce(
+    (total, _day, i) => total + (sessionsByDate.get(addDaysISO(weekStart, i)) || 0), 0,
+  );
+  const consistencyPct = plannedSessions > 0
+    ? Math.min(100, Math.round((sessionsLogged / plannedSessions) * 100))
+    : 0;
+
   const focus = pickWeeklyFocus({
-    consistencyPct: model.week.consistencyPct,
-    hasPlan: model.week.consistencyTotal > 0,
+    consistencyPct,
+    hasPlan: plannedSessions > 0,
     acwr: model.load.hasData ? model.load.acwr : 0,
     distance: current.distanceKm,
     volumeDeltaPct,
@@ -205,9 +221,9 @@ export function buildWeeklyReview(state, days, program, opts = {}) {
     },
     deltas: { volumePct: volumeDeltaPct, distancePct: distanceDeltaPct },
     consistency: {
-      done: model.week.consistencyDone,
-      total: model.week.consistencyTotal,
-      pct: model.week.consistencyPct,
+      done: sessionsLogged,
+      total: plannedSessions,
+      pct: consistencyPct,
     },
     prs,
     arc,
