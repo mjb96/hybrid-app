@@ -1,45 +1,69 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { buildWeeklyReview, reviewToText, pickWeeklyFocus } from '../js/brain/weekly-review.js';
+import { addDaysISO } from '../js/analytics/weekly-aggregate.js';
 
 const DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
-const iso = (d) => d.toISOString().slice(0, 10);
+const TODAY = '2026-11-20'; // Friday
+const W1 = '2026-11-02';
+const W2 = '2026-11-09';
+const W3 = '2026-11-16';
+
+function weekData(startMonday, weight, dist) {
+  const mon = startMonday;
+  const wed = addDaysISO(startMonday, 2);
+  return {
+    lifts: {
+      mon: {
+        'Back Squat': [
+          { w: String(weight), r: 5, c: true },
+          { w: String(weight), r: 5, c: true },
+        ],
+      },
+    },
+    runs: {},
+    runSessions: {
+      wed: [{
+        sessionId: `run-${startMonday}`,
+        dist: String(dist),
+        time: '25:00',
+        rpe: '6',
+        localDate: wed,
+        source: 'gps',
+      }],
+    },
+    gymRpe: { mon: '7' },
+    gymStats: { mon: { time: '45:00' } },
+    dates: { mon, wed },
+    sessionStatus: { mon: 'finished' },
+  };
+}
 
 function makeState() {
-  const start = new Date();
-  start.setDate(start.getDate() - 2 * 7);
-  const weeks = {};
-  // Week 1: squat 100; week 2: squat 110 (PR) + 2 runs.
-  for (let w = 1; w <= 3; w++) {
-    const ws = new Date(start); ws.setDate(start.getDate() + (w - 1) * 7);
-    weeks[String(w)] = {
-      lifts: { mon: { 'Back Squat': [{ w: String(95 + w * 5), r: 5, c: true }, { w: String(95 + w * 5), r: 5, c: true }] } },
-      runs: { wed: { dist: String(4 + w), time: '25:00', rpe: '6' } },
-      gymRpe: { mon: '7' }, gymStats: { mon: { time: '45' } },
-      dates: { mon: iso(ws), wed: iso(new Date(ws.getTime() + 2 * 864e5)) },
-    };
-  }
-  const today = iso(new Date());
   return {
     currentWeek: '3',
-    weekStartedAt: iso(new Date(Date.now() - 2 * 864e5)),
+    weekStartedAt: W3,
     settings: { fitnessLevel: 'intermediate' },
-    weeks,
+    weeks: {
+      '1': weekData(W1, 100, 5),
+      '2': weekData(W2, 105, 6),
+      '3': weekData(W3, 110, 7),
+    },
     loadMetrics: { atl: 9, ctl: 10 },
     hybridScore: {
-      xp: 900, lastRecordedDate: today,
+      xp: 900, lastRecordedDate: TODAY,
       history: [
-        { date: iso(new Date(Date.now() - 5 * 864e5)), score: 72, level: 2 },
-        { date: iso(new Date(Date.now() - 2 * 864e5)), score: 78, level: 2 },
-        { date: today, score: 84, level: 2 },
+        { date: '2026-11-15', score: 72, level: 2 },
+        { date: '2026-11-18', score: 78, level: 2 },
+        { date: TODAY, score: 84, level: 2 },
       ],
     },
   };
 }
 const PROGRAM = { totalWeeks: 12, days: { mon: { title: 'Squat', runs: 'Rest', lifts: [{ name: 'Back Squat' }] }, wed: { title: 'Run', runs: '5k easy' } } };
 
-test('buildWeeklyReview: totals, PR detection, score arc', () => {
-  const r = buildWeeklyReview(makeState(), DAYS, PROGRAM);
+test('buildWeeklyReview: calendar totals, PR detection, score arc', () => {
+  const r = buildWeeklyReview(makeState(), DAYS, PROGRAM, { today: TODAY });
   assert.equal(r.hasData, true);
   assert.equal(r.wkNum, 3);
   assert.equal(r.totals.sessions, 2);                 // mon lift + wed run
@@ -52,10 +76,99 @@ test('buildWeeklyReview: totals, PR detection, score arc', () => {
   assert.equal(r.arc.hasData, true);
   assert.equal(r.arc.delta, 12);
   assert.ok(r.focus.area.length > 0);
+  assert.equal(r.isCurrentWeek, true);
+  assert.equal(r.label, 'This week');
+});
+
+test('buildWeeklyReview: the score arc follows the reviewed day, not the system clock', () => {
+  // On 2026-11-22 the cutoff is 2026-11-16, so the arc holds 18 Nov + 20 Nov
+  // (78 → 84). A system-clock read on any other day returns a different arc,
+  // which is why this fixture must stay deterministic forever.
+  const mid = buildWeeklyReview(makeState(), DAYS, PROGRAM, { today: '2026-11-22' });
+  assert.equal(mid.arc.hasData, true);
+  assert.equal(mid.arc.delta, 6);
+
+  // Far past the recorded week, the same state has no arc at all.
+  const expired = buildWeeklyReview(makeState(), DAYS, PROGRAM, { today: '2026-12-20' });
+  assert.equal(expired.arc.hasData, false);
+});
+
+test('buildWeeklyReview: adherence counts sessions, not sets', () => {
+  // The audit's "6% · 5/81" contradiction: five completed sets in a part-finished
+  // session must read as sessions against the plan, the same unit the Progress
+  // hub uses, and imported archives must count by their real date.
+  const state = makeState();
+  const importedDay = (day, date) => ({
+    lifts: { [day]: { 'Back Squat': [{ w: '100', r: 5, c: true }, { w: '100', r: 5, c: true }] } },
+    dates: { [day]: date },
+    gymStats: { [day]: { time: '45:00' } },
+    sessionStatus: { [day]: 'finished' },
+    runs: {}, runSessions: {}, gymRpe: {}, notes: {}, bodyWeight: {}, liftMeta: {},
+    sessionId: `og_${day}`, sessionTitle: 'Imported', source: 'csv-import', activationId: 'imported',
+  });
+  state.weeks['arch:import:thu'] = importedDay('thu', addDaysISO(W3, 3));
+  state.weeks['arch:import:fri'] = importedDay('fri', addDaysISO(W3, 4));
+  const program = {
+    totalWeeks: 12,
+    days: {
+      mon: { title: 'Squat', runs: 'Rest', lifts: [{ name: 'Back Squat' }] },
+      tue: { title: 'Run', runs: '5k easy' },
+      thu: { title: 'Upper', runs: 'Rest', lifts: [{ name: 'Bench Press' }] },
+      fri: { title: 'Lower', runs: 'Rest', lifts: [{ name: 'Deadlift' }] },
+    },
+  };
+  const r = buildWeeklyReview(state, DAYS, program, { today: TODAY });
+  assert.equal(r.consistency.total, 4);
+  assert.equal(r.consistency.done, 4); // Mon lift, Wed run, Thu + Fri imports
+  assert.equal(r.consistency.pct, 100);
+});
+
+test('buildWeeklyReview: imported archived weeks are this week when their DATE says so', () => {
+  const state = {
+    currentWeek: '1',
+    settings: { fitnessLevel: 'intermediate' },
+    weeks: {
+      '1': { dates: {}, lifts: {}, runs: {}, runSessions: {}, gymStats: {}, sessionStatus: {} },
+      'arch:import:prev': {
+        ...weekData(W2, 100, 5),
+        activationId: 'imported', programId: 'imported', sessionId: 'og_prev',
+        sessionTitle: 'Imported Push', source: 'csv-import',
+      },
+      'arch:import:this': {
+        ...weekData(W3, 120, 8),
+        activationId: 'imported', programId: 'imported', sessionId: 'og_this',
+        sessionTitle: 'Imported Push', source: 'csv-import',
+      },
+    },
+  };
+  const r = buildWeeklyReview(state, DAYS, null, { today: TODAY });
+  assert.equal(r.totals.sessions, 2);
+  assert.equal(r.totals.volume, 120 * 5 * 2);
+  assert.equal(r.totals.distanceKm, 8);
+  assert.equal(r.totals.sets, 2);
+  assert.equal(r.prs.length, 1);
+  assert.equal(r.prs[0].lift, 'Back Squat');
+  assert.match(reviewToText(r), /This week on openHybrid: 1,200 kg lifted · 8 km run · 2 sessions · 1 PR/);
+});
+
+test('buildWeeklyReview: a frozen program week is not this calendar week', () => {
+  const state = {
+    currentWeek: '3',
+    settings: {},
+    weeks: {
+      // currentWeek still points at week 3, but its dates are LAST week.
+      '3': weekData(W2, 110, 7),
+    },
+  };
+  const r = buildWeeklyReview(state, DAYS, null, { today: TODAY });
+  assert.equal(r.totals.sessions, 0);
+  assert.equal(r.totals.volume, 0);
+  assert.equal(r.totals.distanceKm, 0);
+  assert.equal(r.hasData, false);
 });
 
 test('buildWeeklyReview: empty week degrades honestly', () => {
-  const r = buildWeeklyReview({ currentWeek: '1', settings: {}, weeks: {} }, DAYS, null);
+  const r = buildWeeklyReview({ currentWeek: '1', settings: {}, weeks: {} }, DAYS, null, { today: TODAY });
   assert.equal(r.hasData, false);
   assert.match(reviewToText(r), /no sessions logged/);
 });
@@ -79,9 +192,9 @@ test('pickWeeklyFocus: a deload week overrides the volume-dip / momentum praise'
 });
 
 test('reviewToText: numbers-first share copy with unit conversion', () => {
-  const r = buildWeeklyReview(makeState(), DAYS, PROGRAM);
+  const r = buildWeeklyReview(makeState(), DAYS, PROGRAM, { today: TODAY });
   const txt = reviewToText(r, 'km');
-  assert.match(txt, /Week 3 on openHybrid: 1,100 kg lifted · 7 km run · 2 sessions · 1 PR 🏆\./);
+  assert.match(txt, /This week on openHybrid: 1,100 kg lifted · 7 km run · 2 sessions · 1 PR 🏆\./);
   assert.match(txt, /Hybrid Score 84 \(\+12 this week\)/);
   assert.match(txt, /Next week's focus — /);
   assert.match(reviewToText(r, 'mi'), /4\.3 mi run/);

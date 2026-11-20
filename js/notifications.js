@@ -20,8 +20,8 @@ import { buildMorningBriefing, briefingToText } from './brain/morning-briefing.j
 import { buildWeeklyReview, reviewToText } from './brain/weekly-review.js';
 import { maybePushFastingNudge } from './fasting/fasting-nudge.js';
 import { makeBridgeCallbackId } from './util/bridge-callback-id.js';
-import { isCompletedSet } from './set-utils.js';
-import { runDaySummary } from './state/run-sessions.js';
+import { indexSlotsByDate } from './analytics/weekly-aggregate.js';
+import { localDayKey } from './dates.js';
 
 let _reminderTimer = null;
 let _weeklySummaryTimer = null;
@@ -149,17 +149,13 @@ function _isProgramRestDay(dayKey) {
   return !hasLifts && !hasRun;
 }
 
-function _hasLoggedToday(dayKey) {
+function _hasLoggedToday(dateISO) {
   const state = _getState?.();
   if (!state) return false;
-  const wk = state.weeks?.[state.currentWeek || '1'];
-  if (!wk) return false;
-  const hasLifts = Object.keys(wk.lifts?.[dayKey] || {}).some(l => {
-    const sets = wk.lifts[dayKey][l];
-    return Array.isArray(sets) && sets.some(isCompletedSet);
-  });
-  const hasRun = (parseFloat(runDaySummary(wk, dayKey).dist) || 0) > 0;
-  return hasLifts || hasRun;
+  // Calendar-date check across every week key, including imports/archives. The
+  // old weekday lookup only saw the current PROGRAM week, so an imported workout
+  // today still triggered "you haven't trained" reminders.
+  return (indexSlotsByDate(state).allByDate.get(dateISO) || []).length > 0;
 }
 
 // ── Daily Workout Reminder ─────────────────────────────────────────────────────
@@ -269,22 +265,16 @@ export function checkMissedWorkout() {
 
   const yesterday    = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayKey = _dayKey(yesterday);
+  const yesterdayDay = _dayKey(yesterday);
+  const yesterdayISO = localDayKey(yesterday);
 
-  if (_isProgramRestDay(yesterdayKey)) return;
+  if (_isProgramRestDay(yesterdayDay)) return;
 
-  // Check yesterday's logs
+  // Check yesterday's logs by REAL DATE, across imports/archives.
   const state = _getState?.();
   if (!state) return;
-  const wk = state.weeks?.[state.currentWeek || '1'];
-  if (!wk) return;
-  const hasLifts = Object.keys(wk.lifts?.[yesterdayKey] || {}).some(l => {
-    const sets = wk.lifts[yesterdayKey][l];
-    return Array.isArray(sets) && sets.some(isCompletedSet);
-  });
-  const hasRun = (parseFloat(runDaySummary(wk, yesterdayKey).dist) || 0) > 0;
 
-  if (!hasLifts && !hasRun) {
+  if (!_hasLoggedToday(yesterdayISO)) {
     const dayLabel = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][yesterday.getDay()];
     notify('Missed Session',
       `Looks like ${dayLabel}'s session wasn't logged. Still time to catch up or log it manually.`,
@@ -351,8 +341,7 @@ function _armStreakCheck() {
 
 function _fireStreakAlert() {
   if (!notificationsGranted()) return;
-  const todayKey = _dayKey(new Date());
-  if (_hasLoggedToday(todayKey)) return; // already trained — no nag
+  if (_hasLoggedToday(localDayKey(new Date()))) return; // already trained — no nag
 
   const streak = _getState?.()?.streakData?.current || 0;
   const body   = streak > 0

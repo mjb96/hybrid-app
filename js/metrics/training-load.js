@@ -10,11 +10,36 @@ import { addDaysISO, localDayKey, todayKey } from '../dates.js';
 import { indexSlotsByDate } from '../analytics/weekly-aggregate.js';
 import { runLoadForDay } from '../state/run-sessions.js';
 import { parseStrengthDurationMinutes } from '../strength/duration.js';
+import { isValidWorkingSet } from '../set-utils.js';
 
 export const TRAINING_DAYS = Object.freeze(['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']);
 
+// Session RPE with a set-level fallback. Importers preserve per-set RPE/RIR but
+// have no session-level number, so requiring `gymRpe` made years of imported
+// training contribute ZERO load and left ATL/CTL/ACWR flat. A mean of the set
+// RPEs (RIR 2 → RPE 8, the same mapping the recap uses) is measured data, not a
+// fabricated default. With no RPE anywhere the day stays 0 on purpose.
+function sessionRpe(week, day) {
+  const explicit = parseFloat(week?.gymRpe?.[day]) || 0;
+  if (explicit > 0) return explicit;
+  const lifts = week?.lifts?.[day] || {};
+  let total = 0;
+  let count = 0;
+  for (const sets of Object.values(lifts)) {
+    if (!Array.isArray(sets)) continue;
+    for (const set of sets) {
+      if (!isValidWorkingSet(set)) continue;
+      const rpe = parseFloat(set.rpe);
+      const fromRir = set.rir != null && set.rir !== '' ? 10 - (parseFloat(set.rir) || 0) : null;
+      const value = rpe > 0 ? rpe : (fromRir != null && fromRir > 0 && fromRir <= 10 ? fromRir : 0);
+      if (value > 0) { total += value; count++; }
+    }
+  }
+  return count ? Math.round((total / count) * 10) / 10 : 0;
+}
+
 export function dayTrainingLoad(week, day) {
-  const gymRpe = parseFloat(week?.gymRpe?.[day]) || 0;
+  const gymRpe = sessionRpe(week, day);
   const gymMins = parseStrengthDurationMinutes(week?.gymStats?.[day]?.time);
   const strength = gymRpe > 0 && gymMins > 0 ? gymRpe * gymMins : 0;
   const endurance = runLoadForDay(week, day);

@@ -20,7 +20,7 @@ import {
   ensureActivation, beginActivation, archiveForeignWeeks,
 } from './state/activation-identity.js';
 import { migrateLegacyRunSessions, runSessionsForDay } from './state/run-sessions.js';
-import { isCompletedSet } from './set-utils.js';
+import { isCompletedSet, isValidWorkingSet } from './set-utils.js';
 import { sessionSetPlan, clearSessionSetPlan, clearDaySetPlans } from './workout/set-plan.js';
 import { ensureEquipmentProfiles, projectActiveEquipmentProfile } from './equipment-profiles.js';
 import {
@@ -632,7 +632,17 @@ function loadMetricsSignature(state) {
       const runSig = runSessionsForDay(wd, d)
         .map(run => `${run.sessionId || ''}:${run.rpe || ''}/${run.time || ''}`)
         .join(',');
-      if (gr || gt || runSig) parts.push(`${wk}${d}:${gr || ''}/${gt || ''}/${runSig}`);
+      // Session RPE can now fall back to the MEAN of per-set RPE/RIR when the
+      // source has no session-level number. The memo must see those set fields,
+      // or editing a set's RIR leaves a stale ATL/CTL cached.
+      const setRpeSig = Object.values(wd.lifts?.[d] || {})
+        .flat()
+        .filter((set) => isValidWorkingSet(set) && (set.rpe != null || set.rir != null))
+        .map(set => `${set.rpe ?? ''}:${set.rir ?? ''}`)
+        .join(',');
+      if (gr || gt || runSig || setRpeSig) {
+        parts.push(`${wk}${d}:${gr || ''}/${gt || ''}/${runSig}/${setRpeSig}`);
+      }
     }
   }
   return parts.join('|');

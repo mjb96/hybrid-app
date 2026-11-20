@@ -3,10 +3,12 @@
 // A pure, calendar-day-aware presentation model for Home's single primary
 // action. It deliberately does not trust the cockpit's last-selected day.
 import { dateKey, todayProgramDay } from '../dates.js';
+import { indexSlotsByDate } from '../analytics/weekly-aggregate.js';
 import { evaluateSessionCompletion, classifyPlannedSession } from '../workout/completion-policy.js';
 import { activeOneOffSession } from '../workout/one-off-session.js';
 import { explicitSessionStatus, SESSION_STATUS } from '../workout/session-status.js';
 import { buildSessionSummary, sessionSummaryHTML } from './session-summary.js';
+import { buildDayRecap } from './week-view.js';
 
 const DAY_NAMES = Object.freeze({
   mon: 'Monday', tue: 'Tuesday', wed: 'Wednesday', thu: 'Thursday',
@@ -82,6 +84,22 @@ function unresolvedProgramSession(state, program, weekKey, todayDay, todayISO) {
   return null;
 }
 
+// Calendar-date completion from an ARCHIVED/imported slot. Work in the active
+// program slot is owned by completionFor(): treating an off-plan lift there as
+// an "imported completion" replaced Start/Resume with Review and stranded the
+// session (caught by touch-target and performance-baseline). Only a slot the
+// active slot cannot see can prove the day is done.
+function calendarCompletedToday(state, program, todayISO, activeWeekKey) {
+  const index = indexSlotsByDate(state);
+  const slots = index.allByDate?.get(todayISO) || [];
+  const hasForeignSlot = slots.some((slot) => String(slot.weekKey) !== String(activeWeekKey));
+  if (!hasForeignSlot) return null;
+  const lookup = (id) => (id && id === state?.activeProgramId ? program : null);
+  const summary = buildDayRecap(state, todayISO, index, lookup);
+  if (!summary?.hasData) return null;
+  return { date: todayISO, slots, summary };
+}
+
 function readinessGuidance(model, fallback) {
   const ready = model?.ready;
   const rec = model?.rec || {};
@@ -137,6 +155,7 @@ function baseModel({ state, program, model, briefing, score, now, offline, tz })
     offline: !!offline,
     week: String(state?.currentWeek || '1'),
     weightUnit: state?.settings?.weightUnit === 'lbs' ? 'lbs' : 'kg',
+    distanceUnit: state?.settings?.distanceUnit === 'mi' ? 'mi' : 'km',
     programName: program?.name || program?.title || '',
     model,
   };
@@ -243,10 +262,40 @@ export function buildTodayCardModel(options) {
 
   const todaySession = programSession(program, card.day);
   const todayCompletion = completionFor(state, program, weekKey, card.day);
+  const todaySlotDate = state?.weeks?.[weekKey]?.dates?.[card.day] || null;
+  // Work already stored in today's program slot belongs to today; work stored in
+  // the same weekday slot under a frozen week belongs to ITS date. The old code
+  // ignored that and could mark today "completed" from last week's session.
+  const todaySlotIsToday = !todaySlotDate || todaySlotDate === todayISO;
   card.title = todaySession.title;
   card.meta = `${card.dayLabel} · Week ${weekKey} · ${todaySession.planned.label}`;
 
-  if (todayCompletion.finished) {
+  // Imported/archived work on today's real date. It can never be found by
+  // scanning weeks[currentWeek], so without this the card offered "Start
+  // workout" while the week rail already showed today as done.
+  const calendarDone = calendarCompletedToday(state, program, todayISO, weekKey);
+  if (calendarDone && !(todaySlotIsToday && todayCompletion.anyLogged)) {
+    const hasStrength = calendarDone.summary.sets > 0 || calendarDone.summary.volume > 0;
+    const calendarRunOnly = !hasStrength && calendarDone.summary.distanceKm > 0;
+    // A run on a planned gym day does not cancel the gym session; keep the
+    // Start action and say the run is already banked. An imported strength
+    // session, or any training on a run/rest day, is the day's work.
+    if (hasStrength || !todaySession.planned.hasGym) {
+      card.state = 'completed';
+      card.tone = 'complete';
+      card.eyebrow = 'Completed';
+      card.title = calendarDone.summary.title || card.title;
+      card.summary = calendarDone.summary;
+      card.meta = completedMeta(card.dayLabel, card.summary);
+      card.guidance = 'Today’s work is safely logged. Recover now; the details remain editable.';
+      card.primary = { action: 'home-open-day-activity', date: todayISO, label: 'Review activity' };
+      card.secondary = { action: 'open-program-workout-picker', label: 'Choose another workout' };
+      return card;
+    }
+    card.calendarRunNote = calendarRunOnly;
+  }
+
+  if (todaySlotIsToday && todayCompletion.finished) {
     card.state = 'completed';
     card.tone = 'complete';
     card.eyebrow = 'Completed';
@@ -258,7 +307,7 @@ export function buildTodayCardModel(options) {
     return card;
   }
 
-  if (isOpenCompletion(state, state?.weeks?.[weekKey] || {}, card.day, todayCompletion)) {
+  if (todaySlotIsToday && isOpenCompletion(state, state?.weeks?.[weekKey] || {}, card.day, todayCompletion)) {
     card.state = 'in_progress';
     card.tone = 'progress';
     card.eyebrow = 'In progress';
@@ -268,6 +317,8 @@ export function buildTodayCardModel(options) {
     card.secondary = { action: 'open-program-workout-picker', label: 'Choose another workout' };
     return card;
   }
+
+  if (card.calendarRunNote) card.meta += ' · run already logged today';
 
   if (todaySession.planned.isRest) {
     card.state = 'rest';
@@ -292,6 +343,7 @@ function actionAttrs(action) {
     `data-action="${esc(action.action)}"`,
     action.target ? `data-target="${esc(action.target)}"` : '',
     action.day ? `data-day="${esc(action.day)}"` : '',
+    action.date ? `data-date="${esc(action.date)}"` : '',
   ].filter(Boolean).join(' ');
 }
 
@@ -334,7 +386,7 @@ export function todayCardHTML(card, options = {}) {
   if (collapsible) classes.push('is-collapsible');
   if (collapsed) classes.push('is-collapsed');
   const summary = card.state === 'completed' && card.summary
-    ? sessionSummaryHTML(card.summary, { weightUnit: card.weightUnit })
+    ? sessionSummaryHTML(card.summary, { weightUnit: card.weightUnit, distanceUnit: card.distanceUnit })
     : '';
 
   return `<article class="${classes.join(' ')}" data-today-state="${esc(card.state)}" aria-labelledby="homeTodayTitle">

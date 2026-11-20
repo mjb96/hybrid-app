@@ -80,3 +80,45 @@ test('a rest-only week reports no plan percentage', () => {
   assert.equal(strip.plannedCount, 0);
   assert.equal(strip.pct, null);
 });
+
+test('an imported/archived session on today’s date counts as done', () => {
+  const imported = {
+    currentWeek: '1',
+    settings: { weekStartDay: 'mon' },
+    weeks: {
+      '1': { dates: {}, lifts: {}, runSessions: {} },
+      'arch:import:x': {
+        activationId: 'imported', programId: 'imported', sessionId: 'og_x',
+        dates: { mon: '2026-11-16' },
+        lifts: { mon: { Bench: [{ w: '80', r: '5', c: true }] } },
+        runSessions: {},
+      },
+    },
+  };
+  const strip = buildHomeWeekStrip({ state: imported, program, days, today: '2026-11-19' });
+  const mon = strip.days.find((day) => day.day === 'mon');
+  assert.equal(mon.status, 'done');
+  assert.equal(mon.date, '2026-11-16');
+  assert.equal(strip.weekStart, '2026-11-16');
+  assert.equal(strip.range, '16 Nov – 22 Nov');
+});
+
+test('a frozen program week does not relabel last week as this week', () => {
+  const frozen = {
+    currentWeek: '1',
+    settings: { weekStartDay: 'mon' },
+    weeks: {
+      '1': {
+        dates: { mon: '2026-11-09', tue: '2026-11-10' },
+        lifts: { mon: { Bench: [{ w: '80', r: '5', c: true }] } },
+        runSessions: {},
+      },
+    },
+  };
+  const strip = buildHomeWeekStrip({ state: frozen, program, days, today: '2026-11-19' });
+  const mon = strip.days.find((day) => day.day === 'mon');
+  // The real Monday of today's calendar week is 2026-11-16 and has no work.
+  assert.equal(mon.date, '2026-11-16');
+  assert.equal(mon.status, 'missed');
+  assert.equal(strip.doneCount, 0);
+});

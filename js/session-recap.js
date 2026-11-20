@@ -84,6 +84,14 @@ export function buildSessionRecap(state, week, day, sessionId = null, activityKi
   const gymStats = wd.gymStats?.[day] || {};
   const gymRpe   = wd.gymRpe?.[day] || '';
   const dateISO  = wd.dates?.[day] || null;
+  const weightUnit = state?.settings?.weightUnit === 'lbs' ? 'lbs' : 'kg';
+  const distanceUnit = state?.settings?.distanceUnit === 'mi' ? 'mi' : 'km';
+  // FIT strength files carry duration/HR/calories but no exercise names, so
+  // `workingSets` is legitimately 0. That is still a real session — treating it
+  // as empty made the Activities detail say "Nothing logged for this day yet."
+  const hasGymStats = ['time', 'avgHR', 'maxHR', 'cals', 'trainingEffect', 'te']
+    .some((key) => gymStats[key] != null && String(gymStats[key]).trim() !== '')
+    || (Array.isArray(gymStats.gymSets) && gymStats.gymSets.length > 0);
 
   // ── Strength ──
   let tonnage = 0, workingSets = 0, totalReps = 0;
@@ -168,7 +176,7 @@ export function buildSessionRecap(state, week, day, sessionId = null, activityKi
   }
 
   const types = [];
-  if (workingSets > 0) types.push('gym');
+  if (workingSets > 0 || hasGymStats) types.push('gym');
   if (runOut) types.push(runOut.type);
 
   // Insights are NOT hand-rolled here — they come from the shared insight
@@ -180,8 +188,9 @@ export function buildSessionRecap(state, week, day, sessionId = null, activityKi
     duration: gymStats.time || '', gymRpe,
     gymHR: gymStats.avgHR || '', gymMaxHR: gymStats.maxHR || '',
     gymCals: gymStats.cals || '', gymTE: gymStats.trainingEffect || gymStats.te || '',
+    weightUnit, distanceUnit, hasGymStats,
     lifts, muscles, run: runOut,
-    empty: workingSets === 0 && !runOut,
+    empty: workingSets === 0 && !runOut && !hasGymStats,
   };
 }
 
@@ -213,17 +222,36 @@ function fmtPace(secs) {
   return `${Math.floor(secs / 60)}:${String(Math.round(secs % 60)).padStart(2, '0')}`;
 }
 
-const UNIT = 'kg';
 const ZONE_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#f97316', '#ef4444'];
+const KM_TO_MI = 0.621371;
+
+function displayDistance(km, unit) {
+  const value = unit === 'mi' ? (Number(km) || 0) * KM_TO_MI : (Number(km) || 0);
+  return `${value.toFixed(2)} ${unit}`;
+}
+
+function displayPace(pacePerKm, unit) {
+  if (!pacePerKm) return '';
+  const match = String(pacePerKm).match(/^(\d+):(\d{2})$/);
+  if (!match) return `${pacePerKm} /${unit}`;
+  const secsPerKm = Number(match[1]) * 60 + Number(match[2]);
+  const secs = unit === 'mi' ? secsPerKm / KM_TO_MI : secsPerKm;
+  return `${Math.floor(secs / 60)}:${String(Math.round(secs % 60)).padStart(2, '0')} /${unit}`;
+}
 
 function _summaryTiles(r) {
+  const unit = r.weightUnit || 'kg';
+  const distUnit = r.distanceUnit || 'km';
   return [
-    r.tonnage > 0 ? statTile('Volume', `${r.tonnage.toLocaleString()} ${UNIT}`) : '',
+    r.tonnage > 0 ? statTile('Volume', `${r.tonnage.toLocaleString()} ${unit}`) : '',
     r.workingSets > 0 ? statTile('Sets', r.workingSets) : '',
     r.duration ? statTile('Duration', r.duration) : '',
     r.gymRpe ? statTile('Gym RPE', `${r.gymRpe}/10`) : '',
-    r.run ? statTile('Distance', r.run.distKm > 0 ? `${r.run.distKm.toFixed(2)} km` : '') : '',
-    r.run ? statTile('Pace', r.run.pace ? `${r.run.pace} /km` : '') : '',
+    r.gymHR ? statTile('Avg HR', `${r.gymHR} bpm`) : '',
+    r.gymCals ? statTile('Calories', r.gymCals) : '',
+    r.gymTE ? statTile('Training effect', r.gymTE) : '',
+    r.run ? statTile('Distance', r.run.distKm > 0 ? displayDistance(r.run.distKm, distUnit) : '') : '',
+    r.run ? statTile('Pace', displayPace(r.run.pace, distUnit)) : '',
     r.run ? statTile('Run time', r.run.time) : '',
     r.run && r.run.avgHR ? statTile('Avg HR', `${r.run.avgHR} bpm`) : '',
     r.run?.gpsQuality ? statTile('GPS quality', esc(r.run.gpsQuality.confidence)) : '',
@@ -231,12 +259,13 @@ function _summaryTiles(r) {
 }
 
 function _liftSummaryRows(r) {
+  const unit = r.weightUnit || 'kg';
   return r.lifts.map((l) => `
     <div class="recap-lift">
       <div class="recap-lift__name">${esc(l.name)}${l.pr ? ` <span class="recap-pr" title="New estimated 1RM best">🏆 PR</span>` : ''}</div>
       <div class="recap-lift__detail">
-        ${l.topSet ? `${l.topSet.w} ${UNIT} × ${l.topSet.r}` : `${l.sets} sets`}
-        ${l.e1rm > 0 ? `<span class="recap-lift__e1rm">est. 1RM ${l.e1rm} ${UNIT}</span>` : ''}
+        ${l.topSet ? `${l.topSet.w} ${unit} × ${l.topSet.r}` : `${l.sets} sets`}
+        ${l.e1rm > 0 ? `<span class="recap-lift__e1rm">est. 1RM ${l.e1rm} ${unit}</span>` : ''}
       </div>
     </div>`).join('');
 }
@@ -271,6 +300,7 @@ function _setTag(s) {
   return '';
 }
 function _liftSetGrid(r) {
+  const unit = r.weightUnit || 'kg';
   return r.lifts.map((l) => {
     let mrsN = 0; // number MRS rows in completed order (MRS 1, MRS 2)
     const rows = l.setList.map((s, i) => {
@@ -279,27 +309,29 @@ function _liftSetGrid(r) {
           <div class="rc-set${s.warmup ? ' rc-set--warm' : ''}">
             <span class="rc-set__n">${i + 1}</span>
             ${tag ? `<span class="rc-set__role rc-set__role--${esc(tag.role)}" data-set-role="${esc(tag.role)}">${esc(tag.label)}</span>` : ''}
-            <span class="rc-set__wr">${s.w} ${UNIT} × ${s.r}</span>
+            <span class="rc-set__wr">${s.w} ${unit} × ${s.r}</span>
             ${_setTag(s)}
             ${s.rir != null ? `<span class="rc-set__rir">RIR ${s.rir}</span>` : ''}
-            <span class="rc-set__vol">${s.vol.toLocaleString()} ${UNIT}</span>
+            <span class="rc-set__vol">${s.vol.toLocaleString()} ${unit}</span>
           </div>`;
     }).join('');
     return `
     <div class="rc-exercise">
       <div class="rc-exercise__head">
         <span class="rc-exercise__name">${esc(l.name)}${l.pr ? ' 🏆' : ''}</span>
-        <span class="rc-exercise__meta">${l.sets} sets · ${l.reps} reps · ${l.volume.toLocaleString()} ${UNIT}</span>
+        <span class="rc-exercise__meta">${l.sets} sets · ${l.reps} reps · ${l.volume.toLocaleString()} ${unit}</span>
       </div>
       <div class="rc-sets">${rows}</div>
     </div>`;
   }).join('');
 }
 function _sessionTotals(r) {
+  const unit = r.weightUnit || 'kg';
   const tiles = [
     r.workingSets > 0 ? statTile('Sets', r.workingSets) : '',
     r.totalReps > 0 ? statTile('Reps', r.totalReps) : '',
-    r.tonnage > 0 ? statTile('Volume', `${r.tonnage.toLocaleString()} ${UNIT}`) : '',
+    r.tonnage > 0 ? statTile('Volume', `${r.tonnage.toLocaleString()} ${unit}`) : '',
+    r.duration ? statTile('Duration', r.duration) : '',
     r.gymHR ? statTile('Avg HR', `${r.gymHR} bpm`) : '',
     r.gymMaxHR ? statTile('Max HR', `${r.gymMaxHR} bpm`) : '',
     r.gymCals ? statTile('Calories', r.gymCals) : '',

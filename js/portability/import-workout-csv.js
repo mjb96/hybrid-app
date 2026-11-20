@@ -439,6 +439,9 @@ export function applyWorkoutCsvImport(state, parsed, opts = {}) {
       liftOrder: { [day]: liftOrder },
       liftMeta: { [day]: {} },
       notes: { [day]: session.note || '' },
+      // Session RPE stays absent when the source has none. Load is derived at
+      // READ time from per-set RPE/RIR (js/metrics/training-load.js); writing a
+      // derived mean here would fabricate athlete-entered data and change exports.
       gymRpe: { [day]: '' },
       bodyWeight: {},
       // A cardio-only session must not masquerade as a strength activity.
@@ -460,6 +463,7 @@ export function applyWorkoutCsvImport(state, parsed, opts = {}) {
         dist: distanceKm > 0 ? distanceKm.toFixed(2) : '',
         time: durationText(seconds * 1000),
         pace: paceText(seconds, distanceKm),
+        // No session-level RPE column exists in these exports; never invent one.
         rpe: '',
         avgHR: '',
         maxHR: '',

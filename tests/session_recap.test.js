@@ -114,6 +114,47 @@ test('PR comparison carries canonical exercise aliases across programs', () => {
   assert.equal(recap.lifts[0].pr, true);
 });
 
+test('FIT strength is a real recap even with no exercise names', () => {
+  const state = {
+    settings: { weightUnit: 'kg', distanceUnit: 'km' },
+    weeks: {
+      'arch:fitgym:1': {
+        dates: { mon: '2026-07-02' },
+        lifts: { mon: {} },
+        gymStats: { mon: { time: '45:00', avgHR: '120', maxHR: '150', cals: '300' } },
+        runs: {},
+      },
+    },
+  };
+  const r = buildSessionRecap(state, 'arch:fitgym:1', 'mon');
+  assert.equal(r.empty, false);
+  assert.deepEqual(r.types, ['gym']);
+  assert.equal(r.hasGymStats, true);
+  const html = renderSessionRecapHTML(r);
+  assert.match(html, /45:00/);
+  assert.match(html, /120 bpm/);
+  assert.match(html, /Calories/);
+});
+
+test('recap labels weights and distances in the athlete’s units', () => {
+  const state = {
+    settings: { weightUnit: 'lbs', distanceUnit: 'mi' },
+    weeks: {
+      '1': {
+        dates: { mon: '2026-07-02' },
+        lifts: { mon: { 'Bench Press': [{ w: 100, r: 5, c: true }] } },
+        runs: { mon: { dist: 5, time: '25:00', pace: '5:00', type: 'run' } },
+      },
+    },
+  };
+  const r = buildSessionRecap(state, '1', 'mon');
+  const html = renderSessionRecapHTML(r);
+  assert.match(html, /500 lbs/);
+  assert.match(html, /3\.11 mi/);
+  assert.match(html, /8:03 \/mi/);
+  assert.doesNotMatch(html, /500 kg|5\.00 km|5:00 \/km/);
+});
+
 test('high-rep work remains in the recap but is not presented as a 1RM estimate', () => {
   const state = stateWith({
     dates: { mon: '2026-07-02' },

@@ -58,13 +58,19 @@ export function consistencyPillar(model) {
   const streak = model.streak?.current || 0;
   const avg = model.goal?.avgConsistency || 0;
 
-  // No baseline to judge against AND nothing done yet → no data. This is the
+  // No adherence baseline AND nothing done yet → no data. This is the
   // day-0/first-week case: a plan exists (consistencyTotal > 0) but the athlete
   // hasn't had a chance to be consistent. Returning null (rather than a
   // done÷planned 0) stops a brand-new user from being branded "At Risk" for
   // work they were never given time to do; the engine's provisional prior then
   // carries this pillar until real adherence exists.
-  const noBaseline = avg <= 0 && streak <= 0;
+  //
+  // The STREAK is deliberately not part of this test. It counts imported and
+  // archived dates too, so imported-only history cleared `noBaseline`, scored
+  // program-week adherence 0, added the streak nudge and banked a real score of
+  // 1 — importing training LOWERED the athlete below a brand-new user. Adherence
+  // is a program-week metric; imported history is not adherence evidence.
+  const noBaseline = avg <= 0;
   const nothingDone = (w?.consistencyDoneToDate ?? w?.consistencyDone ?? 0) === 0;
   if (noBaseline && nothingDone) return { score: null, signals: [] };
 

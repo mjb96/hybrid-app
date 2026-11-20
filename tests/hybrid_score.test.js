@@ -270,6 +270,18 @@ test('consistencyPillar: no baseline + nothing done yet → null (not a punishin
   assert.equal(p.score, null, 'consistency has no data to judge yet');
 });
 
+test('consistencyPillar: imported history does not turn zero adherence into a score of 1', () => {
+  // Imported/archived dates raise the STREAK but are not program adherence.
+  // Before the fix this returned ~1 and banked it as a real daily score.
+  const p = consistencyPillar({
+    week: { consistencyTotal: 6, consistencyDone: 0, consistencyPct: 0, consistencyPctToDate: null },
+    streak: { current: 1 },
+    goal: { avgConsistency: 0 },
+  });
+  assert.equal(p.score, null);
+  assert.deepEqual(p.signals, []);
+});
+
 test('computeHybridScore: day-0 with a provisional prior shows the starting Score, never "At Risk"', () => {
   const provisional = {
     score: 65,
