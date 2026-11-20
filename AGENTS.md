@@ -443,7 +443,10 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   never rewritten. `js/workout/load-basis.js` owns the helpers. Per-set
   `restSec` (0 = no timer) outranks the plan/override/tier resolution; per-set
   `note` (140 chars) is shown in the logger and recap. Both are additive and
-  recognised by the draft predicates.
+  recognised by the draft predicates. The per-set plate line
+  (`js/workout/plate-hint-dom.js`) uses the entered/ghost weight and active
+  profile and shows the load change since the previous row; it respects
+  `settings.showPlateHints`.
 - Session lifecycle: additive `weeks[key].sessionStatus[day]` (`in_progress|finished`)
   and `sessionSummary[day]` sidecars are owned by `js/workout/session-status.js`.
   Deliberate Finish marks the workout finished even below 100% plan adherence; deletion/

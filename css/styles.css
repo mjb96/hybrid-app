@@ -2923,6 +2923,14 @@ html[data-theme="light"] .bm-h4 { stroke: #fff; }
   font-style: italic;
   line-height: 1.4;
 }
+.set-plate-line {
+  grid-column: 1 / -1;
+  margin: 1px 0 0 calc(28px + var(--space-3));
+  color: var(--text-muted, #94a3b8);
+  font-size: 0.64rem;
+  font-variant-numeric: tabular-nums;
+}
+.set-plate-line[hidden] { display: none; }
 
 /* ==========================================
    PROFILE AVATAR BUTTON

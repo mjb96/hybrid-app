@@ -29,7 +29,7 @@ import { buildSessionReview } from './workout/session-review.js';
 import { activeSessionLiftNames, applyExerciseSwap, neighborDay, pickInheritedSet } from './workout-order.js';
 import { getSubstitutions } from './workout/substitutions.js';
 import { plateHint } from './workout/plates.js';
-import { applyPlateHint } from './workout/plate-hint-dom.js';
+import { applyPlateHint, refreshCardSetPlateLines } from './workout/plate-hint-dom.js';
 import { getActivePlateSetup } from './equipment-profiles.js';
 import { resolveExercise } from './exercises/catalog.js';
 import { deleteMapFromDB } from './db.js';
@@ -443,6 +443,12 @@ function _buildExerciseCardEl(liftName, loggedLiftsData, weekData, wk, selectedD
   try {
     exCard.innerHTML = buildExerciseCard({ displaySafeName, safeLiftName, isCompleted, diagnostic, blueprintLabel, targetLabel, historicalLineText, historyPanelHTML, setsMarkup, groupId, ssColor, plates, weightUnit: wUnit });
     if (showPlates && plates) applyPlateHint(exCard, plates);
+    if (showPlates && resolveExercise(displayLiftName)?.equipment?.includes('barbell')) {
+      refreshCardSetPlateLines(exCard, {
+        unit: wUnit,
+        setup: getActivePlateSetup(appState, wUnit),
+      });
+    }
     // Any completed WORKING set means the athlete is past warming up. Kept in
     // sync on tick by refreshContextualRowActions(), since ticking updates the
     // DOM without re-rendering this card.
@@ -2007,6 +2013,13 @@ document.addEventListener('input', (e) => {
     const row = target.closest?.('.cockpit-set-row');
     if (row && row.getAttribute('data-set-role') === 'repmax') {
       recalcJtBackoff(target.closest('.cockpit-exercise'));
+    }
+    const state = _getState?.();
+    const card = target.closest?.('.cockpit-exercise');
+    if (state?.settings?.showPlateHints && card
+      && resolveExercise(card.getAttribute('data-liftname'))?.equipment?.includes('barbell')) {
+      const unit = state.settings.weightUnit === 'lbs' ? 'lbs' : 'kg';
+      refreshCardSetPlateLines(card, { unit, setup: getActivePlateSetup(state, unit) });
     }
   }
   if (target.matches('#runInputDist, #runInputTime, #runInputRpeCockpit, #runInputPace, #runInputNotes')) {
