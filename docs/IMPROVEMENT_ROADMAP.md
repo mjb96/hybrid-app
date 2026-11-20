@@ -1923,10 +1923,13 @@ testable on its own.
   - Projections now read dated calendar weeks for strength and running, so
     imported/archived sessions produce real ETAs. Legacy undated states still
     fall back to the program-week series instead of losing their projection.
+  - Current Recovery/Strength load (ATL/CTL/ACWR, monotony, strain,
+    consistency and progression) uses the same dated timeline as Home whenever
+    real dates exist; undated legacy states keep the program-week reading. The
+    program-week series remain for the trend charts and are labelled as such.
   - Validation: 1,936 node tests, typecheck, smoke, progress-hub browser check
     (hero, 12 bars, Review Stats calendar/log), strength-volume check.
-  - Next: load-model unification, exercise drilldown and the monthly/year
-    review surfaces.
+  - Next: exercise drilldown and the monthly/year review surfaces.
 - **2026-11-20 — History overhaul: calendar-first imported history.**
   - Activities is presented as **History** and now has List | Calendar views.
     Calendar cells group the same row model History renders, so a day with two
