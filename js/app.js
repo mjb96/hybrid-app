@@ -56,7 +56,7 @@ import { initBodyweightSheet, openBodyweightSheet, closeBodyweightSheet, stepBod
 import { initSessionRecap, openSessionRecap, closeSessionRecap, isSessionRecapOpen, sharePRFromRecap } from './session-recap.js';
 import { initDragDrop } from './dragdrop.js';
 import {
-  initWorkout, renderWorkout,
+  initWorkout, renderWorkout, scrollCockpitToActiveExercise,
   updateInputState, commitWorkoutUIState, toggleGymCheckLoggingState,
   appendCustomSetRow, removeCustomSetRow,
   toggleAccordionManual,
@@ -214,7 +214,13 @@ function toggleQuickStart(show) {
 }
 
 export function setCockpitActiveDay(dayKey) {
-  if (activeTab === 'workout') {
+  // Only commit live cockpit inputs when the cockpit is actually on screen.
+  // Opening a session from the Train landing used to commit the hidden
+  // cockpit's blank scaffolding, which marked the day in_progress before the
+  // athlete had even started it.
+  const cockpit = document.getElementById('trainCockpit');
+  const cockpitVisible = !!cockpit && !cockpit.hidden;
+  if (activeTab === 'workout' && cockpitVisible) {
     try { commitWorkoutUIState(); } catch(e) { console.warn(e); }
   }
   setSelectedDay(dayKey);
@@ -1122,7 +1128,11 @@ document.addEventListener('click', (e) => {
   else if (action === 'switch-browser-tab') switchBrowserSectionTab(target.getAttribute('data-tab'));
   
   // Timers
-  else if (action === 'start-timer') startWorkoutTimer(activeWorkoutTimerKey());
+  else if (action === 'start-timer') {
+    startWorkoutTimer(activeWorkoutTimerKey());
+    try { renderWorkout(); } catch (err) { console.warn(err); }
+    try { scrollCockpitToActiveExercise(); } catch (_) { /* best-effort */ }
+  }
   else if (action === 'dismiss-rest') dismissRestTimer();
   else if (action === 'rest-pause') toggleRestPause();
 

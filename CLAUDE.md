@@ -121,11 +121,20 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   Equipment switches, adds, renames and deletes profiles (the last cannot be
   deleted). v6→v7 seeds the optional inventory shape; v5→v6 seeded the first
   profile from the legacy kit.
-- Home decision surface: `index.html` puts the generated week strip
-  (`js/home/week-strip.js` → `#homeWeekDays`) first, then one compact Today card
-  (`#homeTodayCard`, rendered by `js/home/today-card.js`). The card keeps the
-  eyebrow/title/meta/short guidance and one primary action; it deliberately
-  omits the state pill, score row and evidence drawer. Below it sit the compact
+- Home decision surface: `index.html` renders ONE week surface
+  (`#homeWeekStrip`) containing the optional seven-day rail
+  (`js/home/week-strip.js` → `#homeWeekDays`, `data-home-card="weekStrip"`) and
+  the pinned Today decision (`#homeTodayCard`, rendered by
+  `js/home/today-card.js`). A fresh `ready` day collapses Today to one compact
+  row but KEEPS `#homePrimaryCta` visible; tapping today's date cell or the row
+  expands the guidance, and `isTodayCardCollapsible` keeps in-progress/
+  completed/rest/no-plan/unresolved states fully open. Hiding "This week" in
+  Customize hides only the rail, never Today. Completed days add the session
+  summary and anatomical heat map (`js/home/session-summary.js` /
+  `js/home/body-heatmap.js`: the static path geometry is Apache-2.0 Body
+  Muscles, vendored with its notice), and the rail pages back through four
+  previous weeks as a recap (`js/home/week-view.js`), never a Start action. The
+  card deliberately omits the state pill, score row and evidence drawer. Below it sit the compact
   bodyweight card (`js/home/bodyweight-card.js` → `#homeBodyweightCard`) with
   one-tap prefilled logging, one coach insight from `model.topInsight`, and a
   2×2 quick-action grid. The In Focus cards and their graph module were removed;
@@ -136,6 +145,18 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   actions and navigation stay pinned. Keep `#homePrimaryCta`,
   `.btn-history-link` and the Run quick action in the Home DOM — browser checks
   measure them.
+- Train landing: `js/train/train-landing.js` + `view-train-landing.js` render a
+  SESSION PREVIEW, not a second Home: week rail, today's card with the day's
+  `liftTarget` prescriptions, one Start/Resume, Quick start limited to
+  Run/Walk/Fast, and one recent row. Do not add a "Workout" quick start — it
+  duplicates Start; a different or empty workout belongs to "Choose another
+  workout". Start opens the cockpit directly; an active session is Resume.
+- Active cockpit: once a session is running, `view-workout.cockpit-session-active`
+  keeps a sticky compact block (Back, volume/sets, Finish, session clock and a
+  numbered exercise rail) and hides the full header, day selector, "Exercises"
+  heading and vertical outline. The active card is scrolled into view with
+  enough offset that its first set stays under the sticky block. The rail and
+  stats refresh after a set is ticked without re-rendering the cockpit.
 - Weekly analytics attribution: `state.currentWeek` is a PROGRAM-week counter that only
   advances on an explicit step / confirmed auto-advance — it is NOT the calendar week.
   So "this week" analytics must NOT read `weeks[currentWeek]` directly (that leaked a

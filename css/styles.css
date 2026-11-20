@@ -1947,13 +1947,15 @@ body.sheet-scroll-locked {
 }
 .home-week {
   margin: 0 0 16px;
-  padding: 15px 14px 13px;
+  padding: 0;
   border: 1px solid var(--border-default);
   border-radius: 18px;
   background:
     radial-gradient(120% 120% at 100% 0%, rgba(99,102,241,0.10), transparent 58%),
     var(--bg-card);
+  overflow: hidden;
 }
+.home-week__rail { padding: 15px 14px 13px; }
 .home-week__head {
   display: flex;
   align-items: flex-end;
@@ -1961,6 +1963,39 @@ body.sheet-scroll-locked {
   gap: 10px;
   margin-bottom: 11px;
 }
+.home-week__nav {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+.home-week__titles { min-width: 0; }
+.home-week__nav-btn {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--border-default);
+  border-radius: 11px;
+  color: var(--text-secondary);
+  background: color-mix(in srgb, var(--text-muted, #94a3b8) 6%, transparent);
+  font: inherit;
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.home-week__nav-btn:active { transform: scale(.96); }
+.home-week__nav-btn:disabled { opacity: .32; cursor: default; }
+.home-week__nav-btn:focus-visible {
+  outline: 2px solid var(--color-cyan, #22d3ee);
+  outline-offset: 2px;
+}
+.home-week__range {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .home-week__eyebrow,
 .home-insight__eyebrow {
   display: block;
@@ -1991,7 +2026,7 @@ body.sheet-scroll-locked {
   min-width: 0;
   display: grid;
   grid-template-columns: repeat(7, minmax(44px, 1fr));
-  gap: 5px;
+  gap: 3px;
   overflow-x: auto;
   padding-bottom: 2px;
   scrollbar-width: none;
@@ -2212,6 +2247,241 @@ html[data-theme="light"] .home-insight { background: linear-gradient(135deg, rgb
 }
 .today-card__secondary:active { transform: scale(.98); }
 
+/* ── Today inside the week surface ─────────────────────────────────────────
+   The seven-day rail is the header; today's decision is the body. The Today
+   card keeps its own state classes so every state consumer is unchanged, but
+   it no longer draws a second card boundary. */
+.home-week #homeTodayCard { border-top: 1px solid var(--border-default); }
+.home-week .today-card {
+  margin: 0;
+  padding: 13px 14px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+.home-week .today-card::after { display: none; }
+.home-week--strip-hidden #homeTodayCard { border-top: 0; }
+.home-week--strip-hidden .today-card { padding-top: 15px; }
+
+.today-card__head { position: relative; }
+.today-card.is-collapsible .today-card__head { padding-right: 30px; }
+.today-card__toggle {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  color: var(--text-muted);
+  background: transparent;
+  cursor: pointer;
+}
+.today-card__toggle:focus-visible {
+  outline: 2px solid var(--color-cyan, #22d3ee);
+  outline-offset: 3px;
+}
+.today-card__chevron {
+  width: 8px;
+  height: 8px;
+  margin: 0 3px 4px 0;
+  border-right: 1.6px solid currentColor;
+  border-bottom: 1.6px solid currentColor;
+  transform: rotate(45deg);
+  transition: transform .18s ease, margin .18s ease;
+}
+.today-card__toggle[aria-expanded="true"] .today-card__chevron {
+  margin: 4px 3px 0 0;
+  transform: rotate(225deg);
+}
+
+/* Collapsed: one compact row, but the primary action never hides. */
+.today-card.is-collapsed {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "head actions";
+  align-items: center;
+  column-gap: 10px;
+}
+.today-card.is-collapsed .today-card__head { grid-area: head; min-width: 0; }
+.today-card.is-collapsed .today-card__title {
+  font-size: 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.today-card.is-collapsed .today-card__meta {
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.today-card.is-collapsed .today-card__detail,
+.today-card.is-collapsed .today-card__secondary { display: none; }
+.today-card.is-collapsed .today-card__actions {
+  grid-area: actions;
+  display: block;
+  margin: 0;
+}
+.today-card.is-collapsed .today-card__primary {
+  width: auto;
+  min-height: 44px;
+  padding: 0 15px;
+  border-radius: 12px;
+  font-size: .72rem;
+  white-space: nowrap;
+}
+
+/* ── Completed session summary + anatomical heat map ─────────────────────── */
+.session-summary {
+  margin: 12px 0 0;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--color-green, #10b981) 15%, var(--border-default));
+  border-radius: 14px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-green, #10b981) 7%, transparent), transparent 62%);
+}
+.session-summary__pr {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 8px;
+  padding: 4px 8px;
+  border: 1px solid color-mix(in srgb, var(--color-amber, #f59e0b) 28%, transparent);
+  border-radius: 999px;
+  color: var(--color-amber, #f59e0b);
+  background: color-mix(in srgb, var(--color-amber, #f59e0b) 8%, transparent);
+  font-size: .6rem;
+  font-weight: 850;
+}
+.session-summary__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(78px, 1fr));
+  gap: 7px;
+}
+.session-summary__stat {
+  padding: 8px 9px;
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--bg-deep, #080f1a) 40%, transparent);
+}
+.session-summary__stat b {
+  display: block;
+  color: var(--text-primary);
+  font-size: .86rem;
+  letter-spacing: -.01em;
+}
+.session-summary__stat span {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-faint, var(--text-muted));
+  font-size: .5rem;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.session-map {
+  margin: 10px 0 0;
+  padding: 9px 6px 5px;
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--bg-deep, #080f1a) 30%, transparent);
+}
+.session-map__views {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  align-items: end;
+}
+.session-map__view { text-align: center; min-width: 0; }
+.session-map__label {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--text-faint, var(--text-muted));
+  font-size: .48rem;
+  font-weight: 800;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+.session-map__view svg {
+  display: block;
+  width: 96px;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+.session-map__legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  margin-top: 5px;
+  color: var(--text-faint, var(--text-muted));
+  font-size: .5rem;
+  font-weight: 700;
+}
+.session-map__legend span { display: inline-flex; align-items: center; gap: 4px; }
+.bm-swatch { width: 7px; height: 7px; border-radius: 2px; display: inline-block; }
+.session-map__credit {
+  margin: 5px 0 0;
+  color: var(--text-faint, var(--text-muted));
+  font-size: .46rem;
+  text-align: center;
+  opacity: .7;
+}
+.session-map__credit a { color: inherit; text-decoration: none; }
+
+.session-summary__muscles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 9px;
+}
+.session-summary__chip {
+  padding: 4px 8px;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  color: var(--text-secondary);
+  background: color-mix(in srgb, var(--text-muted, #94a3b8) 7%, transparent);
+  font-size: .58rem;
+  font-weight: 700;
+}
+.session-summary__chip.is-primary {
+  color: color-mix(in srgb, #ff7a1a 72%, var(--text-primary));
+  border-color: color-mix(in srgb, #ff7a1a 30%, transparent);
+  background: color-mix(in srgb, #ff7a1a 8%, transparent);
+}
+.session-summary__body {
+  margin: 9px 0 0;
+  color: var(--text-muted);
+  font-size: .64rem;
+}
+.session-summary__body b { color: var(--text-primary); }
+
+/* Body-map geometry. The fill is only the "not trained" base; each heat class
+   carries the intensity. Class names are prefixed so they cannot collide with
+   the generic utility classes elsewhere. */
+.bm-base, .bm-h1, .bm-h2, .bm-h3, .bm-h4 {
+  stroke: var(--bg-deep, #080f1a);
+  stroke-width: .22;
+  stroke-linejoin: round;
+}
+.bm-base { fill: #22364f; }
+.bm-h1 { fill: #ff7a1a; fill-opacity: .28; }
+.bm-h2 { fill: #ff7a1a; fill-opacity: .5; }
+.bm-h3 { fill: #ff7a1a; fill-opacity: .74; }
+.bm-h4 { fill: #ff7a1a; fill-opacity: .96; }
+.bm-swatch.bm-base { background: #22364f; }
+.bm-swatch.bm-h1 { background: rgba(255,122,26,.28); }
+.bm-swatch.bm-h2 { background: rgba(255,122,26,.5); }
+.bm-swatch.bm-h3 { background: rgba(255,122,26,.74); }
+.bm-swatch.bm-h4 { background: #ff7a1a; }
+
 html[data-theme="light"] .today-card {
   border-color: color-mix(in srgb, var(--today-accent) 18%, #e2e8f0);
   background:
@@ -2219,6 +2489,17 @@ html[data-theme="light"] .today-card {
     #fff;
   box-shadow: 0 4px 14px rgba(15, 23, 42, .06);
 }
+html[data-theme="light"] .home-week .today-card {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+html[data-theme="light"] .bm-base { fill: #dbe4ef; }
+html[data-theme="light"] .bm-base,
+html[data-theme="light"] .bm-h1,
+html[data-theme="light"] .bm-h2,
+html[data-theme="light"] .bm-h3,
+html[data-theme="light"] .bm-h4 { stroke: #fff; }
 
 /* dvh tracks the CURRENT visual viewport; vh tracks the largest one (URL bar
    hidden), so the vh line alone can size this picker taller than the screen and
@@ -9150,21 +9431,185 @@ input[type="checkbox"].gym-check,
 }
 
 /* ==========================================
+   ACTIVE SESSION COCKPIT
+
+   Once a session is running, the full landing-style header, day selector,
+   "Exercises" heading and vertical outline step aside. A compact stats bar,
+   Finish and a numbered exercise rail keep the active card in view.
+   ========================================== */
+.cockpit-active-sticky { display: block; }
+.cockpit-session-active .cockpit-active-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  margin: 0 0 6px;
+  padding: 4px 0 6px;
+  background: var(--bg-deep, #080f1a);
+  box-shadow: 0 10px 18px rgba(0,0,0,.24);
+}
+.cockpit-active-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 8px;
+  padding: 9px 12px;
+  border: 1px solid var(--border-default, rgba(255,255,255,.09));
+  border-radius: 13px;
+  background: var(--surface-2, rgba(255,255,255,.04));
+}
+.cockpit-active-head[hidden] { display: none; }
+.cockpit-active-head__stats { display: flex; align-items: center; gap: 18px; min-width: 0; }
+.cockpit-active-head__stats span { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.cockpit-active-head__stats b {
+  color: var(--text-primary, #f8fafc);
+  font-size: .86rem;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.cockpit-active-head__stats small {
+  color: var(--text-muted, #94a3b8);
+  font-size: .5rem;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.cockpit-active-head__finish {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 0 15px;
+  border: 1px solid color-mix(in srgb, var(--color-cyan, #22d3ee) 35%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-cyan, #22d3ee) 8%, transparent);
+  color: var(--color-cyan, #22d3ee);
+  font: inherit;
+  font-size: .76rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+.cockpit-active-head__finish:active { transform: scale(.98); }
+
+.cockpit-exercise-rail {
+  display: flex;
+  gap: 6px;
+  margin: 0 0 10px;
+  padding: 0 0 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.cockpit-exercise-rail[hidden] { display: none; }
+.cockpit-exercise-rail::-webkit-scrollbar { display: none; }
+.cockpit-exercise-rail__item {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  width: 44px;
+  min-height: 44px;
+  padding: 4px 2px;
+  border: 1px solid var(--border-default, rgba(255,255,255,.09));
+  border-radius: 10px;
+  background: rgba(255,255,255,.02);
+  color: var(--text-muted, #94a3b8);
+  font: inherit;
+  cursor: pointer;
+}
+.cockpit-exercise-rail__item:active { transform: scale(.96); }
+.cockpit-exercise-rail__num { font-size: .72rem; font-weight: 850; }
+.cockpit-exercise-rail__count { font-size: .5rem; font-weight: 750; }
+.cockpit-exercise-rail__item.is-active {
+  border-color: color-mix(in srgb, var(--color-cyan, #22d3ee) 55%, transparent);
+  background: color-mix(in srgb, var(--color-cyan, #22d3ee) 9%, transparent);
+  color: var(--color-cyan, #22d3ee);
+}
+.cockpit-exercise-rail__item.is-done {
+  border-color: rgba(16,185,129,.35);
+  background: rgba(16,185,129,.07);
+  color: #6ee7b7;
+}
+
+.cockpit-session-active .workout-cockpit-header,
+.cockpit-session-active #cockpitDaySelectorBar,
+.cockpit-session-active .app-section-heading,
+.cockpit-session-active #cockpitSessionOutline,
+.cockpit-session-active #cockpitScheduleContext,
+.cockpit-session-active #cockpitScoreHook { display: none !important; }
+.cockpit-active-sticky .subview-back-btn { margin: 0 0 6px; }
+.cockpit-session-active .cockpit-exercise { scroll-margin-top: 245px; }
+
+html[data-theme="light"] .cockpit-session-active .cockpit-active-sticky { background: var(--bg-body, #f2f2f7); box-shadow: 0 10px 18px rgba(15,23,42,.08); }
+html[data-theme="light"] .cockpit-active-head { background: rgba(0,0,0,.02); border-color: rgba(0,0,0,.08); }
+html[data-theme="light"] .cockpit-exercise-rail__item { background: rgba(0,0,0,.02); border-color: rgba(0,0,0,.08); }
+
+/* ==========================================
    TRAIN LANDING (roadmap Phase 0/2)
 
-   Train opens on a landing rather than the cockpit: one dominant Today card
-   with a single primary action, the quick starts that used to hide behind a
-   sheet, and recent activity that was not on this screen at all.
+   Train is a SESSION PREVIEW, not a second Home. The week rail and one session
+   card carry the actual exercises and targets; Start goes straight into the
+   cockpit. Quick start is only the unplanned Run / Walk / Fast actions.
    ========================================== */
 .tl-head { margin: 2px 0 12px; }
-.tl-kicker {
-  font-size: .68rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
-  color: var(--text-muted, #94a3b8);
+.tl-title {
+  margin: 0;
+  color: var(--text-primary, #f8fafc);
+  font-size: 1.5rem;
+  font-weight: 850;
+  letter-spacing: -.03em;
 }
+
+.tl-week {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(44px, 1fr));
+  gap: 4px;
+  margin: 0 0 14px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+.tl-week::-webkit-scrollbar { display: none; }
+.tl-week__day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  min-height: 54px;
+  padding: 5px 2px;
+  border: 1px solid var(--border-default, rgba(255,255,255,.09));
+  border-radius: 11px;
+  background: rgba(255,255,255,.02);
+  color: var(--text-secondary, #cbd5e1);
+  font: inherit;
+  cursor: pointer;
+}
+.tl-week__day:active { transform: scale(.97); }
+.tl-week__day:disabled { cursor: default; opacity: .5; }
+.tl-week__name {
+  font-size: .56rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.tl-week__dot { width: 5px; height: 5px; border-radius: 50%; background: var(--text-faint, #64748b); }
+.tl-week__date { font-size: .54rem; color: var(--text-muted, #94a3b8); font-variant-numeric: tabular-nums; }
+.tl-week__day--done { border-color: rgba(16,185,129,.35); background: rgba(16,185,129,.07); }
+.tl-week__day--done .tl-week__dot { background: var(--color-green, #10b981); }
+.tl-week__day--today { border-color: var(--color-cyan, #22d3ee); background: color-mix(in srgb, var(--color-cyan, #22d3ee) 9%, transparent); }
+.tl-week__day--today .tl-week__dot { background: var(--color-cyan, #22d3ee); }
+.tl-week__day--today .tl-week__name,
+.tl-week__day--today .tl-week__date { color: var(--color-cyan, #22d3ee); }
+.tl-week__day--missed { border-color: rgba(239,68,68,.28); }
+.tl-week__day--missed .tl-week__dot { background: #ef4444; }
+.tl-week__day--planned .tl-week__dot { background: var(--text-muted, #94a3b8); }
+.tl-week__day--rest { opacity: .55; }
 
 .tl-today {
   display: block;
-  padding: 18px;
+  padding: 15px;
   border: 1px solid var(--border-default, rgba(255,255,255,.09));
   border-radius: var(--radius-lg, 14px);
   background: var(--surface-2, rgba(255,255,255,.04));
@@ -9177,16 +9622,13 @@ input[type="checkbox"].gym-check,
   font-size: .68rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
   color: var(--text-muted, #94a3b8); margin-bottom: 6px;
 }
-.tl-today__pip {
-  width: 7px; height: 7px; border-radius: 50%;
-  background: var(--color-blue, #3b82f6);
-}
+.tl-today__pip { width: 7px; height: 7px; border-radius: 50%; background: var(--color-blue, #3b82f6); }
 .tl-today__title {
-  margin: 0 0 6px; font-size: 1.5rem; font-weight: 800; letter-spacing: -.03em; line-height: 1.15;
+  margin: 0 0 6px; font-size: 1.5rem; font-weight: 850; letter-spacing: -.03em; line-height: 1.15;
   color: var(--text-primary, #f8fafc);
 }
 .tl-today__meta { margin: 0 0 6px; font-size: .82rem; color: var(--text-secondary, #cbd5e1); }
-.tl-today__guidance { margin: 0 0 14px; font-size: .8rem; line-height: 1.5; color: var(--text-muted, #94a3b8); }
+.tl-today__guidance { margin: 10px 0 14px; font-size: .8rem; line-height: 1.5; color: var(--text-muted, #94a3b8); }
 .tl-today__primary {
   display: block; width: 100%; min-height: 52px; padding: 12px 16px;
   border: 0; border-radius: 12px; cursor: pointer;
@@ -9195,13 +9637,33 @@ input[type="checkbox"].gym-check,
 }
 .tl-today__primary:active { transform: scale(.99); }
 .tl-today__secondary {
-  display: block; width: 100%; min-height: 44px; margin-top: 8px; padding: 10px 16px;
-  border: 1px solid var(--border-default, rgba(255,255,255,.1)); border-radius: 12px;
-  background: transparent; color: var(--text-secondary, #cbd5e1);
-  font-size: .82rem; font-weight: 650; cursor: pointer;
+  display: block; width: 100%; min-height: 44px; margin-top: 4px; padding: 8px 16px;
+  border: 0; border-radius: 12px;
+  background: transparent; color: var(--text-muted, #94a3b8);
+  font-size: .78rem; font-weight: 650; cursor: pointer;
 }
 
-.tl-section { margin-bottom: 20px; }
+.tl-exercises { margin: 12px 0 4px; border-top: 1px solid var(--border-subtle, rgba(255,255,255,.07)); }
+.tl-exercise {
+  display: flex; align-items: center; gap: 8px;
+  min-height: 36px;
+  border-bottom: 1px solid var(--border-subtle, rgba(255,255,255,.07));
+}
+.tl-exercise:last-child { border-bottom: 0; }
+.tl-exercise__num {
+  flex: 0 0 auto; width: 18px; height: 18px; border-radius: 50%;
+  display: grid; place-items: center;
+  border: 1px solid var(--border-default, rgba(255,255,255,.1));
+  color: var(--text-muted, #94a3b8); font-size: .5rem; font-weight: 850;
+}
+.tl-exercise__name {
+  flex: 1 1 auto; min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: var(--text-primary, #f8fafc); font-size: .74rem; font-weight: 650;
+}
+.tl-exercise__target { flex: 0 0 auto; color: var(--text-muted, #94a3b8); font-size: .64rem; font-weight: 800; }
+
+.tl-section { margin-bottom: 18px; }
 .tl-section__head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
 .tl-section__title {
   margin: 0 0 10px; font-size: .72rem; font-weight: 800; letter-spacing: .08em;
@@ -9209,15 +9671,14 @@ input[type="checkbox"].gym-check,
 }
 .tl-section__more {
   background: none; border: 0; cursor: pointer;
-  /* A link-styled control is still a touch target. */
   min-height: 44px; padding: 4px 2px;
   color: var(--color-blue, #3b82f6); font-size: .74rem; font-weight: 700;
 }
 
-.tl-quick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.tl-quick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .tl-quick__item {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
-  min-height: 76px; padding: 10px 4px; cursor: pointer;
+  min-height: 70px; padding: 10px 4px; cursor: pointer;
   border: 1px solid var(--border-default, rgba(255,255,255,.09));
   border-radius: 12px; background: var(--surface-2, rgba(255,255,255,.04));
   color: var(--text-primary, #f8fafc);
@@ -9226,33 +9687,28 @@ input[type="checkbox"].gym-check,
 .tl-quick__icon { color: var(--text-muted, #94a3b8); display: inline-flex; }
 .tl-quick__label { font-size: .72rem; font-weight: 700; }
 
-.tl-recent { display: flex; flex-direction: column; gap: 8px; }
+.tl-recent-section { margin-bottom: 6px; }
 .tl-recent__row {
   display: flex; align-items: center; gap: 10px; width: 100%;
-  min-height: 56px; padding: 10px 14px; text-align: left; cursor: pointer;
+  min-height: 52px; padding: 10px 14px; text-align: left; cursor: pointer;
   border: 1px solid var(--border-subtle, rgba(255,255,255,.07));
   border-radius: 12px; background: transparent; color: var(--text-primary, #f8fafc);
 }
 .tl-recent__body { flex: 1 1 auto; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.tl-recent__title { font-size: .88rem; font-weight: 700; }
+.tl-recent__title { font-size: .82rem; font-weight: 700; }
 .tl-recent__meta {
-  font-size: .72rem; color: var(--text-muted, #94a3b8);
+  font-size: .68rem; color: var(--text-muted, #94a3b8);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .tl-recent__arrow { flex: 0 0 auto; opacity: .45; }
-.tl-empty {
-  margin: 0; padding: 14px; font-size: .8rem; line-height: 1.5;
-  color: var(--text-muted, #94a3b8);
-  border: 1px solid var(--border-subtle, rgba(255,255,255,.07)); border-radius: 12px;
-}
 
 html[data-theme="light"] .tl-today,
-html[data-theme="light"] .tl-quick__item { background: rgba(0,0,0,.02); border-color: rgba(0,0,0,.08); }
-html[data-theme="light"] .tl-recent__row,
-html[data-theme="light"] .tl-empty { border-color: rgba(0,0,0,.08); }
+html[data-theme="light"] .tl-quick__item,
+html[data-theme="light"] .tl-week__day { background: rgba(0,0,0,.02); border-color: rgba(0,0,0,.08); }
+html[data-theme="light"] .tl-recent__row { border-color: rgba(0,0,0,.08); }
 
 @media (max-width: 340px) {
-  .tl-quick { grid-template-columns: repeat(2, 1fr); }
+  .tl-quick { grid-template-columns: repeat(3, 1fr); gap: 6px; }
 }
 
 /* ==========================================

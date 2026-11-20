@@ -13,7 +13,7 @@ export function buildEmptyWorkoutCard() {
 
 // `bodyweight` is null when the athlete has never logged one. It used to
 // default to 75 kg and was shown in the weight field as if it were theirs.
-export function buildSetRow(sData, sIdx, safeLiftName, historicalSetData = null, weightUnit = 'kg', exerciseName = safeLiftName, bodyweight = null, prescribedReps = null, prescribedRepGoal = null, previousSetData = historicalSetData, roleTag = null) {
+export function buildSetRow(sData, sIdx, safeLiftName, historicalSetData = null, weightUnit = 'kg', exerciseName = safeLiftName, bodyweight = null, prescribedReps = null, prescribedRepGoal = null, previousSetData = null, roleTag = null) {
   const ghostWeight = historicalSetData?.w || weightUnit;
   const ghostReps   = historicalSetData?.r || prescribedReps || 'reps';
   const type = sData.type || '';

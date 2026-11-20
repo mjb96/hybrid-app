@@ -89,6 +89,9 @@ try {
         primary: l?.querySelector('.tl-today__primary')?.textContent?.trim(),
         primaryCount: l?.querySelectorAll('.tl-today__primary').length,
         quickStarts: [...(l?.querySelectorAll('.tl-quick__item') || [])].map((b) => b.getAttribute('data-action')),
+        exercises: l?.querySelectorAll('.tl-exercise').length || 0,
+        exerciseTarget: l?.querySelector('.tl-exercise__target')?.textContent?.trim() || '',
+        weekDays: l?.querySelectorAll('.tl-week__day').length || 0,
         recentRows: l?.querySelectorAll('.tl-recent__row').length,
         overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
         smallControls: [...(l?.querySelectorAll('button') || [])].filter((b) => {
@@ -103,9 +106,13 @@ try {
     if (!landing.title) failures.push(`${width}px: no today title`);
     // "One obvious primary action" is an interaction principle, not a nicety.
     if (landing.primaryCount !== 1) failures.push(`${width}px: expected exactly one primary action, got ${landing.primaryCount}`);
-    for (const action of ['qs-workout', 'qs-run', 'qs-walk', 'qs-fast']) {
+    for (const action of ['qs-run', 'qs-walk', 'qs-fast']) {
       if (!landing.quickStarts.includes(action)) failures.push(`${width}px: quick start missing ${action}`);
     }
+    if (landing.quickStarts.includes('qs-workout')) failures.push(`${width}px: duplicate Workout quick start is back`);
+    if (landing.exercises < 1) failures.push(`${width}px: the session preview has no exercises`);
+    if (!landing.exerciseTarget) failures.push(`${width}px: the session preview has no target`);
+    if (landing.weekDays !== 7) failures.push(`${width}px: expected a seven-day rail, got ${landing.weekDays}`);
     if (landing.recentRows < 1) failures.push(`${width}px: the logged session did not appear under Recent`);
     if (landing.overflow) failures.push(`${width}px: page-level horizontal overflow`);
     if (landing.smallControls) failures.push(`${width}px: ${landing.smallControls} controls below the 44px target`);

@@ -470,15 +470,23 @@
         </article>
       </div>
 
-      <section class="home-week" id="homeWeekStrip" data-home-card="weekStrip" aria-label="This week">
-        <div class="home-week__head">
-          <div>
-            <span class="home-week__eyebrow">This week</span>
-            <strong class="home-week__range" id="homeWeekRange">Your seven-day plan</strong>
+      <section class="home-week" id="homeWeekStrip" aria-label="This week">
+        <div class="home-week__rail" data-home-card="weekStrip">
+          <div class="home-week__head">
+            <div class="home-week__nav">
+              <button type="button" class="home-week__nav-btn" data-action="home-week-prev" aria-label="Show previous week">‹</button>
+              <div class="home-week__titles" aria-live="polite">
+                <span class="home-week__eyebrow" id="homeWeekLabel">This week</span>
+                <strong class="home-week__range" id="homeWeekRange">Your seven-day plan</strong>
+              </div>
+              <button type="button" class="home-week__nav-btn" data-action="home-week-next" aria-label="Show next week">›</button>
+            </div>
+            <span class="home-week__count" id="homeWeekCount">—</span>
           </div>
-          <span class="home-week__count" id="homeWeekCount">—</span>
+          <div class="home-week__days" id="homeWeekDays"></div>
         </div>
-        <div class="home-week__days" id="homeWeekDays"></div>
+        <!-- Pinned: the strip may be hidden in Customize; the decision cannot. -->
+        <div id="homeTodayCard"></div>
       </section>
 
       <!-- A live fast is status, not a menu: never hide an in-progress timer. -->
@@ -488,9 +496,6 @@
           <span class="qa-text"><span class="qa-label">Fasting</span><span class="qa-sub">Intermittent fasting</span></span>
         </button>
       </div>
-
-      <!-- This week first, then the one decision surface: what to do today. -->
-      <div id="homeTodayCard"></div>
 
       <div id="homeBodyweightCard" data-home-card="bodyweight"></div>
 
@@ -539,7 +544,25 @@
 
       <div id="trainCockpit" hidden>
 
-      <button class="subview-back-btn" data-action="back-to-train-landing">← Back to Train</button>
+      <!-- Active session: compact stats + Finish, then a numbered exercise rail.
+           The full header/day selector/outline step aside so the first set is
+           visible (js/workout.js toggles cockpit-session-active). -->
+      <div class="cockpit-active-sticky">
+        <button class="subview-back-btn" data-action="back-to-train-landing">← Back to Train</button>
+        <div class="cockpit-active-head" id="cockpitActiveHead" hidden>
+          <div class="cockpit-active-head__stats">
+            <span><b id="cockpitActiveVolume">0 kg</b><small>Volume</small></span>
+            <span><b id="cockpitActiveSets">0/0</b><small>Sets</small></span>
+          </div>
+          <button type="button" class="cockpit-active-head__finish" data-action="open-finish-modal">Finish</button>
+        </div>
+        <div class="cockpit-exercise-rail" id="cockpitExerciseRail" role="group" aria-label="Exercise rail" hidden></div>
+
+        <div class="session-timer-bar" id="workoutDurationBar" role="timer">
+          <span class="timer-txt">⏱️ SESSION ACTIVE</span>
+          <span class="timer-clock" id="workoutDurationClock">00:00</span>
+        </div>
+      </div>
 
       <div class="workout-cockpit-header">
         <div class="wch-meta">
@@ -574,11 +597,6 @@
       </nav>
 
       <button id="startWorkoutBtn" class="btn-action-block btn-green mb-3" data-action="start-timer">Start Workout</button>
-
-      <div class="session-timer-bar" id="workoutDurationBar" role="timer">
-        <span class="timer-txt">⏱️ SESSION ACTIVE</span>
-        <span class="timer-clock" id="workoutDurationClock">00:00</span>
-      </div>
 
       <div class="global-timer-bar" id="cockpitTimerBar">
         <div class="rest-timer-body">

@@ -44,6 +44,16 @@ test('third-party notices cover every vendored runtime component', () => {
   }
 });
 
+test('NOTICE carries the Apache-2.0 body-map attribution and licence copy', () => {
+  const notice = read('NOTICE.md');
+  assert.match(notice, /Body Muscles/);
+  assert.match(notice, /Ivan Vulović/);
+  assert.match(notice, /Apache License, Version 2\.0/);
+  const license = read('LICENSES/Apache-2.0.txt');
+  assert.match(license, /Apache License/);
+  assert.match(license, /Version 2\.0/);
+});
+
 test('Settings exposes the AGPL source link for network users', () => {
   const html = read('index.html');
   assert.match(html, /href="https:\/\/github\.com\/mjb96\/openHybrid"/);

@@ -174,7 +174,7 @@ try {
     // Train opens on its landing; this check is about COCKPIT ergonomics, so
     // enter the cockpit deterministically via the landing's Workout quick start
     // (present regardless of whether today is a training or rest day).
-    await page.click('#trainLanding [data-action="qs-workout"]');
+    await page.click('#trainLanding .tl-today__primary');
     await page.waitForSelector('#trainCockpit:not([hidden])');
     const trainCurrent = await page.$$eval('.bottom-nav [aria-current="page"]', (items) => items.map((item) => item.textContent.trim()));
     check(trainCurrent.join('|') === 'Train', `workout ${width}px: aria-current was ${trainCurrent.join('|')}`);
@@ -227,7 +227,7 @@ try {
   // The Train landing is itself a primary surface at 200% text, so assert it
   // BEFORE stepping into the cockpit — it is where the tab now opens.
   await inspect(page, 'train landing 360px @200% text', ['#trainLanding .tl-today__primary', '#trainLanding .tl-quick__item', '#trainLanding .tl-section__more']);
-  await page.click('#trainLanding [data-action="qs-workout"]');
+  await page.click('#trainLanding .tl-today__primary');
   await page.waitForSelector('#trainCockpit:not([hidden])');
   await inspect(page, 'workout 360px @200% text', ['#view-workout .day-pill', '#view-workout #startWorkoutBtn', '#view-workout .set-num-lbl[data-action="quick-log"]', '#view-workout .gym-check-wrap', '#view-workout .btn-set-more']);
   await context.close();

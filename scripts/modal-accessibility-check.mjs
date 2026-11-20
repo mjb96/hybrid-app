@@ -60,7 +60,7 @@ try {
   // this check is specifically about the SHEET's modal semantics.)
   await page.click('.bottom-nav [data-target="workout"]');
   await page.waitForSelector('#view-workout.active');
-  await page.click('#trainLanding [data-action="qs-workout"]');
+  await page.click('#trainLanding .tl-today__primary');
   await page.waitForSelector('#trainCockpit:not([hidden])');
   const trigger = page.locator('#view-workout [data-action="open-quick-start"]');
   await trigger.focus();

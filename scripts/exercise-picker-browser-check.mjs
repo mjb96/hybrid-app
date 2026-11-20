@@ -191,8 +191,11 @@ try {
   await page.click('#builderViewContainer [data-action="close-builder"]');
   await page.click('.nav-item[data-target="workout"]');
   await page.waitForTimeout(250);
-  // Train opens on its landing; step into the cockpit for cockpit assertions.
-  await page.click('#trainLanding [data-action="qs-workout"]');
+  // Train opens on its landing; step into a deterministic planned day. Today
+  // may be a rest day, whose primary action is not the cockpit.
+  const cockpitDay = await page.evaluate(() =>
+    document.querySelector('#trainLanding .tl-week__day:not([disabled])')?.dataset.day);
+  await page.click(`#trainLanding .tl-week__day[data-day="${cockpitDay}"]`);
   await page.waitForSelector('#trainCockpit:not([hidden])');
   await page.click('#view-workout [data-action="open-add-exercise"]');
   await page.waitForSelector('#addExerciseModal.active', { timeout: 3000 });

@@ -227,8 +227,8 @@ surfaces, not implementation-file ownership.
 
 | Surface | Current user job and entry | Important states/actions | Product owner |
 | --- | --- | --- | --- |
-| **Home** | Open app and decide what matters today | One state-aware Today card, alerts, two retained In Focus graphs, Activities; sparse-data, rest-day, completed, active-fast, warning, and offline states | **Home**. Today owns the first decision; In Focus remains the intentional weekly analytics surface and Progress owns deeper interpretation. |
-| **Train** (`workout` route retained) | Start/resume a planned or one-off session and log strength/running | Day selector, schedule context, session timer, GPS/manual run, exercise/set logger, advanced set options, swap/add/reorder/superset/plate math, finish, clear; rest, empty one-off, in-progress, completed, GPS wait/failure and invalid-input states | **Train**. The new shell owns both the old Workout destination and Quick Start. A true Train landing remains future work. |
+| **Home** | Open app and decide what matters today | One week surface: the seven-day rail plus a state-aware Today decision that collapses to one compact row on a fresh day; alerts, Activities; sparse-data, rest-day, completed, active-fast, warning, and offline states | **Home**. Today owns the first decision and never hides its primary action; the rail is optional, Today is pinned. Progress owns deeper interpretation. |
+| **Train** (`workout` route retained) | See the planned session, start/resume it, or start an unplanned activity | Week rail, session preview with exercises and `liftTarget` targets, one Start/Resume, Quick start (Run/Walk/Fast), one recent row; cockpit day selector, schedule context, session timer, GPS/manual run, exercise/set logger, advanced set options, swap/add/reorder/superset/plate math, finish, clear; rest, empty one-off, in-progress, completed, GPS wait/failure and invalid-input states | **Train**. The landing is a session preview, not a second Home. Start opens the cockpit directly; an active session is Resume. |
 | **Progress hub** (`analytics` route retained) | Understand training history and choose a domain | Hybrid Score, Strength, Running, Recovery & Load, Review, optional Fasting, Body Weight, Projections | **Progress**. The old visible “Insights” label is retired; internal context IDs remain compatible. |
 | **Progress details** | Explain a metric and expose evidence | Strength overview/stats, weekly volume, Gym Performance, exercise/muscle/metric drilldowns; Running overview/stats/performance/metric; Recovery overview/stats/performance; Review week/month; Hybrid Score; activity calendar; fasting/bodyweight/projections | **Progress**. Origin-aware Back returns to Home or Progress; entity drilldowns return to their parent and preserve calendar week. |
 | **Plans library** (`program` route retained) | Continue, discover, save, compare, or create a plan | Active-plan banner, Discover/Saved/Completed, search, 16 category filters, five level filters, recommendations, collections and empty results | **Plans**. Phase 4 will lead with fit/recommendations before catalogue controls. |
@@ -574,6 +574,141 @@ gap in the journey, and is folded into the Phase 6 visual-system work.
 - No keyboard covers the active input or primary action.
 - Changing exercise/day/session preserves user-entered work.
 - Strength and running finish flows use the same interaction vocabulary.
+
+## Phase 2D — Logger upgrade (planned)
+
+**Status: L0 in progress.** The openGym logger was inspected as a reference for
+CONCEPTS only. No openGym code, media or nested data shape is copied.
+
+**Outcome:** the number the athlete types means what they think it means, and a
+set can be a rep set, a hold, a carry, or a failure without lying to volume,
+1RM, history or progression.
+
+### Surface model — list, not one exercise per page
+- **No page-per-exercise carousel.** openGym's version is built around a large
+  exercise demo; without that media it would hide the session and add a swipe
+  to every jump. Hevy's scrolling exercise list is the better reference.
+- Keep the existing accordion: a numbered exercise rail (`1..N`) jumps between
+  exercises, the active card expands, completed cards collapse to a summary,
+  and Prev/Next at the card foot moves focus without hiding the rest.
+- A deliberate "Focus" mode may come later as an optional layout; it is not the
+  default and is not part of the first slice.
+
+### Set-row contract
+- Five columns only: **SET | PREVIOUS | WEIGHT | REPS | ✓**. The set number is a
+  label, not a Log button; the tick is the single completion action. A blank row
+  takes its visible target/ghost and then validates, as the checkbox already
+  does.
+- PREVIOUS is the real prior set for that row (`60×8`), or an em dash when there
+  is none. It is never the prescription or a ghost.
+- Completed rows read as one compact line; the active row is the only one with
+  highlighted inputs. RIR/RPE appears after completion. Set type, load, rest
+  after this set, note and remove live in the `⋯` sheet.
+- Target: a working row no taller than ~52px, so a 390×844 cockpit shows the
+  active exercise, its previous values and at least the first working set under
+  the sticky session block.
+
+### Settings model — simple but comprehensive
+Three levels only. Session defaults live in Settings; per-exercise and per-set
+options live in the `⋯` sheets. Nothing appears in two places.
+
+**Settings → Training → Logging (session defaults)**
+- Weight unit (kg/lbs) with an explicit Convert / Keep numbers choice.
+- Dumbbell load default: **Each / Both**; one-arm work is detected, and an
+  exercise can override it.
+- Effort scale: **Off / RIR / RPE** (one scale, not one per set).
+- Rest: auto timer on/off; compound / accessory / isolation tiers; warm-up rest.
+- Auto warm-up ramp: off/on (rungs round to owned plates/dumbbells).
+- Previous values: **Last / Best** under each exercise.
+- New exercises start with: **Plan / Last session**.
+- Plate hints: off/on (bar and plate inventory stay under Equipment).
+- Keep screen awake; collapse completed exercises.
+
+**Per-exercise `⋯` (only what that exercise needs)**
+- Mode: Reps / Time / Distance.
+- Load default: Weighted / Bodyweight / Assisted / Band.
+- Weight meaning: Each / Both / Per side (auto-detected, overrideable).
+- Rest: Use default / Custom / No timer.
+- Warm-up: Auto / Own / None (only when the ramp is relevant).
+- Note.
+
+**Per-set `⋯`**
+- Set type: Working / Warm-up / Drop / Failure.
+- Load mode (the row-level version of the default).
+- Rest after this set: default / custom / no timer.
+- RIR/RPE after completion; note; remove.
+
+**Deliberately not copied from openGym**
+- Pyramid sets, tempo, per-side L/R sub-rows, per-exercise unit pins,
+  per-exercise plate-loading overrides, cardio mode inside the strength logger,
+  circuits/AMRAP player, animations/orientation/button-layout switches, custom
+  sound packs, spoken cues, and warm-up/bodyweight volume toggles. These are
+  either separate features, analytics settings, or complexity without a clear
+  logging payoff.
+
+### L0 — Truth fixes (first)
+- **DONE 2026-11-20 — a first-ever row no longer labels the prescription as
+  history.** `buildSetRow` defaulted `previousSetData` to the ghost target, so a
+  new lift with a coaching/target weight rendered `Last 112.5kg × 6` above
+  "First time logging this". The default is now null; only a real prior set
+  renders the persistent Last line.
+- **Unit switch needs an explicit decision.** Changing kg ↔ lbs must offer
+  Convert the numbers / Keep the numbers and change the label (openGym's
+  behaviour), never silently reinterpret stored loads. Convert every weight
+  field before writing the new unit.
+- Keep target, ghost and history visually separate: target is a prescription,
+  ghost is an editable suggestion, Last is measured work.
+
+### L1 — Load basis (the big one)
+- Add an optional `basis` to a set/exercise: `total` (default legacy), `each`
+  (a dumbbell pair; volume counts both) or `per-side` (one-arm; volume counts
+  the one implement). One-arm/pair detection comes from the catalogue and the
+  exercise name, never from guessing at entry time.
+- Store `w` as ENTERED and stamp the basis used; old sets have no basis and keep
+  exactly today's meaning (total, counted once). No retroactive rewrite.
+- Centralise `effectiveLoad(set, exerciseName)` and use it in `setVolume`,
+  e1RM, history, weekly aggregation and progression. The weight column label
+  becomes `Each (kg)` / `Both (kg)` / `Per side (kg)`.
+- Per-exercise setting lives with the exercise config, not only in Settings;
+  openGym plan prescriptions may carry it.
+
+### L2 — Set shapes
+- `failure: true` independent of type; unrated failure reads as RIR 0.
+- Timed holds (`sec`) and loaded carries (`m`) as set modes, with the row
+  switching its second input to time/distance. CSV import stops skipping holds
+  and carries and preserves them.
+- A `+ Drop` shortcut that seeds a percentage-lighter linked row (separate rows,
+  not openGym's nested `drops`). Rest-pause/cluster stay deferred until real
+  use demands them.
+
+### L3 — Rest and timer
+- Surface the rest tiers that already exist but are hidden (compound/accessory/
+  isolation), plus warm-up and next-exercise rest.
+- Per-exercise and per-set rest overrides (`restSec`) with an explicit "No
+  timer" value (0).
+- Superset rounds rest once, on the longest member.
+- Persist the running timer (`endsAt`) across reload/background; arm the
+  Android notification at START, not only when the countdown happens to end
+  while hidden. ±15s alongside the current adjustment.
+
+### L4 — Plates and warm-ups
+- Inline per-set plate line (per side) with a "short" warning and delta chips
+  between consecutive loads; bar weight per equipment type.
+- Warm-up rungs round down to the plates/dumbbells actually owned, adapting to
+  compound/isolation/bodyweight instead of the fixed 40/60/80 ladder.
+
+### L5 — Polish
+- Per-set note (140 chars), RIR/RPE display choice, planned-vs-last prefill
+  choice. No new account, sync or backend surface.
+
+### Acceptance
+- A 2 × 20 kg dumbbell set at 8 reps counts **320 kg** volume with basis
+  `each`, **160 kg** with `total`; a one-arm row counts once. Existing logs
+  keep their stored meaning.
+- A timed hold or carry is loggable and importable without inventing reps.
+- A failure set contributes RIR 0 unless the athlete rated it.
+- A running rest timer survives a reload and alerts when backgrounded.
+- Every new setting is reachable from Settings or the exercise config.
 
 ## Phase 3 — Progress and analytics redesign
 
@@ -1626,6 +1761,64 @@ testable on its own.
 
 ## 12. Session log
 
+- **2026-11-20 — Active cockpit gets a compact, sticky header.**
+  - Starting a session hides the full landing-style header, day selector,
+    "Exercises" heading and vertical outline. A sticky block keeps Back, volume,
+    sets, Finish, the session clock and a numbered exercise rail on screen.
+  - The active card scrolls into view with a 245px offset so its first working
+    set sits below the sticky block. Logging a set updates volume, set count and
+    the rail in place, without a cockpit re-render.
+- **2026-11-20 — Train is a session preview, not a second Home.**
+  - The landing now shows the week rail and today's card with the actual
+    exercises and `liftTarget` targets, then one Start/Resume. The card is the
+    preview; Start opens the cockpit directly, with no extra route.
+  - Quick start is only Run / Walk / Fast. The duplicate "Workout" entry is
+    gone; a different or empty workout is "Choose another workout".
+  - Recent is one row (hidden when empty); the four-card "Start something else"
+    grid is gone.
+  - The train-landing browser check now asserts the exercise preview, targets,
+    seven-day rail, no duplicate Workout quick start, and the Resume state.
+- **2026-11-20 — Logger L0: the prescription stopped impersonating history.**
+  - A first-ever set row showed `Last 112.5kg × 6` whenever a coaching/target
+    ghost existed, while the card said "First time logging this". `buildSetRow`
+    defaulted `previousSetData` to the ghost target; only a real prior set now
+    renders the Last line.
+  - The logger upgrade plan (2D) is written: load basis, failure/timed/distance
+    set shapes, rest resolution/persistence, plate lines and warm-up rounding,
+    each additive and migration-free.
+- **2026-11-20 — Completed session summary and the anatomical heat map.**
+  - A completed Today card now carries duration, volume, working sets, PRs,
+    today's weigh-in and a front/back muscle heat map instead of only a review
+    action.
+  - 89-region static path geometry is vendored from the Apache-2.0 Body Muscles
+    project (`js/home/body-paths.js`, `NOTICE.md`, `LICENSES/Apache-2.0.txt`).
+    openHybrid supplies the credit-weighted model, palette, layout and copy; no
+    openGym or Gym-visual media is used.
+  - `js/home/session-muscles.js` sums the catalogue's per-muscle credits across
+    completed working sets (warm-ups and unticked rows excluded), normalises to
+    the hardest-trained muscle and maps it onto the body regions. The chips are
+    the accessible text equivalent.
+- **2026-11-20 — Home week history, bounded to four previous weeks.**
+  - The week header now pages back through four calendar weeks. A past week
+    renders a recap (sessions, volume, sets, PRs and the same heat map) instead
+    of a Today decision, and offers only "Back to this week".
+  - `js/home/week-view.js` reads `indexSlotsByDate`, not `state.currentWeek`, so
+    archived activations and same-date sessions are attributed by real calendar
+    date. No future weeks and no infinite history.
+  - The rail keeps its 44px cells; hiding "This week" in Customize resets to the
+    current week and leaves Today pinned.
+- **2026-11-20 — Home: Today folded into the week surface.**
+  - `#homeTodayCard` now lives inside `#homeWeekStrip`: the seven-day rail is the
+    header and Today is the decision body, not a second card.
+  - A fresh `ready` day collapses to one compact row with the primary action
+    still visible. Tapping today's date cell or the row expands the guidance,
+    secondary action and offline status; tapping again collapses it.
+  - In-progress, completed, rest, no-plan and unresolved states stay fully open,
+    so a warning or a result can never hide behind a chevron.
+  - `data-home-card="weekStrip"` moved onto the rail. Hiding "This week" in
+    Customize removes only the seven cells; Today remains pinned.
+  - The home-today browser check now covers collapse/expand, the 44px Start
+    target while collapsed, and the hidden-rail case.
 - **2026-11-20 — Catalogue is metadata-only; imported form text removed.**
   - Kept all 5,555 usable openGym/ExerciseDB catalogue names, ids, muscles and
     equipment for search and plan import, but stopped shipping the 5,400
