@@ -9,6 +9,8 @@
 // rewritten; absence means the old behaviour.
 // =============================================================================
 import { resolveExercise } from '../exercises/catalog.js';
+import { isBodyweightExercise, resolvedLoadMode } from './load-mode.js';
+import { defaultBasisForExercise, normalizeBasis } from './load-basis.js';
 
 export const WARMUP_MODE = Object.freeze({ INHERIT: 'inherit', AUTO: 'auto', OFF: 'off' });
 
@@ -80,4 +82,20 @@ export function setExerciseRestOverride(state, name, seconds) {
   if (seconds == null) delete state.settings.restOverrides[name];
   else state.settings.restOverrides[name] = Math.max(0, Math.min(600, Math.round(Number(seconds) || 0)));
   return true;
+}
+
+/** The load mode a NEW row of this exercise starts in. */
+export function preferredLoadMode(state, name) {
+  const pref = getExercisePrefs(state, name).loadMode;
+  if (pref === 'assisted' && !isBodyweightExercise(name)) return resolvedLoadMode({}, name);
+  if (pref === 'weighted' || pref === 'bodyweight' || pref === 'assisted' || pref === 'banded') {
+    return pref;
+  }
+  return resolvedLoadMode({}, name);
+}
+
+/** The weight meaning a NEW set of this exercise starts in. */
+export function preferredLoadBasis(state, name) {
+  const pref = getExercisePrefs(state, name).basis;
+  return normalizeBasis(pref || defaultBasisForExercise(name));
 }

@@ -12,6 +12,8 @@ import {
   setExercisePref, setExerciseRestOverride,
 } from './exercise-config.js';
 import { defaultSetModeForExercise } from './set-shape.js';
+import { isBodyweightExercise, resolvedLoadMode } from './load-mode.js';
+import { defaultBasisForExercise, normalizeBasis, supportsLoadBasis } from './load-basis.js';
 import { SET_MODE } from '../set-utils.js';
 import {
   getState, saveState, rerenderWorkout,
@@ -42,6 +44,14 @@ export function openExerciseOptions(name) {
   const storedMode = getExercisePrefs(state, name).mode;
   const initialMode = storedMode === SET_MODE.REPS || storedMode === SET_MODE.TIME || storedMode === SET_MODE.DISTANCE
     ? storedMode : defaultMode;
+  const prefs = getExercisePrefs(state, name);
+  const defaultLoad = resolvedLoadMode({}, name);
+  const initialLoad = ['weighted', 'bodyweight', 'assisted', 'banded'].includes(prefs.loadMode)
+    ? prefs.loadMode : defaultLoad;
+  const bodyweightCapable = isBodyweightExercise(name);
+  const basisCapable = supportsLoadBasis(name);
+  const defaultBasis = defaultBasisForExercise(name);
+  const initialBasis = normalizeBasis(prefs.basis || defaultBasis);
   const overlay = document.createElement('div');
   overlay.className = 'cmodal-overlay exercise-config-overlay';
   overlay.setAttribute('role', 'dialog');
@@ -59,6 +69,25 @@ export function openExerciseOptions(name) {
         </div>
         <p class="exercise-config__hint">New rows start in this shape. Any set can still be switched from its ⋯ options.</p>
       </section>
+      <section class="exercise-config__section">
+        <h3>Load default</h3>
+        <div class="exercise-config__choices" role="group" aria-label="Load default">
+          <button type="button" class="exercise-config__choice ${initialLoad === 'weighted' ? 'is-active' : ''}" data-load-mode="weighted">Weighted</button>
+          <button type="button" class="exercise-config__choice ${initialLoad === 'bodyweight' ? 'is-active' : ''}" data-load-mode="bodyweight">Bodyweight</button>
+          ${bodyweightCapable ? `<button type="button" class="exercise-config__choice ${initialLoad === 'assisted' ? 'is-active' : ''}" data-load-mode="assisted">Assisted</button>` : ''}
+          <button type="button" class="exercise-config__choice ${initialLoad === 'banded' ? 'is-active' : ''}" data-load-mode="banded">Band</button>
+        </div>
+        <p class="exercise-config__hint">Weighted rows take an external load. Bodyweight and assisted rows use your logged body mass; Band uses the band weight.</p>
+      </section>
+      ${basisCapable ? `<section class="exercise-config__section">
+        <h3>Weight meaning</h3>
+        <div class="exercise-config__choices" role="group" aria-label="Weight meaning">
+          <button type="button" class="exercise-config__choice ${initialBasis === 'each' ? 'is-active' : ''}" data-basis="each">Each</button>
+          <button type="button" class="exercise-config__choice ${initialBasis === 'total' ? 'is-active' : ''}" data-basis="total">Both</button>
+          <button type="button" class="exercise-config__choice ${initialBasis === 'per-side' ? 'is-active' : ''}" data-basis="per-side">Per side</button>
+        </div>
+        <p class="exercise-config__hint">Each counts a dumbbell pair twice; Both counts the entered number once; Per side is for one-arm work.</p>
+      </section>` : ''}
       <section class="exercise-config__section">
         <h3>Rest after a set</h3>
         <div class="exercise-config__choices" role="group" aria-label="Rest after a set">
@@ -93,6 +122,8 @@ export function openExerciseOptions(name) {
   let restChoice = rest == null ? 'default' : rest <= 0 ? 'off' : 'custom';
   let warmupChoice = warmup;
   let modeChoice = initialMode;
+  let loadChoice = initialLoad;
+  let basisChoice = initialBasis;
   const syncChoices = () => {
     overlay.querySelectorAll('[data-rest]').forEach((button) => {
       button.classList.toggle('is-active', button.getAttribute('data-rest') === restChoice);
@@ -102,6 +133,12 @@ export function openExerciseOptions(name) {
     });
     overlay.querySelectorAll('[data-mode]').forEach((button) => {
       button.classList.toggle('is-active', button.getAttribute('data-mode') === modeChoice);
+    });
+    overlay.querySelectorAll('[data-load-mode]').forEach((button) => {
+      button.classList.toggle('is-active', button.getAttribute('data-load-mode') === loadChoice);
+    });
+    overlay.querySelectorAll('[data-basis]').forEach((button) => {
+      button.classList.toggle('is-active', button.getAttribute('data-basis') === basisChoice);
     });
     const input = /** @type {HTMLInputElement|null} */ (overlay.querySelector('#exerciseConfigRest'));
     if (input) input.disabled = restChoice !== 'custom';
@@ -123,6 +160,8 @@ export function openExerciseOptions(name) {
     }
     setExercisePref(state, name, {
       mode: modeChoice === defaultMode ? null : modeChoice,
+      loadMode: loadChoice === defaultLoad ? null : loadChoice,
+      basis: basisCapable && basisChoice !== defaultBasis ? basisChoice : null,
       warmup: warmupChoice === WARMUP_MODE.INHERIT ? null : warmupChoice,
       note: String(/** @type {HTMLTextAreaElement|null} */ (overlay.querySelector('#exerciseConfigNote'))?.value || '').trim(),
     });
@@ -141,6 +180,10 @@ export function openExerciseOptions(name) {
     if (warmButton) { warmupChoice = warmButton.getAttribute('data-warmup') || WARMUP_MODE.INHERIT; syncChoices(); return; }
     const modeButton = target.closest('[data-mode]');
     if (modeButton) { modeChoice = /** @type {any} */ (modeButton.getAttribute('data-mode')); syncChoices(); return; }
+    const loadButton = target.closest('[data-load-mode]');
+    if (loadButton) { loadChoice = /** @type {any} */ (loadButton.getAttribute('data-load-mode')); syncChoices(); return; }
+    const basisButton = target.closest('[data-basis]');
+    if (basisButton) { basisChoice = /** @type {any} */ (basisButton.getAttribute('data-basis')); syncChoices(); return; }
     if (target.closest('[data-cm="cancel"]')) { close(); return; }
     if (target.closest('[data-cm="ok"]')) save();
   });

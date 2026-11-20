@@ -464,10 +464,13 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   swaps its second input for `.input-time-node` / `.input-dist-node`, and its
   `⋯` sheet cycles Reps → Time → Distance. The per-exercise settings sheet
   (`js/workout/exercise-options.js`) owns **Set shape** (Reps/Time/Distance),
-  rest (reusing name-keyed `settings.restOverrides`, 0 = no timer), warm-up
-  mode and a durable note in additive `settings.exercisePrefs`, keyed by
-  canonical exercise id so aliases share one preference
-  (`js/workout/exercise-config.js`). The session recap closes each lift with
+  **Load default** (Weighted/Bodyweight/Assisted/Band), **Weight meaning**
+  (Each/Both/Per side, dumbbells only), rest (reusing name-keyed
+  `settings.restOverrides`, 0 = no timer), warm-up mode and a durable note in
+  additive `settings.exercisePrefs`, keyed by canonical exercise id so aliases
+  share one preference (`js/workout/exercise-config.js`). A default shapes a
+  BLANK row only; completion stamps the load mode/basis actually used, and
+  logged sets are never rewritten. The session recap closes each lift with
   Last time and a Next-time progression suggestion (omitted when no rep target
   exists).
 - Session lifecycle: additive `weeks[key].sessionStatus[day]` (`in_progress|finished`)

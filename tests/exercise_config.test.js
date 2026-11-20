@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
   WARMUP_MODE, exerciseConfigKey, getExerciseNote, getExercisePrefs,
-  getExerciseRestOverride, getExerciseWarmupMode, setExercisePref,
-  setExerciseRestOverride, shouldAutoWarmup,
+  getExerciseRestOverride, getExerciseWarmupMode, preferredLoadBasis,
+  preferredLoadMode, setExercisePref, setExerciseRestOverride, shouldAutoWarmup,
 } from '../js/workout/exercise-config.js';
 
 function state(settings = {}) {
@@ -53,4 +53,23 @@ test('getExercisePrefs never leaks the stored object', () => {
   const prefs = getExercisePrefs(s, 'Row');
   prefs.note = 'mutated';
   assert.equal(getExerciseNote(s, 'Row'), 'cue');
+});
+
+test('load defaults follow the exercise unless overridden', () => {
+  const s = state();
+  assert.equal(preferredLoadMode(s, 'Bench Press'), 'weighted');
+  assert.equal(preferredLoadMode(s, 'Pull-Up'), 'bodyweight');
+  setExercisePref(s, 'Bench Press', { loadMode: 'banded' });
+  assert.equal(preferredLoadMode(s, 'Bench Press'), 'banded');
+  setExercisePref(s, 'Pull-Up', { loadMode: 'weighted' });
+  assert.equal(preferredLoadMode(s, 'Pull-Up'), 'weighted');
+});
+
+test('weight meaning defaults to Each / Per side by equipment and is overrideable', () => {
+  const s = state();
+  assert.equal(preferredLoadBasis(s, 'Incline Dumbbell Press'), 'each');
+  assert.equal(preferredLoadBasis(s, 'Dumbbell Row'), 'per-side');
+  assert.equal(preferredLoadBasis(s, 'Back Squat'), 'total');
+  setExercisePref(s, 'Incline Dumbbell Press', { basis: 'total' });
+  assert.equal(preferredLoadBasis(s, 'Incline Dumbbell Press'), 'total');
 });
