@@ -66,7 +66,13 @@ export function resolveDateToSlot(state, dateISO) {
 }
 
 // Invoke `cb` once per day that has completed lifting OR a logged run, with a
-// small record: { weekNum, day, dayIdx, dateISO, volume, distance, lifts, run }.
+// small record:
+// { weekNum, day, dayIdx, dateISO, volume, distance, sessionCount, lifts, run }.
+//
+// `sessionCount` counts SESSIONS, not days: one strength session plus every run
+// in the slot. A strength+run day is two sessions, and two runs are two more;
+// summing a set of dates silently collapsed them into one and under-reported
+// monthly/year reviews.
 export function forEachLoggedDay(state, days, cb) {
   const weeks = state?.weeks || {};
   for (const w in weeks) {
@@ -78,14 +84,17 @@ export function forEachLoggedDay(state, days, cb) {
       const lifts = wd.lifts?.[day];
       const run = runDaySummary(wd, day);
       const distance = num(run?.dist);
-      if (completedSetCount(lifts) <= 0 && distance <= 0) return;
+      const hasStrength = completedSetCount(lifts) > 0;
+      if (!hasStrength && distance <= 0) return;
       const dateISO = localDayKey(stored[day]);
       if (!dateISO) return;
       const volume = dayVolume(lifts);
+      const runSessions = Number(run?.sessionCount) || (distance > 0 ? 1 : 0);
       cb({
         weekNum, day, dayIdx,
         dateISO,
         volume, distance, lifts, run,
+        sessionCount: (hasStrength ? 1 : 0) + runSessions,
       });
     });
   }
