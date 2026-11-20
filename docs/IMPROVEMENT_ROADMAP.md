@@ -1972,6 +1972,16 @@ testable on its own.
     smoke, progress-hub browser check (chart points, four cards, session rows,
     range switch, no overflow at 320/390/412px).
   - Next: History copy/repeat and full exercise editing.
+- **2026-11-21 — History calendar day sheet.**
+  - Tapping a calendar day now opens a managed bottom sheet with that day's
+    sessions instead of jumping straight to a filtered list. It respects the
+    active type/source/activation filters, closes through the shared modal stack
+    (Escape/backdrop/X), and **View full day** switches to the filtered list.
+  - Opening a session from the sheet dismisses it first; an empty day shows an
+    honest empty state and hides the full-day action.
+  - Validation: typecheck, smoke, History browser check (two same-day sessions,
+    close keeps the calendar, View full day shows both rows).
+  - Next: final Home/Progress polish and preflight.
 - **2026-11-21 — History source filter.**
   - Activity rows now carry a coarse `origin` (`app` or `imported`) derived from
     the stored source, not from display copy. Runs whose week was imported but
@@ -1981,7 +1991,7 @@ testable on its own.
     with an honest no-results state.
   - Validation: activities model tests (imported strength + FIT run vs app runs),
     typecheck, smoke, History browser check (3 imported / 1 app / 4 all).
-  - Next: calendar day-sheet polish.
+  - Next: final Home/Progress polish and preflight.
 - **2026-11-21 — Edit a saved session's exercises, not just its numbers.**
   - `edit-saved.js` now works on a cloned draft. Add exercise (catalogue search
     or custom name), add/remove set, remove exercise and edit notes/weights/
@@ -1993,7 +2003,7 @@ testable on its own.
   - New set rows are shape-aware (Plank opens Time, Farmer Carry opens Distance).
   - Validation: 1,988 node tests, typecheck, smoke, edit-saved browser check
     (Cancel untouched, add Back Squat, remove one set, summary, recap).
-  - Next: calendar day-sheet polish.
+  - Next: final Home/Progress polish and preflight.
 - **2026-11-21 — Repeat a strength workout from History.**
   - The strength detail now leads with **Repeat this workout**. It force-closes
     History and creates a fresh one-off session from the source sets through the
@@ -2002,7 +2012,7 @@ testable on its own.
   - The same action is still reachable from Choose workout → Copy past workout.
   - Validation: typecheck, smoke, History browser check (copy is created, title
     kept, two sets, none completed, History dismissed).
-  - Next: calendar day-sheet polish.
+  - Next: final Home/Progress polish and preflight.
 - **2026-11-21 — Training Report: real session counts, 30 days or 12 months.**
   - `forEachLoggedDay` now exposes `sessionCount` (one strength session + every
     run in the slot). The Training Report sums sessions, not unique dates, so a
