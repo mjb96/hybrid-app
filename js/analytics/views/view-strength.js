@@ -342,8 +342,10 @@ function renderStrengthHeatmap(data) {
     </article>`;
 
   const calEl = qs('strengthCalendarHeatmap');
-  if (calEl && data._trainingDays) {
-    renderVolumeCalendarHeatmap(calEl, data._trainingDays, data.weekLabels, data.volData);
+  if (calEl && data.calendarTrainingDays) {
+    renderVolumeCalendarHeatmap(
+      calEl, data.calendarTrainingDays, data.calendarWeekLabels, data.calendarWeekVolume,
+    );
   }
 }
 

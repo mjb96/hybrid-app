@@ -95,6 +95,36 @@ test('consistency attributes an archived activation\'s sessions to their real da
   assert.equal(domainOf(model, 'consistency').headline.value, '2');
 });
 
+test('weekSummary and recentWeeks are calendar-date aggregates, including archives', () => {
+  const state = {
+    currentWeek: '9',
+    settings: { weightUnit: 'kg', distanceUnit: 'km' },
+    weeks: {
+      '1': {
+        dates: { mon: '2026-07-13', tue: '2026-07-14' },
+        lifts: { mon: { Bench: [work(100, 5)] } },
+        runs: { tue: { dist: '5', time: '25:00' } },
+      },
+      'arch:old:6': {
+        dates: { wed: '2026-07-15' },
+        lifts: { wed: { Squat: [work(100, 5)] } },
+      },
+    },
+  };
+  const model = buildProgressLanding(state, { days: DAYS, today: '2026-07-17' });
+  assert.equal(model.weekSummary.sessions, 3);
+  assert.equal(model.weekSummary.volumeKg, 1000);
+  assert.equal(model.weekSummary.distanceKm, 5);
+  assert.equal(model.weekSummary.hasData, true);
+  assert.equal(model.units.weight, 'kg');
+  assert.equal(model.units.distance, 'km');
+  const current = model.recentWeeks[model.recentWeeks.length - 1];
+  assert.equal(current.weekStart, WK);
+  assert.equal(current.sessions, 3);
+  assert.equal(current.volumeKg, 1000);
+  assert.equal(current.distanceKm, 5);
+});
+
 test('a live week compares only its elapsed portion against the same days last week', () => {
   // Last week: 4 sessions (Mon–Thu). This week: 2 by Tuesday.
   const state = {

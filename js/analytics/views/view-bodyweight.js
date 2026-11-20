@@ -48,7 +48,12 @@ function summaryHtml(model, state) {
     ? `Trend ${signed(rate.perWeek)} ${unit}/week (${signed(rate.pct)}%)`
     : rate.n >= 6
       ? 'Spread your weigh-ins across at least 10 days for a weekly trend.'
-      : `Need ${missing} more weigh-in${missing === 1 ? '' : 's'} across 10 days for a weekly trend.`;
+      : model.points.length > rate.n
+        // The graph can show months of weekly means while the rate needs a
+        // recent 10-day window. Say that instead of claiming only three total
+        // weigh-ins exist.
+        ? `Add ${missing} more weigh-in${missing === 1 ? '' : 's'} in the last 10 days for a weekly rate — earlier entries still appear in the graph.`
+        : `Need ${missing} more weigh-in${missing === 1 ? '' : 's'} across 10 days for a weekly trend.`;
   const statusText = {
     in: 'On pace',
     slow: 'Slower than planned',

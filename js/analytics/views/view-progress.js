@@ -1,14 +1,20 @@
 // ==========================================
 // PROGRESS VIEW (analytics/views/view-progress.js)
 // ==========================================
-import { formatPace, rpeColour, paceZoneColour, formatWeight, weightUnitOf } from '../utils.js';
+import { formatDist, formatWeight, weightUnitOf } from '../utils.js';
 import { renderVolumeChart, renderConsistencyHeatmap } from '../charts.js';
 import { getProgramById } from '../../state.js';
 import { isCompletedSet } from '../../set-utils.js';
 import { streakFreezeInfo } from '../../brain/streak.js';
-import { runDaySummary } from '../../state/run-sessions.js';
 import { activeTrainingDates, computeStreak } from '../../home/dashboard-model.js';
-import { isNumericWeekKey } from '../../state/activation-identity.js';
+
+function weekLabel(iso) {
+  const [y, m, d] = String(iso || '').split('-').map(Number);
+  if (!y || !m || !d) return iso || '--';
+  return new Date(Date.UTC(y, m - 1, d, 12)).toLocaleDateString(undefined, {
+    day: 'numeric', month: 'short',
+  });
+}
 
 export function renderProgressAnalytics(data, getState) {
   const tbody = document.getElementById('analyticsTimelineTableBody');
@@ -16,25 +22,19 @@ export function renderProgressAnalytics(data, getState) {
 
   tbody.innerHTML = '';
   const state = getState();
-  const currentWeekStr = state.currentWeek;
   const unit = weightUnitOf(state);
-  data.weekLabels.forEach((lbl, i) => {
-    const wKey    = (i + 1).toString();
-    const isActive = wKey === currentWeekStr;
-    const avgPace  = data.paceData[i] > 0 ? formatPace(data.paceData[i]) : '--';
-    const avgRpe   = data.rpeData[i]  > 0 ? data.rpeData[i].toFixed(1) : '--';
-    const rpeStyle = data.rpeData[i] > 0 ? `color:${rpeColour(data.rpeData[i])};font-weight:700;` : '';
-    const paceCol  = data.paceData[i] > 0 ? paceZoneColour(data.paceData[i], data.thresholdSecs) : '#ffffff';
-
+  const distUnit = state?.settings?.distanceUnit === 'mi' ? 'mi' : 'km';
+  const weeks = Array.isArray(data.calendarWeeks) ? data.calendarWeeks : [];
+  const currentWeekStart = weeks.length ? weeks[weeks.length - 1].weekStart : null;
+  weeks.forEach((week) => {
+    const isActive = week.weekStart === currentWeekStart;
     const tr = document.createElement('tr');
     if (isActive) tr.style.background = 'rgba(59,130,246,0.1)';
-
     tr.innerHTML =
-      `<td class="py-2"><strong style="${isActive ? 'color:#3b82f6;' : 'color:#fff;'}">${lbl}</strong></td>` +
-      `<td class="py-2" style="color:#fff;">${formatWeight(data.volData[i], unit)}</td>` +
-      `<td class="py-2" style="color:#fff;">${data.runData[i] > 0 ? data.runData[i].toFixed(1) + ' km' : '--'}</td>` +
-      `<td class="py-2" style="color:${paceCol};font-variant-numeric:tabular-nums;">${avgPace}</td>` +
-      `<td class="py-2" style="${rpeStyle}">${avgRpe}</td>`;
+      `<td class="py-2"><strong style="${isActive ? 'color:#3b82f6;' : 'color:#fff;'}">${weekLabel(week.weekStart)}</strong></td>` +
+      `<td class="py-2" style="color:#fff;">${week.sessions}</td>` +
+      `<td class="py-2" style="color:#fff;">${formatWeight(week.volumeKg, unit)}</td>` +
+      `<td class="py-2" style="color:#fff;">${week.distanceKm > 0 ? formatDist(week.distanceKm, distUnit, 1) : '--'}</td>`;
     tbody.appendChild(tr);
   });
 }
@@ -147,31 +147,9 @@ export function renderStreakDetail(data, getState, getDays) {
     }
   }
 
-  // Consistency heatmap. This grid is PROGRAM-week indexed (its columns are the
-  // "Week N" labels), so only numeric week keys belong on it — an archived
-  // activation's `arch:<id>:<n>` key is a previous program run and has no column
-  // here. parseInt on such a key returns NaN, which slipped past the renderer's
-  // range guard (every NaN comparison is false) and emitted <rect x="NaN">.
-  const trainingDays = [];
-  for (const wk in appState.weeks || {}) {
-    if (!isNumericWeekKey(wk)) continue;
-    const weekNum = parseInt(wk, 10);
-    const wkData = appState.weeks[wk];
-    defaultDays.forEach((d, dayIdx) => {
-      let completedSets = 0;
-      const dayLifts = wkData?.lifts?.[d] || {};
-      for (const lift in dayLifts) {
-        if (Array.isArray(dayLifts[lift])) {
-          completedSets += dayLifts[lift].filter(s => isCompletedSet(s)).length;
-        }
-      }
-      const gymHasData = completedSets > 0;
-      const runHasData = (parseFloat(runDaySummary(wkData, d).dist) || 0) > 0;
-      if (gymHasData || runHasData) {
-        trainingDays.push({ week: weekNum, dayIdx, gym: gymHasData, run: runHasData });
-      }
-    });
-  }
+  // Consistency heatmap. Calendar-week columns from the canonical date index, so
+  // imported and archived sessions occupy the week they actually happened in.
+  const trainingDays = data.calendarTrainingDays || [];
 
   // Find or create heatmap header + container after detailEl
   let heatmapHeader = document.querySelector('.streak-heatmap-header');
@@ -186,7 +164,7 @@ export function renderStreakDetail(data, getState, getDays) {
     heatmapHeader.after(heatmapContainer);
   }
 
-  renderConsistencyHeatmap(heatmapContainer, trainingDays, data.weekLabels);
+  renderConsistencyHeatmap(heatmapContainer, trainingDays, data.calendarWeekLabels || data.weekLabels);
 }
 
 export function renderGoalProgressDetail(data, getState) {

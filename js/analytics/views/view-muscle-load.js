@@ -29,11 +29,20 @@ export function renderMuscleLoad(state) {
   summary.textContent = '';
   const summaryCard = document.createElement('div');
   summaryCard.className = 'muscle-load-summary';
-  const stats = [
-    [`${model.summary.inRangeCount} of ${model.summary.focusCount}`, 'focus muscles in range'],
-    [`${model.summary.recovering}`, 'recovering'],
-    [`${model.summary.untrained}`, 'not trained yet'],
-  ];
+  // With no focus muscles chosen, "0 of 0 focus muscles in range" is not a
+  // useful headline. Show the recovery picture instead; the range column still
+  // explains that focus muscles can be set in Settings.
+  const stats = model.summary.focusCount > 0
+    ? [
+      [`${model.summary.inRangeCount} of ${model.summary.focusCount}`, 'focus muscles in range'],
+      [`${model.summary.recovering}`, 'recovering'],
+      [`${model.summary.untrained}`, 'not trained yet'],
+    ]
+    : [
+      [`${model.summary.recovering}`, 'recovering'],
+      [`${model.summary.ready + model.summary.fresh}`, 'ready or fresh'],
+      [`${model.summary.untrained}`, 'not trained yet'],
+    ];
   for (const [value, label] of stats) {
     const item = document.createElement('div');
     const strong = document.createElement('strong');

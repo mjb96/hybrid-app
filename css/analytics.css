@@ -1460,6 +1460,36 @@ html[data-theme="light"] .hub-link__icon {
   margin: 0 0 14px;
 }
 
+.ph-week {
+  margin: 0 0 12px;
+  padding: 16px;
+  border: 1px solid var(--border-subtle, rgba(255,255,255,0.08));
+  border-radius: var(--radius-lg, 14px);
+  background: linear-gradient(145deg, rgba(99,102,241,0.14), var(--surface-2, rgba(255,255,255,0.04)));
+}
+.ph-week__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.ph-week__eyebrow { display: block; color: var(--text-muted); font-size: 0.66rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+.ph-week__title { margin: 4px 0 0; color: var(--text-primary); font-size: 1.5rem; line-height: 1.1; }
+.ph-week__link { flex-shrink: 0; min-height: 44px; padding: 0 10px; border: 0; border-radius: 10px; background: transparent; color: var(--color-cyan, #22d3ee); font-size: 0.75rem; font-weight: 800; }
+.ph-week__stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
+.ph-week__stats div { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.ph-week__stats b { color: var(--text-primary); font-size: 0.9rem; font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ph-week__stats span { color: var(--text-muted); font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.ph-week__adherence { height: 6px; margin-top: 14px; border-radius: 999px; background: rgba(255,255,255,0.08); overflow: hidden; }
+.ph-week__adherence span { display: block; height: 100%; border-radius: inherit; background: var(--color-green, #10b981); }
+.ph-week__adherence-label { margin: 6px 0 0; color: var(--text-muted); font-size: 0.68rem; }
+.ph-weeks {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-subtle, rgba(255,255,255,0.08));
+  border-radius: var(--radius-lg, 14px);
+  background: var(--surface-2, rgba(255,255,255,0.04));
+}
+.ph-weeks__head { display: flex; justify-content: space-between; color: var(--text-muted); font-size: 0.62rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+.ph-weeks__bars { display: grid; grid-template-columns: repeat(12, 1fr); align-items: end; gap: 4px; height: 48px; margin-top: 8px; }
+.ph-weeks__bar { display: block; min-height: 3px; border-radius: 3px 3px 0 0; background: rgba(255,255,255,0.09); }
+.ph-weeks__bar.is-trained { background: linear-gradient(180deg, var(--color-cyan, #22d3ee), var(--color-indigo, #6366f1)); }
+
 .ph-grid {
   display: grid;
   grid-template-columns: 1fr;

@@ -30,10 +30,11 @@ import { renderStrengthMetricDetail } from './analytics/views/view-strength-metr
 import { renderRunPerformance } from './analytics/views/view-run-performance.js';
 import { renderRecoveryPerformance } from './analytics/views/view-recovery-performance.js';
 import { renderRecoveryMetricDetail } from './analytics/views/view-recovery-metric.js';
-import { buildProgressLanding } from './analytics/progress-landing.js';
+import { buildProgressLanding, buildRecentWeekSeries } from './analytics/progress-landing.js';
+import { buildCalendarTrainingWeeks } from './analytics/training-calendar.js';
+import { weekStartOf } from './analytics/weekly-aggregate.js';
 import { renderProgressHub } from './analytics/views/view-progress-hub.js';
 import { buildRunningMetricDetail } from './analytics/running-detail.js';
-import { isNumericWeekKey } from './state/activation-identity.js';
 
 let _getState;
 let _getDays;
@@ -315,31 +316,16 @@ function collectAnalyticsData() {
   const validGymHr = data.gymHrData.filter(h => h > 0);
   data.globalAvgGymHr = validGymHr.length ? validGymHr.reduce((a, b) => a + b, 0) / validGymHr.length : 0;
 
-  // Program-week-indexed grid: numeric week keys only. An archived activation
-  // (`arch:<id>:<n>`) belongs to a previous program run and has no column here,
-  // and parseInt would turn it into NaN — which the heatmap's range guard does
-  // not catch, because every NaN comparison is false.
-  const trainingDays = [];
-  Object.keys(appState.weeks || {}).forEach(wk => {
-    if (!isNumericWeekKey(wk)) return;
-    const wkData = appState.weeks[wk];
-    DEFAULT_DAYS.forEach((d, dayIdx) => {
-      const dayLifts = wkData?.lifts?.[d] || {};
-      let completedSets = 0;
-      for (const lift in dayLifts) {
-        if (!Array.isArray(dayLifts[lift])) continue;
-        dayLifts[lift].forEach(s => {
-          if (isCompletedSet(s)) completedSets++;
-        });
-      }
-      const gymHasData = completedSets > 0;
-      const runHasData = (parseFloat(runDaySummary(wkData, d).dist) || 0) > 0;
-      if (gymHasData || runHasData) {
-        trainingDays.push({ week: parseInt(wk, 10), dayIdx, gym: gymHasData, run: runHasData });
-      }
-    });
-  });
-  data._trainingDays = trainingDays;
+  // Calendar-week training grid. Program weeks are NOT calendar weeks and an
+  // archived/imported activation has no numeric column at all, so both
+  // Training Calendar heatmaps now read the same date-strict trailing weeks as
+  // History and the Progress hub.
+  const todayISO = todayKey();
+  const calendar = buildCalendarTrainingWeeks(appState, { today: todayISO, weeks: 12 });
+  data.calendarTrainingDays = calendar.trainingDays;
+  data.calendarWeekLabels = calendar.labels;
+  data.calendarWeeks = buildRecentWeekSeries(appState, weekStartOf(todayISO), 12);
+  data.calendarWeekVolume = data.calendarWeeks.map((week) => week.volumeKg);
 
   return data;
 }

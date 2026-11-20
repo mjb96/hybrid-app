@@ -12,6 +12,7 @@
 
 import { esc, spark } from './screen-kit.js';
 import { icon } from '../../ui/icons.js';
+import { formatDist } from '../utils.js';
 
 const DOMAIN_ICON = {
   consistency: 'calendar',
@@ -87,6 +88,48 @@ const SECONDARY_CARD_ID = {
   projections: 'projections',
 };
 
+function weekHero(model) {
+  const week = model.weekSummary;
+  if (!week || !week.hasData) return '';
+  const unit = model.units?.weight || 'kg';
+  const distUnit = model.units?.distance || 'km';
+  const sessions = week.planned ? `${week.sessions} / ${week.planned}` : String(week.sessions);
+  const adherence = week.adherencePct == null
+    ? ''
+    : `<div class="ph-week__adherence"><span style="width:${week.adherencePct}%"></span></div>
+       <p class="ph-week__adherence-label">${week.adherencePct}% of planned sessions</p>`;
+  return `<section class="ph-week" aria-label="This week">
+    <div class="ph-week__head">
+      <div>
+        <span class="ph-week__eyebrow">${esc(model.periodLabel)}</span>
+        <h2 class="ph-week__title">${esc(sessions)} session${week.sessions === 1 ? '' : 's'}</h2>
+      </div>
+      <button type="button" class="ph-week__link" data-action="open-activities" data-view="calendar">History →</button>
+    </div>
+    <div class="ph-week__stats">
+      <div><b>${week.volumeKg.toLocaleString('en-AU')} ${esc(unit)}</b><span>Volume</span></div>
+      <div><b>${esc(formatDist(week.distanceKm, distUnit, 1))}</b><span>Distance</span></div>
+      <div><b>${week.prCount}</b><span>PR${week.prCount === 1 ? '' : 's'}</span></div>
+    </div>
+    ${adherence}
+  </section>`;
+}
+
+function recentWeeksStrip(model) {
+  const weeks = Array.isArray(model.recentWeeks) ? model.recentWeeks : [];
+  if (!weeks.some((week) => week.sessions > 0)) return '';
+  const max = Math.max(1, ...weeks.map((week) => week.volumeKg || 0));
+  return `<section class="ph-weeks" aria-label="Last 12 calendar weeks">
+    <div class="ph-weeks__head"><span>Last 12 weeks</span><span>Sessions</span></div>
+    <div class="ph-weeks__bars">
+      ${weeks.map((week) => {
+        const height = week.sessions > 0 ? Math.max(10, Math.round((week.volumeKg / max) * 100)) : 4;
+        return `<span class="ph-weeks__bar${week.sessions > 0 ? ' is-trained' : ''}" style="height:${height}%" title="Week of ${esc(week.weekStart)}: ${week.sessions} session${week.sessions === 1 ? '' : 's'}"></span>`;
+      }).join('')}
+    </div>
+  </section>`;
+}
+
 export function renderProgressHub(container, model, hidden = []) {
   if (!container || !model) return;
   const hiddenSet = new Set(Array.isArray(hidden) ? hidden : []);
@@ -106,6 +149,8 @@ export function renderProgressHub(container, model, hidden = []) {
       <button type="button" class="hub-customize-btn" data-action="open-customize" data-surface="progress" aria-label="Customize Progress cards">Customize</button>
     </div>
     ${intro}
+    ${model.allEmpty ? '' : weekHero(model)}
+    ${recentWeeksStrip(model)}
     ${!domains.length && !secondary.length ? '<p class="ph-empty">All Progress cards are hidden. Use Customize to bring them back.</p>' : ''}
     <div class="ph-grid">${domains.map(domainCard).join('')}</div>
     ${secondary.length ? `<h3 class="section-header mt-4">More detail</h3>
