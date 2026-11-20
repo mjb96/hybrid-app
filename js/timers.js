@@ -223,7 +223,13 @@ export function triggerRestTimerEngine(liftName, setRpe, setType, planRestSec = 
   } else if (liftName && _restOverrides[liftName] != null) {
     // A remembered per-exercise adjustment is an explicit choice — use it as-is
     // (no RPE bonus on top, since the user already dialled in this value).
-    duration = _restOverrides[liftName];
+    // 0 is the explicit "no timer for this exercise" sentinel.
+    const remembered = Number(_restOverrides[liftName]);
+    if (remembered <= 0) {
+      dismissRestTimer();
+      return;
+    }
+    duration = remembered;
   } else {
     // Working sets: prescribe rest by exercise type (heavy compound → isolation)
     // so a curl no longer inherits the same 3 min as a squat. Unrecognised /

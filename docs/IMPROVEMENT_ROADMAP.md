@@ -1906,6 +1906,21 @@ testable on its own.
   - Validation: node tests, typecheck, smoke, settings-nav browser check
     (visible Logging controls/preset/scope), set-row and quick-log tests.
   - Next: timed/distance sets and the per-exercise config sheet.
+- **2026-11-20 — Per-exercise preferences: rest, warm-up and note.**
+  - Each cockpit exercise card now has a 44px settings button opening a sheet
+    for **rest** (Default / custom seconds / No timer), **warm-up** (Use global
+    / Always / Never) and a durable 140-character **exercise note**.
+  - Rest reuses the existing name-keyed `settings.restOverrides`, so plans,
+    per-set rest and the timer engine keep one precedence chain; a remembered
+    `0` is now an explicit no-timer and is honoured by the engine.
+  - Warm-up mode and the note live in additive `settings.exercisePrefs`, keyed
+    by canonical exercise id (name fallback), so alias spellings share one
+    preference. A per-exercise mode overrides `autoWarmupRamp`; nothing stored
+    is rewritten.
+  - The note renders on the card during the session. Validation: node tests,
+    typecheck, smoke, set-row browser check writes and re-reads all three
+    controls through localStorage.
+  - Next: timed/distance set shapes.
 - **2026-11-20 — Progress overview: week hero, recent weeks, calendar heatmaps.**
   - The hub now leads with a this-week summary (sessions / planned, volume,
     distance, PRs, adherence bar) and a 12-week session strip, then the four

@@ -453,6 +453,10 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   `settings.showPlateHints`. Rest settings also own `restPeriods.warmup`
   (0 disables the warm-up timer), `restAlertSound` and `restAlertVolume`;
   `js/timers.js` receives them through `setRestTiers`/`setRestAlertConfig`.
+  The per-exercise settings sheet (`js/workout/exercise-options.js`) owns rest
+  (reusing name-keyed `settings.restOverrides`, 0 = no timer), warm-up mode and
+  a durable note in additive `settings.exercisePrefs`, keyed by canonical
+  exercise id so aliases share one preference (`js/workout/exercise-config.js`).
   The session recap closes each lift with Last time and a Next-time progression
   suggestion (omitted when no rep target exists).
 - Session lifecycle: additive `weeks[key].sessionStatus[day]` (`in_progress|finished`)
