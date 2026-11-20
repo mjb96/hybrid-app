@@ -177,6 +177,13 @@ try {
     if (!stored?.c || String(stored.w) !== '62.5' || String(stored.r) !== '8') {
       fail(`${tag}: stored set does not match what was logged: ${JSON.stringify(stored)}`);
     }
+    const comparison = await page.evaluate(() => {
+      const cmp = document.querySelector('.cockpit-exercise:not(.collapsed) .cockpit-set-row .set-cmp');
+      return cmp ? { text: cmp.textContent, cls: cmp.className } : null;
+    });
+    if (!comparison || !/set-cmp--up/.test(comparison.cls)) {
+      fail(`${tag}: a completed set did not show its comparison against last time (${JSON.stringify(comparison)})`);
+    }
 
     // ---- layout -------------------------------------------------------------
     if (await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1)) {

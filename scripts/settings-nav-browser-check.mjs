@@ -68,6 +68,20 @@ try {
   ok((await visibleLabel()).includes('Training'), 'Training tab shows Training');
   ok(!(await visibleLabel()).includes('Profile'), 'Training tab hides Profile');
 
+  // Logging settings used to be hidden power-user markup. They are now a
+  // first-class group: rest tiers, presets, progression step and last-performed
+  // scope must all be reachable.
+  ok(await page.locator('#settingsRestCompound').isVisible(), 'compound rest tier is visible');
+  ok(await page.locator('#settingsRestAccessory').isVisible(), 'accessory rest tier is visible');
+  ok(await page.locator('#settingsRestIsolation').isVisible(), 'isolation rest tier is visible');
+  ok(await page.locator('[data-action="set-progression"][data-kg="2.5"]').isVisible(), 'progression step is visible');
+  ok(await page.locator('[data-action="set-previous-scope"][data-scope="program"]').isVisible(), 'previous-values scope is visible');
+
+  await page.click('[data-action="rest-preset"][data-preset="efficient"]');
+  ok((await page.inputValue('#settingsRestCompound')) === '2:00', 'rest preset updates the compound tier');
+  await page.click('[data-action="set-previous-scope"][data-scope="program"]');
+  ok(await page.locator('[data-action="set-previous-scope"][data-scope="program"]').evaluate((el) => el.classList.contains('active')), 'previous-values scope persists its active state');
+
   await page.fill('#settingsSearch', 'theme');
   const searchLabels = await visibleLabel();
   ok(searchLabels.includes('Appearance'), 'search finds Appearance');

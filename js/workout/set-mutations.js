@@ -16,6 +16,9 @@ import { dateKey } from '../dates.js';
 import { numberPromptModal } from '../ui/confirm-modal.js';
 import { applySetRemoval, restoreSetRemoval } from './set-plan.js';
 import { applyBandLoad, applyLoadMode, bandRole, resolvedLoadMode } from './load-mode.js';
+import {
+  defaultBasisForExercise, nextBasis, normalizeBasis,
+} from './load-basis.js';
 import { activeWorkoutDay, activeWorkoutWeekKey } from './one-off-session.js';
 import {
   getState as _getState,
@@ -275,6 +278,61 @@ export async function cycleSetLoad(liftName, setIndex) {
   }
   _syncLoadModeRow(liftName, setIndex, nextSet);
   _saveState(true);
+}
+
+/**
+ * Failure is a per-set fact independent of set type. `type: 'F'` is AMRAP and
+ * must stay that way; a set taken to failure can be a normal working set.
+ */
+export function toggleSetFailure(liftName, setIndex) {
+  const appState = _getState();
+  const day = _getSelectedDay();
+  const weekKey = activeWorkoutWeekKey(appState);
+  const sets = appState.weeks?.[weekKey]?.lifts?.[day]?.[liftName];
+  if (!sets || !sets[setIndex]) return;
+  const set = sets[setIndex];
+  set.failure = !set.failure;
+  if (!set.failure) delete set.failure;
+  _saveState(true);
+  const row = document.querySelector(
+    `.cockpit-exercise[data-liftname="${CSS.escape(liftName)}"] .cockpit-set-row[data-set-index="${setIndex}"]`,
+  );
+  row?.querySelector('[data-action="toggle-set-failure"]')?.classList.toggle('is-failure', !!set.failure);
+}
+
+/**
+ * Cycle a dumbbell set's load basis between Each (the entered number is per
+ * dumbbell) and Both (the entered number is the pair total). Volume only; e1RM
+ * remains per-implement. Legacy completed sets with no basis read as Both.
+ */
+export function toggleLoadBasis(liftName, setIndex) {
+  const appState = _getState();
+  const day = _getSelectedDay();
+  const weekKey = activeWorkoutWeekKey(appState);
+  const sets = appState.weeks?.[weekKey]?.lifts?.[day]?.[liftName];
+  if (!sets || !sets[setIndex]) return;
+  const set = sets[setIndex];
+  const current = normalizeBasis(set.basis || (set.c ? 'total' : defaultBasisForExercise(liftName)));
+  const next = nextBasis(liftName, current);
+  set.basis = next;
+  _saveState(true);
+  const row = document.querySelector(
+    `.cockpit-exercise[data-liftname="${CSS.escape(liftName)}"] .cockpit-set-row[data-set-index="${setIndex}"]`,
+  );
+  if (row) {
+    row.setAttribute('data-load-basis', next);
+    const button = row.querySelector('[data-action="toggle-load-basis"]');
+    if (button) {
+      button.textContent = next === 'each' ? 'Each' : next === 'per-side' ? 'Per side' : 'Both';
+      button.classList.toggle('is-each', next !== 'total');
+      button.setAttribute('aria-pressed', String(next !== 'total'));
+      button.setAttribute('title', next === 'each'
+        ? 'The entered weight is per dumbbell'
+        : next === 'per-side'
+          ? 'The entered weight is for the working side'
+          : 'The entered weight is the pair total');
+    }
+  }
 }
 
 export function setPerSetRir(liftName, setIndex, rir) {

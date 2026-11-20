@@ -126,6 +126,20 @@ test('new-program progression ignores global history from another activation', (
   assert.equal(globalReference.latest?.weight, 100, 'Program A remains visible as read-only history');
 });
 
+test('previous-values scope can keep another program out of the logger', () => {
+  const state = historyFixture();
+  const all = exerciseLoggerHistory(state, 'Squat', {
+    weekKey: '2', day: 'tue', beforeDate: '2026-07-08',
+  });
+  assert.equal(all.latest?.weekKey, 'arch:act_old:2', 'Any workout sees Program A');
+
+  const program = exerciseLoggerHistory(state, 'Squat', {
+    weekKey: '2', day: 'tue', beforeDate: '2026-07-08',
+    scope: 'program',
+  });
+  assert.equal(program.latest?.weekKey, '9', 'This program only sees Program B');
+});
+
 test('progression uses a prior matching day only inside the current activation', () => {
   const state = historyFixture();
   state.weeks['3'] = {

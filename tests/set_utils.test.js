@@ -43,6 +43,12 @@ test('setVolume multiplies coerced weight × reps', () => {
   assert.equal(setVolume(null), 0);
 });
 
+test('setVolume counts a dumbbell pair when the entered load is per hand', () => {
+  assert.equal(setVolume({ w: '20', r: '8', basis: 'each' }), 320);
+  assert.equal(setVolume({ w: '20', r: '8', basis: 'total' }), 160);
+  assert.equal(setVolume({ w: '20', r: '8' }), 160, 'legacy/no basis stays single');
+});
+
 test('dayVolume sums completed working sets and excludes warmups by default', () => {
   const dayLifts = {
     'Back Squat': [

@@ -6,7 +6,7 @@
 // =============================================================================
 import { getCatalogEntry } from './programs/catalog.js';
 import { allLiftsStats } from './metrics/metrics-strength.js';
-import { isValidWorkingSet } from './set-utils.js';
+import { isValidWorkingSet, setVolume } from './set-utils.js';
 import { runDaySummary, runSessionsForDay } from './state/run-sessions.js';
 import { addDaysISO, todayKey } from './dates.js';
 import { indexSlotsByDate, weekStartOf } from './analytics/weekly-aggregate.js';
@@ -245,7 +245,7 @@ export function _lifetimeTotals(state, days) {
       for (const lift in dayLifts) {
         if (!Array.isArray(dayLifts[lift])) continue;
         dayLifts[lift].forEach(s => {
-          if (_isSet(s)) { dayVol += (parseFloat(s.w) || 0) * (parseInt(s.r, 10) || 0); dayHasLift = true; }
+          if (_isSet(s)) { dayVol += setVolume(s); dayHasLift = true; }
         });
       }
       const runDist = parseFloat(runDaySummary(wkData, d).dist) || 0;

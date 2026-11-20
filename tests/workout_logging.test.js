@@ -172,6 +172,26 @@ test('setPerSetRir sets RIR + derived RPE, and taps to clear', () => {
   assert.equal(sets('Row')[0].rpe, null);
 });
 
+test('toggleSetFailure is independent of the AMRAP set type and toggles off', () => {
+  initWith(freshState());
+  workout.appendCustomSetRow(null, 'Row');
+  workout.toggleSetFailure('Row', 0);
+  assert.equal(sets('Row')[0].failure, true);
+  assert.equal(sets('Row')[0].type, undefined, 'failure never reuses type F');
+  workout.toggleSetFailure('Row', 0);
+  assert.equal(sets('Row')[0].failure, undefined);
+});
+
+test('toggleLoadBasis cycles a dumbbell set between Each and Both', () => {
+  initWith(freshState());
+  workout.appendCustomSetRow(null, 'Dumbbell Bench Press');
+  // A blank dumbbell row DISPLAYS Each, so the first tap switches it to Both.
+  workout.toggleLoadBasis('Dumbbell Bench Press', 0);
+  assert.equal(sets('Dumbbell Bench Press')[0].basis, 'total');
+  workout.toggleLoadBasis('Dumbbell Bench Press', 0);
+  assert.equal(sets('Dumbbell Bench Press')[0].basis, 'each');
+});
+
 test('removeCustomSetRow deletes the set and prunes empty lift from liftOrder', () => {
   initWith(freshState());
   state.weeks['1'].liftOrder.mon = ['Deadlift'];

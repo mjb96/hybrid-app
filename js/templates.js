@@ -5,6 +5,9 @@
 import { DAY_NAMES_FULL } from './constants.js';
 import { escapeHtml } from './util.js';
 import { isBodyweightExercise, resolvedLoadMode } from './workout/load-mode.js';
+import {
+  basisLabel, defaultBasisForExercise, normalizeBasis, supportsLoadBasis,
+} from './workout/load-basis.js';
 import { previousSetLabel } from './workout/set-entry.js';
 
 export function buildEmptyWorkoutCard() {
@@ -27,6 +30,12 @@ export function buildSetRow(sData, sIdx, safeLiftName, historicalSetData = null,
   const loadLabels = { '': 'Weighted', 'BW': 'Bodyweight', 'L': '🟢 Light band', 'M': '🟡 Med band', 'H': '🔴 Heavy band' };
   const loadCls = loadState === '' ? 'weighted' : loadState === 'BW' ? 'bw' : loadState;
   const bodyweightCapable = isBodyweightExercise(exerciseName);
+  const basisCapable = supportsLoadBasis(exerciseName);
+  // A legacy COMPLETED set has no basis and was counted once -> show Both.
+  // A new/blank dumbbell row defaults to Each and is stamped on completion.
+  const basis = basisCapable
+    ? normalizeBasis(sData.basis || (sData.c ? 'total' : defaultBasisForExercise(exerciseName)))
+    : null;
   const directMode = resolvedLoadMode(sData, exerciseName);
   const knownBodyweight = Number.isFinite(Number.parseFloat(bodyweight)) && Number.parseFloat(bodyweight) > 0
     ? Number.parseFloat(bodyweight) : null;
@@ -64,11 +73,31 @@ export function buildSetRow(sData, sIdx, safeLiftName, historicalSetData = null,
   // there is a real prior set: a first-ever session shows nothing rather than a
   // "-- × --" that reads as data which failed to load.
   const prev = previousSetLabel(previousSetData, weightUnit);
+  // Per-set comparison against the SAME set index last session. Only shown once
+  // this set is complete: an arrow beside a blank row would claim a result that
+  // has not happened yet. Warm-ups never carry a prior set, so they never compare.
+  const currentWeight = parseFloat(sData.w);
+  const currentReps = parseInt(sData.r, 10);
+  const priorWeight = parseFloat(previousSetData?.w);
+  const priorReps = parseInt(previousSetData?.r, 10);
+  let compare = null;
+  if (sData.c && Number.isFinite(currentWeight) && currentWeight > 0
+      && Number.isFinite(currentReps) && currentReps > 0
+      && Number.isFinite(priorWeight) && priorWeight > 0
+      && Number.isFinite(priorReps) && priorReps > 0) {
+    const delta = currentWeight - priorWeight || currentReps - priorReps;
+    compare = delta > 0 ? { glyph: '↑', tone: 'up', label: 'better than last time' }
+      : delta < 0 ? { glyph: '↓', tone: 'down', label: 'lower than last time' }
+        : { glyph: '=', tone: 'same', label: 'matched last time' };
+  }
+  const compareHtml = compare
+    ? `<span class="set-cmp set-cmp--${compare.tone}" aria-label="${compare.label}" title="${compare.label}">${compare.glyph}</span>`
+    : '';
   const prevHtml = prev
-    ? `<div class="set-prev" aria-label="${escapeHtml(prev.label)}">${escapeHtml(prev.text)}</div>`
+    ? `<div class="set-prev" aria-label="${escapeHtml(prev.label)}" data-prev-w="${Number.isFinite(priorWeight) ? priorWeight : ''}" data-prev-r="${Number.isFinite(priorReps) ? priorReps : ''}">${escapeHtml(prev.text)}${compareHtml}</div>`
     : '';
 
-  return `<div class="cockpit-set-row ${sData.c ? 'is-complete' : ''} ${typeClass} ${sData.isPR ? 'is-pr' : ''}"${hasRole ? ` data-set-role="${escapeHtml(String(roleTag.role))}"` : ''}${boAttrs} data-set-index="${sIdx}" data-load-mode="${directMode}">
+  return `<div class="cockpit-set-row ${sData.c ? 'is-complete' : ''} ${typeClass} ${sData.isPR ? 'is-pr' : ''}"${hasRole ? ` data-set-role="${escapeHtml(String(roleTag.role))}"` : ''}${boAttrs} data-set-index="${sIdx}" data-load-mode="${directMode}"${basisCapable ? ` data-load-basis="${escapeHtml(basis)}"` : ''}>
     ${roleTagHtml}
     ${sData.isPR ? '<span class="pr-badge">PR</span>' : ''}
     ${bodyweightCapable ? `<div class="set-load-choice" role="group" aria-label="Load mode for set ${sIdx + 1}">
@@ -121,6 +150,20 @@ export function buildSetRow(sData, sIdx, safeLiftName, historicalSetData = null,
               title="Tap to set load: Weighted → Bodyweight → Light → Medium → Heavy band. Bodyweight/band auto-fill the weight for volume; edit it to add or assist.">
         ${loadLabels[loadState]}
       </button>
+      <button class="btn-failure tactile-scale${sData.failure ? ' is-failure' : ''}"
+        data-action="toggle-set-failure"
+        data-liftname="${safeLiftName}"
+        data-sidx="${sIdx}"
+        aria-pressed="${!!sData.failure}"
+        title="Mark this set as taken to failure">Failure</button>
+      ${basisCapable ? `<button class="btn-basis tactile-scale${basis !== 'total' ? ' is-each' : ''}"
+        data-action="toggle-load-basis"
+        data-liftname="${safeLiftName}"
+        data-sidx="${sIdx}"
+        aria-pressed="${basis !== 'total'}"
+        title="${basis === 'each' ? 'The entered weight is per dumbbell'
+          : basis === 'per-side' ? 'The entered weight is for the working side'
+          : 'The entered weight is the pair total'}">${basisLabel(basis)}</button>` : ''}
       <button class="btn-set-delete tactile-scale"
         data-action="remove-set"
         data-liftname="${safeLiftName}"

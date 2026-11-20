@@ -4,7 +4,7 @@
 import { formatDist, formatWeight, weightUnitOf } from '../utils.js';
 import { renderVolumeChart, renderConsistencyHeatmap } from '../charts.js';
 import { getProgramById } from '../../state.js';
-import { isCompletedSet } from '../../set-utils.js';
+import { isCompletedSet, setVolume } from '../../set-utils.js';
 import { streakFreezeInfo } from '../../brain/streak.js';
 import { activeTrainingDates, computeStreak } from '../../home/dashboard-model.js';
 
@@ -54,11 +54,9 @@ export function renderWeeklyVolumeDetail(data, getState, getDays) {
         if (Array.isArray(dayLifts[lift])) {
           dayLifts[lift].forEach(s => {
             if (isCompletedSet(s)) {
-              const w = parseFloat(s.w) || 0;
-              const r = parseInt(s.r, 10) || 0;
-              totalVol  += w * r;
+              totalVol += setVolume(s);
               totalSets += 1;
-              totalReps += r;
+              totalReps += parseInt(s.r, 10) || 0;
             }
           });
         }

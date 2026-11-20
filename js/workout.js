@@ -67,13 +67,14 @@ import {
 } from './workout/run-logging.js';
 import {
   appendCustomSetRow, appendWarmupSetRow, removeCustomSetRow, cycleSetType,
-  setSetLoadMode, cycleSetLoad, setPerSetRir, currentBodyweight as _currentBodyweight,
+  setSetLoadMode, cycleSetLoad, setPerSetRir, toggleSetFailure, toggleLoadBasis,
+  currentBodyweight as _currentBodyweight,
 } from './workout/set-mutations.js';
 // Re-exported for js/app.js, which imports these from here.
 export { openConfirmResetModal, closeConfirmResetModal, executeResetActiveDayMetrics };
 export {
   appendCustomSetRow, appendWarmupSetRow, removeCustomSetRow, cycleSetType,
-  setSetLoadMode, cycleSetLoad, setPerSetRir,
+  setSetLoadMode, cycleSetLoad, setPerSetRir, toggleSetFailure, toggleLoadBasis,
 };
 import {
   renderExerciseLibraryList,
@@ -351,6 +352,7 @@ function _buildExerciseCardEl(liftName, loggedLiftsData, weekData, wk, selectedD
     weekKey: wk,
     day: selectedDay,
     beforeDate: weekData?.dates?.[selectedDay] || dateKey(),
+    scope: appState.settings?.previousValuesScope === 'program' ? 'program' : 'all',
   });
   const priorPerformance = loggerHistory.latest;
   let historicalLineText = 'First time logging this — today sets your baseline';
@@ -893,6 +895,59 @@ function _ensureWorkoutDateStamp(appState, wk, day) {
   if (!appState.weeks[wk].dates[day]) appState.weeks[wk].dates[day] = dateKey();
 }
 
+// Per-set comparison against the same set index last session. Shared by the
+// manual tick and the one-tap/log-all paths so a quick log cannot skip it.
+function applySetComparison(parentRow, w, r) {
+  const prevEl = parentRow?.querySelector('.set-prev');
+  const priorW = parseFloat(prevEl?.getAttribute('data-prev-w') || '');
+  const priorR = parseInt(prevEl?.getAttribute('data-prev-r') || '', 10);
+  if (!prevEl || !Number.isFinite(priorW) || priorW <= 0 || !Number.isFinite(priorR) || priorR <= 0) return;
+  const delta = w - priorW || r - priorR;
+  const tone = delta > 0 ? 'up' : delta < 0 ? 'down' : 'same';
+  const glyph = delta > 0 ? '↑' : delta < 0 ? '↓' : '=';
+  const label = delta > 0 ? 'better than last time'
+    : delta < 0 ? 'lower than last time' : 'matched last time';
+  let cmp = prevEl.querySelector('.set-cmp');
+  if (!cmp) {
+    cmp = document.createElement('span');
+    prevEl.appendChild(cmp);
+  }
+  cmp.className = `set-cmp set-cmp--${tone}`;
+  cmp.textContent = glyph;
+  cmp.setAttribute('aria-label', label);
+  cmp.title = label;
+}
+
+// PR detection for one completed set. Extracted from the tick path so quick-log
+// and log-all get the same live PR feedback instead of only manual ticks.
+function detectSetPR(parentRow, liftName, setIndex, w, r, appState, weekKey, day) {
+  if (!parentRow || !liftName || setIndex < 0 || !(w > 0) || !(r > 0)) return;
+  const setType = appState.weeks?.[weekKey]?.lifts?.[day]?.[liftName]?.[setIndex]?.type || '';
+  if (setType === 'W') return;
+  const storedSet = appState.weeks?.[weekKey]?.lifts?.[day]?.[liftName]?.[setIndex] || {};
+  const e1rm = estimatedE1rmForSet(liftName, { ...storedSet, w, r });
+  const prior = exerciseLoggerHistory(appState, liftName, {
+    weekKey,
+    day,
+    beforeDate: appState.weeks?.[weekKey]?.dates?.[day] || dateKey(),
+  });
+  const prevMax = Math.max(prior.datedBestEstimated1RM, prior.globalBestEstimated1RM);
+  const hasHistory = prior.hasHistory;
+  if (hasHistory && isE1rmPr(e1rm, prevMax)) {
+    parentRow.classList.add('is-pr');
+    hapticSuccess();
+    if (!parentRow.querySelector('.pr-badge')) {
+      const badge = document.createElement('span');
+      badge.className = 'pr-badge';
+      badge.textContent = 'PR';
+      parentRow.appendChild(badge);
+    }
+    showToast(`🏆 New PR — ${liftName}!`);
+  } else if (e1rm > 0 && !hasHistory) {
+    showToast(`Baseline set — ${liftName} ✓`);
+  }
+}
+
 export function executeOneTapQuickLog(labelNode, liftName, sIdx) {
   if (!labelNode) return;
   const appState = _getState();
@@ -970,6 +1025,8 @@ export function executeOneTapQuickLog(labelNode, liftName, sIdx) {
     });
   }
   _setArr[sIdx] = { ..._prev, w: targetW, r: targetR, c: true };
+  const quickBasis = parentRow.getAttribute('data-load-basis');
+  if (quickBasis) _setArr[sIdx].basis = quickBasis;
   if (_tw != null && _prev.tw == null) _setArr[sIdx].tw = _tw;
   if (_tr != null && _prev.tr == null) _setArr[sIdx].tr = _tr;
   _ensureWorkoutDateStamp(appState, wk, selectedDay);
@@ -984,6 +1041,11 @@ export function executeOneTapQuickLog(labelNode, liftName, sIdx) {
     const planRest = getProgramById(appState.activeProgramId)?.prescriptions?.[selectedDay]?.[liftName]?.restSec;
     triggerRestTimerEngine(liftName, setRpe, setType, planRest);
   } catch(e) { console.warn(e); }
+
+  const quickW = parseFloat(targetW);
+  const quickR = parseInt(targetR, 10);
+  detectSetPR(parentRow, liftName, sIdx, quickW, quickR, appState, wk, selectedDay);
+  applySetComparison(parentRow, quickW, quickR);
 
   _saveState(true);
   evaluateAccordionAutoFlowTransitions();
@@ -1046,6 +1108,7 @@ export function usePreviousValues(liftName) {
   const previous = exerciseLoggerHistory(appState, liftName, {
     weekKey: wk, day: selectedDay,
     beforeDate: appState.weeks?.[wk]?.dates?.[selectedDay] || dateKey(),
+    scope: appState.settings?.previousValuesScope === 'program' ? 'program' : 'all',
   }).latest?.workingSets || [];
   let previousIndex = 0;
   let filled = 0;
@@ -1196,6 +1259,11 @@ export function commitWorkoutUIState() {
           if (wIn && (isTicked || hasReps || hasStoredWeight)) storedSet.w = wIn.value;
           if (rIn && (isTicked || hasReps || String(storedSet.r ?? '').trim() !== '')) storedSet.r = rIn.value;
           if (cIn) storedSet.c = cIn.checked;
+          // Stamp the dumbbell basis only once there is real user data. A blank
+          // scaffold row must not gain `basis` and stop being recognised as
+          // untouched by the prescription reconciler.
+          const rowBasis = row.getAttribute('data-load-basis');
+          if (rowBasis && (isTicked || hasReps || hasStoredWeight)) storedSet.basis = rowBasis;
           if (row.classList.contains('is-pr')) appState.weeks[wk].lifts[selectedDay][liftName][idx].isPR = true;
         }
       });
@@ -1303,45 +1371,22 @@ export function toggleGymCheckLoggingState(checkboxNode) {
         _appState.weeks[_wk].dates[_selDay] = dateKey();
       }
 
-      // PR detection — compare this set's bounded e1RM against prior dated
-      // performances (with aggregate stats only as a legacy-history fallback).
-      if (liftName && setType !== 'W' && _sIdx >= 0) {
+      // PR + per-set comparison. Shared with quick-log/log-all so those paths
+      // cannot silently skip the feedback a manual tick gets.
+      if (liftName && _sIdx >= 0) {
         const wIn = parentRow?.querySelector('.input-weight-node');
         const rIn = parentRow?.querySelector('.input-reps-node');
         const w = parseFloat(wIn?.value) || 0;
         const r = parseInt(rIn?.value, 10) || 0;
-        if (w > 0 && r > 0) {
-          const storedSet = _appState.weeks?.[_wk]?.lifts?.[_selDay]?.[liftName]?.[_sIdx] || {};
-          const e1rm = estimatedE1rmForSet(liftName, { ...storedSet, w, r });
-          const prior = exerciseLoggerHistory(_appState, liftName, {
-            weekKey: _wk,
-            day: _selDay,
-            beforeDate: _appState.weeks?.[_wk]?.dates?.[_selDay] || dateKey(),
-          });
-          const prevMax = Math.max(prior.datedBestEstimated1RM, prior.globalBestEstimated1RM);
-          // Only celebrate a PR against *real* prior history. The first-ever log
-          // of a lift always beats a 0 baseline, so firing "New PR" then made the
-          // trophy noise on every exercise of a new user's first session. No
-          // history ⇒ this is a baseline, not a record.
-          const hasHistory = prior.hasHistory;
-          if (hasHistory && isE1rmPr(e1rm, prevMax)) {
-            parentRow.classList.add('is-pr');
-            hapticSuccess();
-            if (!parentRow.querySelector('.pr-badge')) {
-              const badge = document.createElement('span');
-              badge.className = 'pr-badge';
-              badge.textContent = 'PR';
-              parentRow.appendChild(badge);
-            }
-            showToast(`🏆 New PR — ${liftName}!`);
-          } else if (e1rm > 0 && !hasHistory) {
-            showToast(`Baseline set — ${liftName} ✓`);
-          }
-        }
+        detectSetPR(parentRow, liftName, _sIdx, w, r, _appState, _wk, _selDay);
+        applySetComparison(parentRow, w, r);
       }
     } catch(e) { console.warn(e); }
   } else {
-    if (parentRow) parentRow.classList.remove('is-complete');
+    if (parentRow) {
+      parentRow.classList.remove('is-complete');
+      parentRow.querySelector('.set-cmp')?.remove();
+    }
     // Un-ticking is the athlete withdrawing the entry, so the complaint about it
     // goes too. Leaving it would accuse a row that no longer claims anything.
     setRowMessage(parentRow, null);
@@ -1899,6 +1944,8 @@ document.addEventListener('click', (e) => {
   else if (action === 'toggle-accordion') toggleAccordionManual(exCard);
   else if (action === 'jump-to-exercise') jumpToExercise(liftName);
   else if (action === 'set-rir') setPerSetRir(liftName, sIdx, parseInt(target.getAttribute('data-rir'), 10));
+  else if (action === 'toggle-set-failure') toggleSetFailure(liftName, sIdx);
+  else if (action === 'toggle-load-basis') toggleLoadBasis(liftName, sIdx);
   else if (action === 'rest-adjust') adjustRestDuration(parseInt(target.getAttribute('data-delta'), 10));
   else if (action === 'open-add-exercise') openAddExerciseModal();
   else if (action === 'close-add-exercise') closeAddExerciseModal();

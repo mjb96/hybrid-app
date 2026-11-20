@@ -1868,6 +1868,31 @@ testable on its own.
     completed working sets (warm-ups and unticked rows excluded), normalises to
     the hardest-trained muscle and maps it onto the body regions. The chips are
     the accessible text equivalent.
+- **2026-11-20 — Logger parity: visible logging settings and set feedback.**
+  - Settings → Training now has a real **Logging** group: rest tiers,
+    Efficient/Standard/Strength presets, reset remembered rests, progression
+    step, auto rest/warm-up, and previous-values scope. The old hidden markup is
+    no longer a dead power-user knob.
+  - `settings.previousValuesScope` (`all` default, or `program`) scopes the Last
+    performed panel and Use previous values; PR detection deliberately stays
+    all-time so switching scope never hides a genuine record.
+  - Each completed set now compares against the SAME set index last session
+    (`↑` / `=` / `↓`) in place on tick, quick-log and log-all. Quick-log and
+    log-all now run the same PR detection as a manual tick (they previously
+    skipped it entirely).
+  - Added an independent `set.failure` flag with a row control. `type: 'F'`
+    remains AMRAP; failure is not a set type and survives into the recap.
+    Draft/prescription predicates recognise it.
+  - Added `set.basis`: `each` doubles a dumbbell pair's volume, `per-side`
+    counts the working side once, and legacy/`total` sets keep the old number.
+    e1RM stays per-implement. Blank dumbbell rows default to Each (Per side for
+    unilateral movements); the row chip cycles the basis and the value is
+    stamped only once real user data exists. All volume readers now go through
+    `setVolume`, so Strength, History, Home and Progress agree.
+  - Validation: node tests, typecheck, smoke, settings-nav browser check
+    (visible Logging controls/preset/scope), set-row and quick-log tests.
+  - Next: per-set rest/note, timed/distance sets, per-exercise config sheet and
+    the load explanation/recap closure.
 - **2026-11-20 — Progress overview: week hero, recent weeks, calendar heatmaps.**
   - The hub now leads with a this-week summary (sessions / planned, volume,
     distance, PRs, adherence bar) and a 12-week session strip, then the four
