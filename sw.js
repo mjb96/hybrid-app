@@ -17,7 +17,11 @@
 // be silently omitted from the cache.
 // ==========================================
 <<<<<<< HEAD
+<<<<<<< HEAD
 const CACHE_NAME = 'openhybrid-v122-h34ee854b183a';
+=======
+const CACHE_NAME = 'openhybrid-v122-hfe15955893c1';
+>>>>>>> origin/history-overhaul
 =======
 const CACHE_NAME = 'openhybrid-v122-hbd7045646f3e';
 >>>>>>> origin/main

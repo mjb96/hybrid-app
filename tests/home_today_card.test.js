@@ -240,6 +240,9 @@ test('a completed card never becomes a collapsed row', () => {
 });
 
 test('an off-plan lift in the active slot does not fake an imported completion', () => {
+  // A completed lift outside the program's lift list lives in the ACTIVE week
+  // slot. completionFor() does not count it, so Home must keep Start/Resume
+  // rather than routing to Review and stranding the cockpit.
   const s = state();
   s.weeks['1'].dates.mon = '2026-08-03';
   s.weeks['1'].lifts.mon['Off Plan Curl'] = [{ w: '20', r: '10', c: true }];
