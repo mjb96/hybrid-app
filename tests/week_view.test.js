@@ -92,3 +92,33 @@ test('a day recap uses the stored program day title when available', () => {
   const recap = buildDayRecap(state(), '2026-07-27', undefined, lookup);
   assert.equal(recap.title, 'Push Strength');
 });
+
+test('a run-only day opens a recap with distance and no strength zeroes', () => {
+  const s = state();
+  s.weeks['1'].dates.wed = '2026-07-29';
+  s.weeks['1'].runSessions = {
+    wed: [{ sessionId: 'r1', dist: '5', time: '25:00', localDate: '2026-07-29', source: 'fit' }],
+  };
+  const recap = buildDayRecap(s, '2026-07-29');
+  assert.equal(recap.hasData, true);
+  assert.equal(recap.distanceKm, 5);
+  assert.equal(recap.runCount, 1);
+  assert.equal(recap.sets, 0);
+  const html = dayRecapHTML({ date: '2026-07-29', recap }, { distanceUnit: 'km' });
+  assert.match(html, /5 km/);
+  assert.match(html, /Distance/);
+  assert.doesNotMatch(html, /0 kg/);
+});
+
+test('a week recap reports distance for imported run weeks', () => {
+  const s = state();
+  s.weeks['1'].dates.wed = '2026-07-29';
+  s.weeks['1'].runSessions = {
+    wed: [{ sessionId: 'r1', dist: '5', time: '25:00', localDate: '2026-07-29', source: 'fit' }],
+  };
+  const view = buildPastWeekView(s, { startISO: '2026-07-27', offset: -1 });
+  assert.equal(view.distanceKm, 5);
+  const html = weekRecapHTML(view, { weightUnit: 'kg', distanceUnit: 'km' });
+  assert.match(html, /5 km/);
+  assert.match(html, /Distance/);
+});

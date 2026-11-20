@@ -367,10 +367,11 @@ function pickTopInsight(m) {
   if (m.load.hasData && m.load.acwr >= 1.3) {
     return { text: `Building load (ACWR ${m.load.acwr}) — hold volume, watch fatigue.`, tone: 'caution', nav: 'training-status' };
   }
-  if (m.week.volume.delta && m.week.volume.delta.good && m.week.volume.delta.dir === 'up') {
-    // `volume.delta` is pace-matched (this week's trained days vs the SAME days
-    // last week), so the copy names that period rather than a full-week "last week".
-    return { text: `Weekly volume up ${m.week.volume.delta.pctLabel} vs the same point last week — momentum is building.`, tone: 'positive', nav: 'weekly-volume' };
+  if (m.calendarWeek?.volume?.delta && m.calendarWeek.volume.delta.good && m.calendarWeek.volume.delta.dir === 'up') {
+    // Calendar volume, not the program-week slot: imported/archived sessions
+    // belong to the real date and must count toward "this week" momentum.
+    // `delta` is pace-matched, so the copy names the same point last week.
+    return { text: `Weekly volume up ${m.calendarWeek.volume.delta.pctLabel} vs the same point last week — momentum is building.`, tone: 'positive', nav: 'weekly-volume' };
   }
   if (m.streak.current >= 3) {
     return { text: `${m.streak.current}-day training streak — keep it alive.`, tone: 'positive', nav: 'streak' };
@@ -382,6 +383,9 @@ function pickTopInsight(m) {
   if (m.bodyweight.hasData && m.bodyweight.delta7 !== null && m.bodyweight.delta7 !== 0) {
     const dir = m.bodyweight.delta7 < 0 ? 'down' : 'up';
     return { text: `Body weight ${dir} ${Math.abs(m.bodyweight.delta7)}kg over the last week.`, tone: 'neutral', nav: 'bodyweight' };
+  }
+  if (m.calendarWeek?.sets > 0) {
+    return { text: `${m.calendarWeek.sets} working set${m.calendarWeek.sets === 1 ? '' : 's'} logged this week — keep the rhythm.`, tone: 'neutral', nav: 'weekly-volume' };
   }
   return { text: 'Log a few sessions to unlock personalised insights.', tone: 'neutral', nav: 'progress' };
 }

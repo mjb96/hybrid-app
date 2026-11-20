@@ -290,10 +290,9 @@ function renderHomeWeek(appState, activeProgram) {
   // current strip supplies the display week's first date so a Sunday-start
   // setting stays consistent.
   let pastView = null;
-  const currentStart = strip.days.find((cell) => cell.date)?.date;
-  if (_homeWeekOffset < 0 && currentStart) {
+  if (_homeWeekOffset < 0) {
     pastView = buildPastWeekView(appState, {
-      startISO: addDaysISO(currentStart, _homeWeekOffset * 7),
+      startISO: addDaysISO(strip.weekStart, _homeWeekOffset * 7),
       offset: _homeWeekOffset,
       programLookup: getProgramById,
     });
@@ -324,9 +323,7 @@ function renderHomeWeek(appState, activeProgram) {
     if (pastView) {
       rangeEl.textContent = pastView.range;
     } else {
-      const first = strip.days.find((d) => d.date)?.date;
-      const last = [...strip.days].reverse().find((d) => d.date)?.date;
-      rangeEl.textContent = first && last ? `${shortDate(first)} – ${shortDate(last)}` : 'Your seven-day plan';
+      rangeEl.textContent = strip.range || 'Your seven-day plan';
     }
   }
   if (countEl) {
@@ -583,6 +580,7 @@ export function renderHome() {
     if (selectedRecap?.hasData) {
       setHTML(todayMount, dayRecapHTML({ date: _homeSelectedDate, recap: selectedRecap }, {
         weightUnit: appState.settings?.weightUnit,
+        distanceUnit: appState.settings?.distanceUnit,
         backAction: _homeWeekOffset < 0 ? 'home-week-recap' : 'home-week-today',
         backLabel: _homeWeekOffset < 0 ? '← Back to week' : '← Back to today',
       }));
@@ -590,6 +588,7 @@ export function renderHome() {
     } else if (_homeWeekOffset < 0 && _lastPastWeekView) {
       setHTML(todayMount, weekRecapHTML(_lastPastWeekView, {
         weightUnit: appState.settings?.weightUnit,
+        distanceUnit: appState.settings?.distanceUnit,
       }));
       _syncTodayCardToggle(null, false);
     } else {

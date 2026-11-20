@@ -238,3 +238,57 @@ test('a completed card never becomes a collapsed row', () => {
   assert.equal(card.state, 'completed');
   assert.doesNotMatch(html, /is-collapsible|is-collapsed|toggle-today-card/);
 });
+
+test('an imported archived session today is the completed Today card', () => {
+  const s = state();
+  s.weeks['arch:import:x'] = {
+    activationId: 'imported', programId: 'imported', sessionId: 'og_x',
+    sessionTitle: 'Imported Push',
+    dates: { mon: '2026-08-03' },
+    lifts: { mon: { 'Bench Press': [{ w: '80', r: '5', c: true }, { w: '80', r: '5', c: true }] } },
+    gymStats: { mon: { time: '45:00' } },
+    sessionStatus: { mon: 'finished' },
+    runSessions: {},
+  };
+  const card = buildTodayCardModel({
+    state: s, program: PROGRAM, model, now: MONDAY, tz: DISPLAY_TZ,
+  });
+  assert.equal(card.state, 'completed');
+  assert.equal(card.title, 'Imported Push');
+  assert.deepEqual(card.primary, { action: 'home-open-day-activity', date: '2026-08-03', label: 'Review activity' });
+  const html = todayCardHTML(card);
+  assert.match(html, /800 kg/);
+  assert.match(html, /data-action="home-open-day-activity" data-date="2026-08-03"/);
+  assert.equal((html.match(/id="homePrimaryCta"/g) || []).length, 1);
+});
+
+test('a run today does not hide a planned gym session', () => {
+  const s = state();
+  s.weeks['arch:import:run'] = {
+    activationId: 'imported', programId: 'imported', sessionId: 'og_run',
+    sessionTitle: 'Treadmill',
+    dates: { mon: '2026-08-03' },
+    lifts: { mon: {} },
+    runSessions: { mon: [{ sessionId: 'r1', dist: '5', time: '25:00', localDate: '2026-08-03', source: 'fit' }] },
+    sessionStatus: { mon: 'finished' },
+  };
+  const card = buildTodayCardModel({
+    state: s, program: PROGRAM, model, now: MONDAY, tz: DISPLAY_TZ,
+  });
+  assert.equal(card.state, 'ready');
+  assert.equal(card.primary.label, 'Start workout');
+  assert.match(card.meta, /run already logged today/);
+});
+
+test('a finished session from a frozen program week is not “completed today”', () => {
+  const s = state();
+  s.weeks['1'].lifts.mon['Bench Press'] = [{ w: '60', r: '5', c: true }];
+  s.weeks['1'].dates.mon = '2026-07-27'; // last week's Monday
+  s.weeks['1'].sessionStatus.mon = 'finished';
+  s.weeks['1'].gymStats.mon = { time: '45:00' };
+  const card = buildTodayCardModel({
+    state: s, program: PROGRAM, model, now: MONDAY, tz: DISPLAY_TZ,
+  });
+  assert.equal(card.state, 'ready');
+  assert.equal(card.primary.label, 'Start workout');
+});

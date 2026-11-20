@@ -127,3 +127,63 @@ test('activity detail isolates strength from runs and an exact run from strength
   assert.equal(run.run.sessionId, 'run_a');
   assert.equal(run.run.distKm, 5);
 });
+
+test('a cardio-only imported session does not create a phantom strength row', () => {
+  const state = {
+    settings: { weightUnit: 'kg', distanceUnit: 'km' },
+    weeks: {
+      'arch:import:cardio': {
+        activationId: 'imported', programId: 'imported', sessionId: 'og_cardio',
+        sessionTitle: 'Treadmill', source: 'csv-import',
+        dates: { mon: '2026-07-13' },
+        lifts: { mon: {} },
+        notes: { mon: 'Easy treadmill session' },
+        gymRpe: { mon: '' },
+        gymStats: { mon: {} },
+        runSessions: { mon: [{ sessionId: 'run_csv', source: 'csv-import', localDate: '2026-07-13', dist: '2.5', time: '25:00' }] },
+      },
+    },
+  };
+  const rows = buildActivityHistory(state);
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].kind, 'run');
+  assert.equal(rows[0].title, 'Treadmill');
+});
+
+test('FIT strength keeps duration/HR detail even with no exercise names', () => {
+  const state = {
+    settings: { weightUnit: 'kg', distanceUnit: 'km' },
+    weeks: {
+      'arch:fitgym:123': {
+        activationId: 'imported', programId: 'imported', sessionId: 'fit_123',
+        sessionTitle: 'Imported Strength Activity', source: 'fit',
+        dates: { mon: '2026-07-13' },
+        lifts: { mon: {} },
+        gymStats: { mon: { time: '45:00', avgHR: '120', maxHR: '150', cals: '300' } },
+        runSessions: {},
+      },
+    },
+  };
+  const rows = buildActivityHistory(state);
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].kind, 'strength');
+  const recap = buildSessionRecap(state, 'arch:fitgym:123', 'mon');
+  assert.equal(recap.empty, false);
+  assert.deepEqual(recap.types, ['gym']);
+  assert.equal(recap.duration, '45:00');
+  assert.equal(recap.gymHR, '120');
+});
+
+test('activity rows honour the athlete’s weight/distance units and import provenance', () => {
+  const state = fixture();
+  state.settings = { weightUnit: 'lbs', distanceUnit: 'mi' };
+  state.weeks['1'].runSessions.mon[0].source = 'csv-import';
+  state.weeks['1'].runSessions.mon[0].pace = '5:00';
+  const rows = buildActivityHistory(state);
+  const strength = rows.find((row) => row.kind === 'strength');
+  const run = rows.find((row) => row.kind === 'run' && row.sessionId === 'run_a');
+  assert.match(strength.metrics.join(' '), /500 lbs/);
+  assert.match(run.metrics.join(' '), /3\.11 mi/);
+  assert.match(run.metrics.join(' '), /8:03 \/mi/);
+  assert.equal(run.subtitle, 'Imported from CSV');
+});

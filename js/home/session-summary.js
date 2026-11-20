@@ -7,9 +7,17 @@
 // sessions without one simply omit the tile rather than inventing a number.
 // =============================================================================
 import { dayVolume, isValidWorkingSet } from '../set-utils.js';
+import { runDaySummary, runSessionsForDay } from '../state/run-sessions.js';
 import { buildSessionMuscles } from './session-muscles.js';
 import { muscleHeatmapHTML } from './body-heatmap.js';
 import { escapeHtml } from '../util.js';
+
+const KM_TO_MI = 0.621371;
+
+function distanceText(km, unit = 'km') {
+  const value = unit === 'mi' ? (Number(km) || 0) * KM_TO_MI : (Number(km) || 0);
+  return `${Math.round(value * 10) / 10} ${unit}`;
+}
 
 /**
  * "42:00" → "42 min", "1:02:30" → "1 hr 2 min", "0:45" → "45 s".
@@ -53,6 +61,8 @@ export function buildSessionSummary(state, weekKey, day) {
     : null;
   const bodyWeight = weighIn && Number(weighIn.weight) > 0 ? Number(weighIn.weight) : null;
   const muscles = buildSessionMuscles(lifts);
+  const distanceKm = parseFloat(runDaySummary(week, day).dist) || 0;
+  const runCount = runSessionsForDay(week, day).length;
 
   return {
     day,
@@ -60,21 +70,24 @@ export function buildSessionSummary(state, weekKey, day) {
     volume,
     prs,
     duration,
+    distanceKm: Math.round(distanceKm * 100) / 100,
+    runCount,
     finishedAt,
     bodyWeight,
     muscles,
-    hasData: sets.length > 0 || volume > 0,
+    hasData: sets.length > 0 || volume > 0 || distanceKm > 0,
   };
 }
 
 /**
  * @param {ReturnType<typeof buildSessionSummary>|null|undefined} summary
- * @param {{ weightUnit?: 'kg'|'lbs' }} [options]
+ * @param {{ weightUnit?: 'kg'|'lbs', distanceUnit?: 'km'|'mi' }} [options]
  * @returns {string}
  */
 export function sessionSummaryHTML(summary, options = {}) {
   if (!summary?.hasData) return '';
   const unit = options.weightUnit === 'lbs' ? 'lbs' : 'kg';
+  const distanceUnit = options.distanceUnit === 'mi' ? 'mi' : 'km';
   const stats = [];
   if (summary.duration) stats.push({ value: summary.duration, label: 'Duration' });
   if (summary.volume > 0) {
@@ -84,6 +97,7 @@ export function sessionSummaryHTML(summary, options = {}) {
     });
   }
   if (summary.sets > 0) stats.push({ value: String(summary.sets), label: 'Sets' });
+  if (summary.distanceKm > 0) stats.push({ value: distanceText(summary.distanceKm, distanceUnit), label: 'Distance' });
 
   const prs = summary.prs > 0
     ? `<span class="session-summary__pr">🏆 ${summary.prs} PR${summary.prs === 1 ? '' : 's'}</span>`

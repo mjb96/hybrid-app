@@ -9,6 +9,28 @@ import { runSessionsForDay } from '../state/run-sessions.js';
 import { parseStrengthDurationSeconds } from '../strength/duration.js';
 
 const DAY_ORDER = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+const KM_TO_MI = 0.621371;
+
+function distanceLabel(km, unit) {
+  const value = unit === 'mi' ? km * KM_TO_MI : km;
+  return `${value.toFixed(2)} ${unit}`;
+}
+
+function paceLabel(pacePerKm, unit) {
+  if (!pacePerKm) return '';
+  const match = String(pacePerKm).match(/^(\d+):(\d{2})$/);
+  if (!match) return `${pacePerKm} /${unit}`;
+  const secsPerKm = Number(match[1]) * 60 + Number(match[2]);
+  const secs = unit === 'mi' ? secsPerKm / KM_TO_MI : secsPerKm;
+  return `${Math.floor(secs / 60)}:${String(Math.round(secs % 60)).padStart(2, '0')} /${unit}`;
+}
+
+function sourceLabel(source) {
+  if (source === 'garmin' || source === 'fit') return 'Imported from Garmin/FIT';
+  if (source === 'csv-import') return 'Imported from CSV';
+  if (source === 'gps') return 'GPS activity';
+  return 'Logged activity';
+}
 
 function dateStamp(localDate, startTs, fallbackIndex) {
   const explicit = Number(startTs);
@@ -43,10 +65,13 @@ function strengthSummary(week, day) {
 export function hasStrengthActivity(week, day) {
   const summary = strengthSummary(week, day);
   if (summary.workingSets > 0) return true;
+  // Notes and a session RPE are metadata, not a strength session. The CSV
+  // importer writes a workout note for cardio-only sessions too, which used to
+  // create a phantom strength row with no metrics and no detail. Only real gym
+  // evidence (duration/HR/calories/TE or FIT lap sets) counts.
   const stats = week?.gymStats?.[day] || {};
-  return !!String(week?.notes?.[day] || '').trim()
-    || !!String(week?.gymRpe?.[day] || '').trim()
-    || Object.values(stats).some((value) => value != null && String(value).trim() !== '');
+  return ['time', 'avgHR', 'maxHR', 'cals', 'trainingEffect', 'te', 'gymSets']
+    .some((key) => stats[key] != null && String(stats[key]).trim() !== '');
 }
 
 function activityDateLabel(localDate) {
@@ -81,7 +106,8 @@ export function buildActivityHistory(state) {
     ]);
     for (const day of days) {
       const localDate = week.dates?.[day] || null;
-      if (hasStrengthActivity(week, day)) {
+      const strengthActivity = hasStrengthActivity(week, day);
+      if (strengthActivity) {
         const summary = strengthSummary(week, day);
         const duration = week.gymStats?.[day]?.time || '';
         rows.push({
@@ -105,6 +131,13 @@ export function buildActivityHistory(state) {
       }
 
       const sessions = runSessionsForDay(week, day);
+      const distanceUnit = state?.settings?.distanceUnit === 'mi' ? 'mi' : 'km';
+      // A cardio-only imported session names the activity (e.g. "Treadmill") on
+      // the week, not on the generated run record. Use it only when there is no
+      // strength row to own that title, so a hybrid day keeps "Run".
+      const runTitle = !strengthActivity && sessions.length === 1 && String(week.sessionTitle || '').trim()
+        ? week.sessionTitle
+        : null;
       sessions.forEach((run, index) => {
         const dist = parseFloat(run.dist) || 0;
         const localRunDate = run.localDate || localDate;
@@ -116,9 +149,9 @@ export function buildActivityHistory(state) {
           localDate: localRunDate,
           dateLabel: activityDateLabel(localRunDate),
           timestamp: dateStamp(localRunDate, run.startTs || run.updatedTs, ++fallbackIndex),
-          title: runName(run),
-          subtitle: run.source === 'garmin' || run.source === 'fit' ? 'Imported activity' : run.source === 'gps' ? 'GPS activity' : 'Logged activity',
-          metrics: [dist > 0 ? `${dist.toFixed(2)} km` : '', run.time || '', run.pace ? `${run.pace} /km` : ''].filter(Boolean),
+          title: runTitle || runName(run),
+          subtitle: sourceLabel(run.source),
+          metrics: [dist > 0 ? distanceLabel(dist, distanceUnit) : '', run.time || '', run.pace ? paceLabel(run.pace, distanceUnit) : ''].filter(Boolean),
           run: { ...run },
         });
       });

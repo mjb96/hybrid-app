@@ -42,6 +42,30 @@ test('all program-week load APIs are adapters over one golden sRPE formula', () 
   assert.deepEqual(weekDailyLoads(state, DAYS, 1), programWeekDailyLoads(state, DAYS, 1));
 });
 
+test('imported set-level RPE feeds sRPE without a session-level RPE', () => {
+  const week = {
+    dates: { mon: '2026-07-10' },
+    lifts: { mon: { Squat: [
+      { w: '100', r: '5', c: true, rpe: 8 },
+      { w: '100', r: '5', c: true, rir: 2 }, // 10 - 2 = RPE 8
+    ] } },
+    gymStats: { mon: { time: '60' } },
+    runs: {}, runSessions: {},
+  };
+  // Mean set RPE 8 × 60 min = 480. No session RPE was stored.
+  assert.deepEqual(dayTrainingLoad(week, 'mon'), { strength: 480, endurance: 0, total: 480 });
+});
+
+test('a day with no RPE anywhere stays zero instead of inventing effort', () => {
+  const week = {
+    dates: { mon: '2026-07-10' },
+    lifts: { mon: { Squat: [{ w: '100', r: '5', c: true }] } },
+    gymStats: { mon: { time: '60' } },
+    runs: {}, runSessions: {},
+  };
+  assert.deepEqual(dayTrainingLoad(week, 'mon'), { strength: 0, endurance: 0, total: 0 });
+});
+
 test('dated rolling load includes archived activations and one-off sessions', () => {
   const state = { weeks: {
     'arch:act_old:3': strengthSession('2026-07-10', 8, 60, {
