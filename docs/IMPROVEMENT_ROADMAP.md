@@ -43,6 +43,35 @@ Everything on a primary screen must help answer one of those questions.
 - The program and exercise catalogues are deep enough for product work to focus
   on discovery and clarity rather than more content.
 
+
+### Current status — 21 November 2026
+
+The Home → Train → History → Progress → Plans surface overhaul and the Logger
+upgrade have landed. In order:
+
+- **Home** is one week surface: an optional seven-day rail plus the pinned Today
+  decision, a collapsible fresh-day row, inline completed-day recaps with the
+  muscle heat map, bodyweight, one coach insight and quick actions.
+- **Train** is a session preview (week rail, today's prescriptions, one
+  Start/Resume), not a second Home.
+- **History** is a full destination: Calendar | List, search, provenance, a
+  source filter, a calendar day sheet, exact detail, lossless editing
+  (add/remove exercise and set), delete/undo and Repeat workout.
+- **Progress** leads with a this-week hero and 12-week strip, then Strength,
+  Running, Recovery and Review. Calendar-week attribution is used throughout;
+  the Training Report covers 30 days or 12 months; the exercise drilldown has a
+  real shape-aware trend, all-time bests and PR baseline.
+- **Logger** supports reps, timed holds and loaded carries; failure, per-set
+  rest/note, plate lines, load basis, effort, per-exercise shape/load/basis
+  defaults, warm-up rest, and a Last time / Next time recap.
+- **Plans** keeps the active plan first, recommends from athlete fit, and has a
+  Overview | Structure | Plan detail with week-stepped targets.
+
+Deliberate follow-ups (not regressions): readiness history components,
+per-muscle corridor charts, the `+ Drop` shortcut, rest-timer persistence
+across reload/background, adaptive warm-up rounding, Android landscape/device
+checks and the remaining authored exercise-metadata batches.
+
 ### What holds the experience back
 
 - The product exposes too much of its capability at once. Home, Insights,
@@ -1791,6 +1820,18 @@ Avoid parallel redesign of every screen. Each step should be usable and
 testable on its own.
 
 ## 12. Session log
+
+- **2026-11-21 — Overhaul verification complete.**
+  - All major Home/Train/History/Progress/Logger gaps identified in the audits
+    are implemented across #259–#279. The Current status section records the
+    shipped shape and the deliberate follow-ups.
+  - Preflight passed on `main`: typecheck, precache check, workflow check,
+    **1,989 node tests**, smoke, and **all 43 required browser checks**
+    (374.5s, concurrency 3, two timeout retries).
+  - Remaining items are explicit follow-ups, not unfinished audit work:
+    readiness history components, per-muscle corridor charts, `+ Drop`, timer
+    persistence, adaptive warm-up rounding, Android landscape/device checks and
+    exercise-metadata batches.
 
 - **2026-11-20 — P0 data correctness: every surface reads the real date.**
   - Week in Review totals, sessions, distance and PRs come from the calendar-week
