@@ -121,20 +121,22 @@ test('applies an import into archived weeks and is idempotent', () => {
   assert.equal(second.sets, 0);
 });
 
-test('a timed treadmill is cardio, but holds and loaded carries are not runs', () => {
+test('a timed treadmill is cardio, but holds and loaded carries are sets', () => {
   const cardio = parseWorkoutCsv('date,exercise,seconds\n2026-11-02,Treadmill,1500\n', { unit: 'kg' });
   assert.equal(cardio.sessions.length, 1);
   assert.equal(cardio.sessions[0].cardio[0].seconds, 1500);
   assert.equal(cardio.cardioRows, 1);
 
-  const unsupported = parseWorkoutCsv([
+  const shapes = parseWorkoutCsv([
     'date,exercise,weight,unit,reps,distance_km,seconds',
     '2026-11-02,Plank,,,0,,90',
     '2026-11-02,Farmer Carry,40,kg,0,0.04,',
   ].join('\n'), { unit: 'kg' });
-  assert.equal(unsupported.sessions.length, 0);
-  assert.equal(unsupported.skippedUnsupported, 2);
-  assert.equal(unsupported.cardioRows, 0);
+  assert.equal(shapes.sessions.length, 1);
+  assert.equal(shapes.cardioRows, 0, 'a carry is not a run');
+  assert.equal(shapes.skippedUnsupported, 0);
+  assert.deepEqual(shapes.sessions[0].entries.Plank[0], { w: '', r: '', c: true, mode: 'time', sec: 90 });
+  assert.deepEqual(shapes.sessions[0].entries['Farmer Carry'][0], { w: '40', r: '', c: true, mode: 'distance', dist: 40 });
 });
 
 test('reads UTF-16 Excel exports and semicolon-delimited files', () => {

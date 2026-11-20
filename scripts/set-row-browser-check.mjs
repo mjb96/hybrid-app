@@ -240,6 +240,47 @@ try {
       }
     }
 
+    // ---- timed hold and carry shapes (one viewport is enough) --------------
+    if (width === 412 && theme === 'dark') {
+      const row2 = '.cockpit-exercise:not(.collapsed) .cockpit-set-row[data-set-index="1"]';
+      await page.click(`${row2} .btn-set-more`);
+      await page.click(`${row2} [data-action="cycle-set-mode"]`);
+      await page.waitForTimeout(350);
+      if (!(await page.locator(`${row2} .input-time-node`).count())) fail(`${tag}: cycling to Time did not render a time field`);
+      await page.fill(`${row2} .input-weight-node`, '40');
+      await page.fill(`${row2} .input-time-node`, '1:30');
+      await page.click(`${row2} .gym-check`);
+      await page.waitForTimeout(400);
+      const hold = await page.evaluate(() => {
+        const s = JSON.parse(localStorage.getItem('hybrid_engine_v2_state') || '{}');
+        return (s.weeks?.['1']?.lifts?.thu?.['Incline Barbell Press'] || [])[1] || null;
+      });
+      if (hold?.mode !== 'time' || Number(hold?.sec) !== 90 || hold?.r) {
+        fail(`${tag}: timed hold did not persist as sec=90 (${JSON.stringify(hold)})`);
+      }
+
+      // Un-tick the hold before reshaping the same row: the checkbox toggles,
+      // so leaving it checked would turn the next click into a removal.
+      await page.click(`${row2} .gym-check`);
+      await page.waitForTimeout(200);
+      await page.click(`${row2} .btn-set-more`);
+      await page.click(`${row2} [data-action="cycle-set-mode"]`);
+      await page.waitForTimeout(350);
+      if (!(await page.locator(`${row2} .input-dist-node`).count())) fail(`${tag}: cycling to Distance did not render a distance field`);
+      await page.fill(`${row2} .input-weight-node`, '40');
+      await page.fill(`${row2} .input-dist-node`, '20');
+      await page.click(`${row2} .gym-check`);
+      await page.waitForTimeout(400);
+      const carry = await page.evaluate(() => {
+        const s = JSON.parse(localStorage.getItem('hybrid_engine_v2_state') || '{}');
+        return (s.weeks?.['1']?.lifts?.thu?.['Incline Barbell Press'] || [])[1] || null;
+      });
+      console.log(`${tag} set-shapes:`, JSON.stringify({ hold: hold && { mode: hold.mode, sec: hold.sec }, carry: carry && { mode: carry.mode, dist: carry.dist } }));
+      if (carry?.mode !== 'distance' || Number(carry?.dist) !== 20) {
+        fail(`${tag}: carry did not persist as dist=20 (${JSON.stringify(carry)})`);
+      }
+    }
+
     // ---- layout -------------------------------------------------------------
     if (await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1)) {
       fail(`${tag}: page-level horizontal overflow`);

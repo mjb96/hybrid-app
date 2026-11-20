@@ -8,6 +8,8 @@ const hasCompletedSet = (sets) => Array.isArray(sets) && sets.some(isCompletedSe
 const hasUnfinishedEditedSet = (sets) => Array.isArray(sets) && sets.some((set) =>
   set && !hasCompletedSet([set]) && (
     String(set.w ?? '').trim() || String(set.r ?? '').trim() || set.type ||
+    String(set.sec ?? '').trim() || String(set.dist ?? '').trim() ||
+    (set.mode === 'time' || set.mode === 'distance' || set.mode === 'reps') ||
     set.rpe != null || set.rir != null || set.bw || set.band || set.loadMode ||
     set.failure === true || set.basis === 'each' || set.basis === 'total' ||
     set.restSec != null || String(set.note || '').trim() !== ''

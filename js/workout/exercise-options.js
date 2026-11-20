@@ -11,6 +11,8 @@ import {
   WARMUP_MODE, getExercisePrefs, getExerciseRestOverride, getExerciseWarmupMode,
   setExercisePref, setExerciseRestOverride,
 } from './exercise-config.js';
+import { defaultSetModeForExercise } from './set-shape.js';
+import { SET_MODE } from '../set-utils.js';
 import {
   getState, saveState, rerenderWorkout,
 } from './context.js';
@@ -36,6 +38,10 @@ export function openExerciseOptions(name) {
   const rest = getExerciseRestOverride(state, name);
   const warmup = getExerciseWarmupMode(state, name);
   const note = String(getExercisePrefs(state, name).note || '');
+  const defaultMode = defaultSetModeForExercise(name);
+  const storedMode = getExercisePrefs(state, name).mode;
+  const initialMode = storedMode === SET_MODE.REPS || storedMode === SET_MODE.TIME || storedMode === SET_MODE.DISTANCE
+    ? storedMode : defaultMode;
   const overlay = document.createElement('div');
   overlay.className = 'cmodal-overlay exercise-config-overlay';
   overlay.setAttribute('role', 'dialog');
@@ -44,6 +50,15 @@ export function openExerciseOptions(name) {
     <div class="cmodal exercise-config">
       <div class="cmodal__title">${esc(name)}</div>
       <p class="cmodal__msg">These preferences stick to this exercise across sessions and programs. Nothing here changes logged history.</p>
+      <section class="exercise-config__section">
+        <h3>Set shape</h3>
+        <div class="exercise-config__choices" role="group" aria-label="Set shape">
+          <button type="button" class="exercise-config__choice ${initialMode === SET_MODE.REPS ? 'is-active' : ''}" data-mode="reps">Reps</button>
+          <button type="button" class="exercise-config__choice ${initialMode === SET_MODE.TIME ? 'is-active' : ''}" data-mode="time">Time</button>
+          <button type="button" class="exercise-config__choice ${initialMode === SET_MODE.DISTANCE ? 'is-active' : ''}" data-mode="distance">Distance</button>
+        </div>
+        <p class="exercise-config__hint">New rows start in this shape. Any set can still be switched from its ⋯ options.</p>
+      </section>
       <section class="exercise-config__section">
         <h3>Rest after a set</h3>
         <div class="exercise-config__choices" role="group" aria-label="Rest after a set">
@@ -77,12 +92,16 @@ export function openExerciseOptions(name) {
 
   let restChoice = rest == null ? 'default' : rest <= 0 ? 'off' : 'custom';
   let warmupChoice = warmup;
+  let modeChoice = initialMode;
   const syncChoices = () => {
     overlay.querySelectorAll('[data-rest]').forEach((button) => {
       button.classList.toggle('is-active', button.getAttribute('data-rest') === restChoice);
     });
     overlay.querySelectorAll('[data-warmup]').forEach((button) => {
       button.classList.toggle('is-active', button.getAttribute('data-warmup') === warmupChoice);
+    });
+    overlay.querySelectorAll('[data-mode]').forEach((button) => {
+      button.classList.toggle('is-active', button.getAttribute('data-mode') === modeChoice);
     });
     const input = /** @type {HTMLInputElement|null} */ (overlay.querySelector('#exerciseConfigRest'));
     if (input) input.disabled = restChoice !== 'custom';
@@ -103,6 +122,7 @@ export function openExerciseOptions(name) {
       setExerciseRestOverride(state, name, Number.isFinite(seconds) ? seconds : null);
     }
     setExercisePref(state, name, {
+      mode: modeChoice === defaultMode ? null : modeChoice,
       warmup: warmupChoice === WARMUP_MODE.INHERIT ? null : warmupChoice,
       note: String(/** @type {HTMLTextAreaElement|null} */ (overlay.querySelector('#exerciseConfigNote'))?.value || '').trim(),
     });
@@ -119,6 +139,8 @@ export function openExerciseOptions(name) {
     if (restButton) { restChoice = restButton.getAttribute('data-rest') || 'default'; syncChoices(); return; }
     const warmButton = target.closest('[data-warmup]');
     if (warmButton) { warmupChoice = warmButton.getAttribute('data-warmup') || WARMUP_MODE.INHERIT; syncChoices(); return; }
+    const modeButton = target.closest('[data-mode]');
+    if (modeButton) { modeChoice = /** @type {any} */ (modeButton.getAttribute('data-mode')); syncChoices(); return; }
     if (target.closest('[data-cm="cancel"]')) { close(); return; }
     if (target.closest('[data-cm="ok"]')) save();
   });

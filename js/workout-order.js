@@ -129,9 +129,9 @@ export function neighborDay(days, current, dir) {
  * convenience only: callers set the input value, never the prescribed target, so
  * an inherited set is never mistaken for plan adherence.
  *
- * @param {{type?:string, w?:string|number, r?:string|number, done?:boolean}[]} sets
+ * @param {{type?:string, w?:string|number, r?:string|number, mode?:string, value?:string|number, done?:boolean}[]} sets
  * @param {number} idx
- * @returns {{ w: string, r: string } | null}
+ * @returns {{ w: string, r?: string, mode?: string, value?: string } | null}
  */
 export function pickInheritedSet(sets, idx) {
   if (!Array.isArray(sets) || idx <= 0) return null;
@@ -142,8 +142,14 @@ export function pickInheritedSet(sets, idx) {
     const prev = sets[j];
     if (!prev) continue;
     if (isWarmup(prev) !== isWarmup(target)) continue;
-    if (prev.done && prev.w != null && prev.w !== '' && prev.r != null && prev.r !== '') {
-      return { w: String(prev.w), r: String(prev.r) };
+    if (prev.done && prev.w != null && prev.w !== '') {
+      if (prev.mode === 'time' && prev.value != null && prev.value !== '') {
+        return { w: String(prev.w), mode: 'time', value: String(prev.value) };
+      }
+      if (prev.mode === 'distance' && prev.value != null && prev.value !== '') {
+        return { w: String(prev.w), mode: 'distance', value: String(prev.value) };
+      }
+      if (prev.r != null && prev.r !== '') return { w: String(prev.w), r: String(prev.r) };
     }
   }
   return null;

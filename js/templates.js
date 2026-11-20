@@ -9,6 +9,8 @@ import {
   basisLabel, defaultBasisForExercise, normalizeBasis, supportsLoadBasis,
 } from './workout/load-basis.js';
 import { previousSetLabel } from './workout/set-entry.js';
+import { effectiveSetMode } from './workout/set-shape.js';
+import { formatDistance, formatDuration, setModeOf } from './set-utils.js';
 
 export function buildEmptyWorkoutCard() {
   return '<div class="card-dark text-xs-muted empty-state-card">No lifting scheduled today.</div>';
@@ -16,10 +18,12 @@ export function buildEmptyWorkoutCard() {
 
 // `bodyweight` is null when the athlete has never logged one. It used to
 // default to 75 kg and was shown in the weight field as if it were theirs.
-export function buildSetRow(sData, sIdx, safeLiftName, historicalSetData = null, weightUnit = 'kg', exerciseName = safeLiftName, bodyweight = null, prescribedReps = null, prescribedRepGoal = null, previousSetData = null, roleTag = null) {
+export function buildSetRow(sData, sIdx, safeLiftName, historicalSetData = null, weightUnit = 'kg', exerciseName = safeLiftName, bodyweight = null, prescribedReps = null, prescribedRepGoal = null, previousSetData = null, roleTag = null, setMode = null) {
   const ghostWeight = historicalSetData?.w || weightUnit;
   const ghostReps   = historicalSetData?.r || prescribedReps || 'reps';
   const type = sData.type || '';
+  const mode = setMode || effectiveSetMode(sData, exerciseName, null);
+  const modeLabels = { reps: 'Reps', time: 'Time', distance: 'Distance' };
 
   const numLabels  = { '': `S${sIdx + 1}`, 'W': 'W', 'D': 'D', 'F': 'F' };
   const typeClass  = type === 'W' ? 'type-warmup' : type === 'D' ? 'type-dropset' : type === 'F' ? 'type-amrap' : '';
@@ -81,15 +85,22 @@ export function buildSetRow(sData, sIdx, safeLiftName, historicalSetData = null,
   // this set is complete: an arrow beside a blank row would claim a result that
   // has not happened yet. Warm-ups never carry a prior set, so they never compare.
   const currentWeight = parseFloat(sData.w);
-  const currentReps = parseInt(sData.r, 10);
   const priorWeight = parseFloat(previousSetData?.w);
-  const priorReps = parseInt(previousSetData?.r, 10);
+  const priorMode = previousSetData ? setModeOf(previousSetData) : null;
+  const currentValue = mode === 'time' ? Number(sData.sec) || 0
+    : mode === 'distance' ? Number(sData.dist) || 0
+    : parseInt(sData.r, 10) || 0;
+  const priorValue = priorMode === 'time' ? Number(previousSetData?.sec) || 0
+    : priorMode === 'distance' ? Number(previousSetData?.dist) || 0
+    : parseInt(previousSetData?.r, 10) || 0;
   let compare = null;
-  if (sData.c && Number.isFinite(currentWeight) && currentWeight > 0
-      && Number.isFinite(currentReps) && currentReps > 0
-      && Number.isFinite(priorWeight) && priorWeight > 0
-      && Number.isFinite(priorReps) && priorReps > 0) {
-    const delta = currentWeight - priorWeight || currentReps - priorReps;
+  if (sData.c && currentValue > 0 && priorMode === mode && priorValue > 0) {
+    // A hold/carry compares its seconds/metres first; a rep set keeps weight
+    // first (heavier at the same reps is the stronger signal), then reps.
+    const delta = mode === 'reps'
+      ? ((Number.isFinite(currentWeight) ? currentWeight : 0) - (Number.isFinite(priorWeight) ? priorWeight : 0)) || currentValue - priorValue
+      : currentValue - priorValue
+        || ((Number.isFinite(currentWeight) ? currentWeight : 0) - (Number.isFinite(priorWeight) ? priorWeight : 0));
     compare = delta > 0 ? { glyph: '↑', tone: 'up', label: 'better than last time' }
       : delta < 0 ? { glyph: '↓', tone: 'down', label: 'lower than last time' }
         : { glyph: '=', tone: 'same', label: 'matched last time' };
@@ -98,13 +109,13 @@ export function buildSetRow(sData, sIdx, safeLiftName, historicalSetData = null,
     ? `<span class="set-cmp set-cmp--${compare.tone}" aria-label="${compare.label}" title="${compare.label}">${compare.glyph}</span>`
     : '';
   const prevHtml = prev
-    ? `<div class="set-prev" aria-label="${escapeHtml(prev.label)}" data-prev-w="${Number.isFinite(priorWeight) ? priorWeight : ''}" data-prev-r="${Number.isFinite(priorReps) ? priorReps : ''}">${escapeHtml(prev.text)}${compareHtml}</div>`
+    ? `<div class="set-prev" aria-label="${escapeHtml(prev.label)}" data-prev-w="${Number.isFinite(priorWeight) ? priorWeight : ''}" data-prev-r="${Number.isFinite(parseInt(previousSetData?.r, 10)) ? parseInt(previousSetData?.r, 10) : ''}" data-prev-mode="${priorMode || ''}" data-prev-value="${priorValue || ''}">${escapeHtml(prev.text)}${compareHtml}</div>`
     : '';
   const noteHtml = sData.note
     ? `<div class="set-note">${escapeHtml(String(sData.note))}</div>`
     : '';
 
-  return `<div class="cockpit-set-row ${sData.c ? 'is-complete' : ''} ${typeClass} ${sData.isPR ? 'is-pr' : ''}"${hasRole ? ` data-set-role="${escapeHtml(String(roleTag.role))}"` : ''}${boAttrs} data-set-index="${sIdx}" data-load-mode="${directMode}"${basisCapable ? ` data-load-basis="${escapeHtml(basis)}"` : ''}>
+  return `<div class="cockpit-set-row ${sData.c ? 'is-complete' : ''} ${typeClass} ${sData.isPR ? 'is-pr' : ''}"${hasRole ? ` data-set-role="${escapeHtml(String(roleTag.role))}"` : ''}${boAttrs} data-set-index="${sIdx}" data-set-mode="${mode}" data-load-mode="${directMode}"${basisCapable ? ` data-load-basis="${escapeHtml(basis)}"` : ''}>
     ${roleTagHtml}
     ${sData.isPR ? '<span class="pr-badge">PR</span>' : ''}
     ${bodyweightCapable ? `<div class="set-load-choice" role="group" aria-label="Load mode for set ${sIdx + 1}">
@@ -127,7 +138,11 @@ export function buildSetRow(sData, sIdx, safeLiftName, historicalSetData = null,
       ${boSrc ? `<small class="set-backoff-hint">${escapeHtml(backoffHint)}</small>` : ''}
     </div>
     <div class="set-entry">
-      <input type="number" inputmode="numeric" class="input-reps-node" aria-label="Reps for set ${sIdx + 1}" data-target-reps="${escapeHtml(String(prescribedRepGoal || ''))}" placeholder="${escapeHtml(String(ghostReps))}" value="${escapeHtml(String(sData.r || ''))}">
+      ${mode === 'time'
+        ? `<input type="text" inputmode="numeric" class="input-time-node input-set-value-node" aria-label="Time for set ${sIdx + 1} (MM:SS)" placeholder="0:00" value="${sData.sec ? escapeHtml(formatDuration(sData.sec)) : ''}">`
+        : mode === 'distance'
+          ? `<input type="number" inputmode="decimal" class="input-dist-node input-set-value-node" aria-label="Distance for set ${sIdx + 1} (metres)" placeholder="m" value="${sData.dist ? escapeHtml(formatDistance(sData.dist)) : ''}">`
+          : `<input type="number" inputmode="numeric" class="input-reps-node input-set-value-node" aria-label="Reps for set ${sIdx + 1}" data-target-reps="${escapeHtml(String(prescribedRepGoal || ''))}" placeholder="${escapeHtml(String(ghostReps))}" value="${escapeHtml(String(sData.r || ''))}">`}
     </div>
     <div class="gym-check-container">
       <label class="gym-check-wrap">
@@ -151,6 +166,13 @@ export function buildSetRow(sData, sIdx, safeLiftName, historicalSetData = null,
            data-sidx="${sIdx}"
            title="Tap to cycle: Working → Warm-up → Drop → AMRAP">
            ${typeFullLabels[type]}
+      </button>
+      <button class="btn-set-mode tactile-scale"
+           data-action="cycle-set-mode"
+           data-liftname="${safeLiftName}"
+           data-sidx="${sIdx}"
+           title="Tap to cycle: Reps → Time → Distance">
+           ${modeLabels[mode]}
       </button>
       <button class="btn-load tactile-scale load-${loadCls}"
               data-action="cycle-load"
@@ -241,7 +263,7 @@ export function buildExerciseCard({ displaySafeName, safeLiftName, isCompleted, 
     ${setsMarkup ? `<div class="set-rows-head" aria-hidden="true">
       <span></span>
       <span class="srh-lbl">Weight</span>
-      <span class="srh-lbl">Reps</span>
+      <span class="srh-lbl">Value</span>
       <span class="srh-lbl">Done</span>
       <span></span>
     </div>` : ''}

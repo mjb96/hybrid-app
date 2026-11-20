@@ -32,9 +32,10 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   for OpenGym/Strong/Hevy one-row-per-set CSV (no OpenGym code copied). It writes
   archived `arch:import:<id>` weeks with a stable `sessionId`, leaves the active
   program alone, imports strength sets and turns cardio rows into archived runs.
-  It accepts comma/semicolon/tab files and UTF-16 Excel exports. Timed holds and
-  loaded carries are counted and skipped because the app has no rep-less set
-  type; they are never guessed into runs. `import-body-csv.js`
+  It accepts comma/semicolon/tab files and UTF-16 Excel exports. Timed holds
+  (`mode:'time'`, `sec`) and loaded carries (`mode:'distance'`, `dist` in
+  metres) are imported as real rep-less sets and are never guessed into runs;
+  a carry name that contains “walk” stays a carry. `import-body-csv.js`
   reads the `date,weight_kg` body export into `bodyWeightLog`, skipping existing
   dates. `handleExternalCsvFile` auto-detects the file type, previews it and
   applies it; re-importing the same file is idempotent. Batch FIT imports live in
@@ -453,12 +454,22 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   `settings.showPlateHints`. Rest settings also own `restPeriods.warmup`
   (0 disables the warm-up timer), `restAlertSound` and `restAlertVolume`;
   `js/timers.js` receives them through `setRestTiers`/`setRestAlertConfig`.
-  The per-exercise settings sheet (`js/workout/exercise-options.js`) owns rest
-  (reusing name-keyed `settings.restOverrides`, 0 = no timer), warm-up mode and
-  a durable note in additive `settings.exercisePrefs`, keyed by canonical
-  exercise id so aliases share one preference (`js/workout/exercise-config.js`).
-  The session recap closes each lift with Last time and a Next-time progression
-  suggestion (omitted when no rep target exists).
+  A set has one of three SHAPES (`js/set-utils.js`): legacy reps, `mode:'time'`
+  (`sec`), or `mode:'distance'` (`dist`, metres). `setVolume` returns 0 for
+  holds/carries — tonnage is weight × reps and inventing reps would inflate
+  every total — but `isValidWorkingSet` counts them, so they appear in session
+  frequency, muscle load and History. `js/workout/set-shape.js` resolves a
+  blank row from catalogue metadata (carry → distance, plank/hold → time) and
+  the per-exercise override; a stored set's own shape always wins. The row
+  swaps its second input for `.input-time-node` / `.input-dist-node`, and its
+  `⋯` sheet cycles Reps → Time → Distance. The per-exercise settings sheet
+  (`js/workout/exercise-options.js`) owns **Set shape** (Reps/Time/Distance),
+  rest (reusing name-keyed `settings.restOverrides`, 0 = no timer), warm-up
+  mode and a durable note in additive `settings.exercisePrefs`, keyed by
+  canonical exercise id so aliases share one preference
+  (`js/workout/exercise-config.js`). The session recap closes each lift with
+  Last time and a Next-time progression suggestion (omitted when no rep target
+  exists).
 - Session lifecycle: additive `weeks[key].sessionStatus[day]` (`in_progress|finished`)
   and `sessionSummary[day]` sidecars are owned by `js/workout/session-status.js`.
   Deliberate Finish marks the workout finished even below 100% plan adherence; deletion/

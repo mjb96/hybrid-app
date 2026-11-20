@@ -152,6 +152,9 @@ const isWarmup = (value) => /warm|aufw|échauff/i.test(String(value || ''));
 // Exported cardio sets have no reps, so the exercise name is the honest signal
 // that a timed row is a run/row/bike rather than an isometric hold or carry.
 const CARDIO_NAME = /(?:\b(?:run|jog|walk|hike|treadmill|bike|cycle|cycling|row|rower|elliptical|swim|stair|ski|sprint|interval|cardio|jump)\b)/i;
+// A carry is timed/distance work, not a run, even when its name contains
+// "walk" (farmer walk) or its distance is recorded without a load.
+const CARRY_NAME = /\b(?:carry|farmer|suitcase|yoke|sled|push|pull|drag)\b/i;
 const setType = (value) => {
   const v = String(value || '').toLowerCase();
   if (isWarmup(v)) return 'W';
@@ -252,17 +255,11 @@ export function parseWorkoutCsv(text, opts = {}) {
 
     const timed = (distance || 0) > 0 || (seconds || 0) > 0;
     const looksCardio = CARDIO_NAME.test(exercise);
+    const looksCarry = CARRY_NAME.test(exercise);
     const loaded = weight != null && weight > 0;
-    const isCardio = !(reps > 0) && (looksCardio ? timed : (!loaded && (distance || 0) > 0));
-    if (!(reps > 0) && !isCardio) {
-      // A hold/carry is a real set, but openHybrid cannot store it as reps and
-      // guessing a run from it would corrupt distance and pace. Count it so the
-      // preview is honest instead of silently dropping it.
-      if (timed) skippedUnsupported++;
-      else skippedInvalid++;
-      continue;
-    }
-
+    const isCardio = !(reps > 0) && (looksCardio && !looksCarry
+      ? timed
+      : (!loaded && (distance || 0) > 0 && !looksCarry));
     const key = `${date}|${start || ''}|${workout}`;
     if (!sessions.has(key)) {
       sessions.set(key, {
@@ -280,6 +277,32 @@ export function parseWorkoutCsv(text, opts = {}) {
       });
     }
     const session = sessions.get(key);
+
+    if (!(reps > 0) && !isCardio) {
+      if (!timed) { skippedInvalid++; continue; }
+      // A hold/carry is a real set. Store its own shape: distance carries never
+      // become runs, and no rep count is invented for a plank.
+      if (!session.entries.has(exercise)) session.entries.set(exercise, []);
+      const holdSet = { w: weight != null && weight > 0 ? String(round2(weight)) : '', r: '', c: true };
+      if ((distance || 0) > 0) {
+        holdSet.mode = 'distance';
+        holdSet.dist = Math.round((distance || 0) * 1000);
+        if ((seconds || 0) > 0) holdSet.sec = Math.round(seconds);
+      } else {
+        holdSet.mode = 'time';
+        holdSet.sec = Math.round(seconds || 0);
+      }
+      const holdType = setType(cell(row, columns.setType));
+      if (holdType) holdSet.type = holdType;
+      const holdRpe = number(cell(row, columns.rpe));
+      const holdRir = number(cell(row, columns.rir));
+      if (holdRpe != null && holdRpe >= 1 && holdRpe <= 10) holdSet.rpe = holdRpe;
+      if (holdRir != null && holdRir >= 0 && holdRir <= 10) holdSet.rir = holdRir;
+      session.entries.get(exercise).push(holdSet);
+      session.setCount++;
+      totalSets++;
+      continue;
+    }
 
     // Cardio rows become run records in the archived week. openGym writes
     // treadmill/rower work as sets with distance_km and seconds and no reps;

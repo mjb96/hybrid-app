@@ -10,7 +10,7 @@
 // PREVIOUS VALUES. The row already showed last time's numbers as input
 // PLACEHOLDERS, which vanish the moment you type — exactly when you want to
 // compare against them. `previousSetLabel` produces a label that can sit beside
-// the field and stay put.
+// the field and stay put. Holds and carries get their own units.
 //
 // VALIDATION. Completion previously only asked "is this field non-empty?", so
 // `-50` and `0` reps were both accepted. Neither is a real set, and a negative
@@ -23,8 +23,11 @@
 // of the way — an athlete really can rep 120 bodyweight squats, and a logger
 // that argues with them is a logger they stop using.
 //
-// PURE. No DOM, no state mutation, no imports.
+// PURE. No DOM, no state mutation.
 // =============================================================================
+import {
+  SET_MODE, formatDistance, formatDuration, parseDuration, setModeOf,
+} from '../set-utils.js';
 
 /**
  * Above these, a value is surprising but still possible, so it warns rather
@@ -37,11 +40,13 @@
 export const SET_ENTRY_LIMITS = Object.freeze({
   maxReps: 100,
   maxWeight: 1500,
+  maxSeconds: 24 * 60 * 60,
+  maxMetres: 100000,
 });
 
 /**
  * @typedef {object} SetEntryMessage
- * @property {'weight'|'reps'} field
+ * @property {'weight'|'reps'|'value'} field
  * @property {'error'|'warning'} level
  * @property {string} text
  */
@@ -49,17 +54,26 @@ export const SET_ENTRY_LIMITS = Object.freeze({
 /**
  * Validate one set's entered values.
  *
- * @param {{weight?: any, reps?: any, type?: string, loadMode?: string}} entry
- * @returns {{ok: boolean, errors: SetEntryMessage[], warnings: SetEntryMessage[], firstErrorField: 'weight'|'reps'|null}}
+ * `mode` defaults to reps, so every existing caller keeps its exact meaning.
+ * Holds read the second input as seconds (`M:SS` or a plain count); carries
+ * read it as metres.
+ *
+ * @param {{weight?: any, reps?: any, value?: any, sec?: any, dist?: any, mode?: string, type?: string, loadMode?: string}} entry
+ * @returns {{ok: boolean, errors: SetEntryMessage[], warnings: SetEntryMessage[], firstErrorField: 'weight'|'reps'|'value'|null}}
  */
 export function validateSetEntry(entry = {}) {
   /** @type {SetEntryMessage[]} */
   const errors = [];
   /** @type {SetEntryMessage[]} */
   const warnings = [];
+  const mode = entry.mode === SET_MODE.TIME || entry.mode === SET_MODE.DISTANCE
+    ? entry.mode : SET_MODE.REPS;
 
   const rawWeight = String(entry.weight ?? '').trim();
-  const rawReps = String(entry.reps ?? '').trim();
+  const rawValue = String(
+    entry.value ?? (mode === SET_MODE.TIME ? entry.sec : mode === SET_MODE.DISTANCE ? entry.dist : entry.reps) ?? ''
+  ).trim();
+  const valueField = mode === SET_MODE.REPS ? 'reps' : 'value';
   // Bodyweight and assisted rows derive their effective load from body mass and
   // band assistance, so a blank weight there is normal, not incomplete.
   const weightRequired = (entry.loadMode || 'weighted') === 'weighted';
@@ -78,10 +92,29 @@ export function validateSetEntry(entry = {}) {
     }
   }
 
-  if (!rawReps) {
-    errors.push({ field: 'reps', level: 'error', text: 'Enter the reps.' });
+  if (!rawValue) {
+    const text = mode === SET_MODE.TIME ? 'Enter the time.'
+      : mode === SET_MODE.DISTANCE ? 'Enter the distance.' : 'Enter the reps.';
+    errors.push({ field: valueField, level: 'error', text });
+  } else if (mode === SET_MODE.TIME) {
+    const seconds = parseDuration(rawValue);
+    if (seconds == null) {
+      errors.push({ field: 'value', level: 'error', text: 'Time must be MM:SS or seconds.' });
+    } else if (seconds > SET_ENTRY_LIMITS.maxSeconds) {
+      warnings.push({ field: 'value', level: 'warning', text: 'Over 24 hours — check the time.' });
+    }
+  } else if (mode === SET_MODE.DISTANCE) {
+    const metres = Number(rawValue);
+    if (!Number.isFinite(metres)) {
+      errors.push({ field: 'value', level: 'error', text: 'Distance must be a number.' });
+    } else if (metres < 1) {
+      // A completed carry of zero metres is a set that did not happen.
+      errors.push({ field: 'value', level: 'error', text: 'At least 1 m.' });
+    } else if (metres > SET_ENTRY_LIMITS.maxMetres) {
+      warnings.push({ field: 'value', level: 'warning', text: `Over ${SET_ENTRY_LIMITS.maxMetres} m — check the number.` });
+    }
   } else {
-    const reps = Number(rawReps);
+    const reps = Number(rawValue);
     if (!Number.isFinite(reps)) {
       errors.push({ field: 'reps', level: 'error', text: 'Reps must be a number.' });
     } else if (!Number.isInteger(reps)) {
@@ -106,7 +139,7 @@ export function validateSetEntry(entry = {}) {
 
 /**
  * The one message to show on the row. Errors outrank warnings; the weight field
- * is read before reps so the message order matches the row's own layout.
+ * is read before the value field so the message order matches the row's layout.
  * @param {ReturnType<typeof validateSetEntry>} result
  * @returns {SetEntryMessage|null}
  */
@@ -115,34 +148,45 @@ export function primarySetEntryMessage(result) {
   const ordered = [...result.errors, ...result.warnings];
   if (!ordered.length) return null;
   const byField = (field) => ordered.find((m) => m.field === field);
-  return byField('weight') || byField('reps') || ordered[0];
+  return byField('weight') || byField('reps') || byField('value') || ordered[0];
 }
 
 /**
  * Last time's numbers for this set, formatted to sit next to the fields and
- * stay visible while typing.
+ * stay visible while typing. Reads the stored shape, so a hold shows its time
+ * and a carry shows its distance instead of a fabricated rep count.
  *
  * Returns null rather than a placeholder string when there is nothing to show:
  * a first-ever session must read as blank, not as "-- × --", which looks like
  * data that failed to load.
  *
- * @param {{w?: any, r?: any}|null|undefined} previousSet
+ * @param {{w?: any, r?: any, sec?: any, dist?: any, mode?: string}|null|undefined} previousSet
  * @param {string} [unit] the athlete's own unit — this app never converts, it labels
  * @returns {{text: string, label: string}|null}
  */
 export function previousSetLabel(previousSet, unit = 'kg') {
   if (!previousSet) return null;
+  const mode = setModeOf(previousSet);
   const weight = Number(String(previousSet.w ?? '').trim());
-  const reps = Number(String(previousSet.r ?? '').trim());
   const hasWeight = Number.isFinite(weight) && weight > 0;
-  const hasReps = Number.isFinite(reps) && reps > 0;
-  if (!hasReps && !hasWeight) return null;
+
+  let value = '';
+  if (mode === SET_MODE.TIME) {
+    const seconds = Number(previousSet.sec);
+    if (Number.isFinite(seconds) && seconds > 0) value = formatDuration(seconds);
+  } else if (mode === SET_MODE.DISTANCE) {
+    const metres = Number(previousSet.dist);
+    if (Number.isFinite(metres) && metres > 0) value = `${formatDistance(metres)}m`;
+  } else {
+    const reps = Number(String(previousSet.r ?? '').trim());
+    if (Number.isFinite(reps) && reps > 0) value = trimNumber(reps);
+  }
+  if (!value && !hasWeight) return null;
 
   const weightPart = hasWeight ? `${trimNumber(weight)}${unit}` : '';
-  const repsPart = hasReps ? `${trimNumber(reps)}` : '';
-  const text = hasWeight && hasReps ? `${weightPart} × ${repsPart}`
-    : hasWeight ? weightPart
-    : `${repsPart} reps`;
+  const text = weightPart && value ? `${weightPart} × ${value}`
+    : weightPart ? weightPart
+    : mode === SET_MODE.REPS ? `${value} reps` : value;
 
   return { text: `Last ${text}`, label: `Last time: ${text}` };
 }

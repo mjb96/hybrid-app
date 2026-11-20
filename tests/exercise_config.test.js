@@ -39,6 +39,14 @@ test('rest override supports default, custom seconds and no timer', () => {
   assert.equal(getExerciseRestOverride(s, 'Row'), null);
 });
 
+test('a set-shape preference is durable per exercise', () => {
+  const s = state();
+  setExercisePref(s, 'Farmer Carry', { mode: 'time' });
+  assert.equal(getExercisePrefs(s, 'Farmer Carry').mode, 'time');
+  setExercisePref(s, 'Farmer Carry', { mode: null });
+  assert.equal(getExercisePrefs(s, 'Farmer Carry').mode, undefined);
+});
+
 test('getExercisePrefs never leaks the stored object', () => {
   const s = state();
   setExercisePref(s, 'Row', { note: 'cue' });

@@ -15,6 +15,8 @@ import { showToast } from '../state.js';
 import { dateKey } from '../dates.js';
 import { numberPromptModal, textPromptModal } from '../ui/confirm-modal.js';
 import { applySetRemoval, restoreSetRemoval } from './set-plan.js';
+import { preferredSetMode } from './set-shape.js';
+import { SET_MODE, setModeOf } from '../set-utils.js';
 import { applyBandLoad, applyLoadMode, bandRole, resolvedLoadMode } from './load-mode.js';
 import {
   defaultBasisForExercise, nextBasis, normalizeBasis,
@@ -36,7 +38,10 @@ export function appendCustomSetRow(btnNode, liftName) {
   if (!appState.weeks[weekKey].lifts[selectedDay][liftName]) {
     appState.weeks[weekKey].lifts[selectedDay][liftName] = [];
   }
-  appState.weeks[weekKey].lifts[selectedDay][liftName].push({ w: '', r: '', c: false });
+  const set = { w: '', r: '', c: false };
+  const mode = preferredSetMode(appState, liftName);
+  if (mode !== SET_MODE.REPS) set.mode = mode;
+  appState.weeks[weekKey].lifts[selectedDay][liftName].push(set);
   _saveState(true);
   rerenderWorkout();
 }
@@ -53,9 +58,37 @@ export function appendWarmupSetRow(btnNode, liftName) {
   const sets = appState.weeks[weekKey].lifts[selectedDay][liftName];
   const firstWorkingIndex = sets.findIndex((set) => !set.type || set.type !== 'W');
   const newSet = { w: '', r: '', c: false, type: 'W' };
+  const mode = preferredSetMode(appState, liftName);
+  if (mode !== SET_MODE.REPS) newSet.mode = mode;
   if (firstWorkingIndex === -1) sets.push(newSet);
   else sets.splice(firstWorkingIndex, 0, newSet);
 
+  _saveState(true);
+  rerenderWorkout();
+}
+
+/** Cycle a row's shape: Reps → Time → Distance → Reps. */
+export function cycleSetMode(liftName, setIndex) {
+  const appState = _getState();
+  if (!appState) return;
+  const selectedDay = activeWorkoutDay(appState, _getSelectedDay());
+  const weekKey = activeWorkoutWeekKey(appState);
+  const set = appState.weeks?.[weekKey]?.lifts?.[selectedDay]?.[liftName]?.[setIndex];
+  if (!set) return;
+  const current = setModeOf(set);
+  const next = current === SET_MODE.REPS ? SET_MODE.TIME
+    : current === SET_MODE.TIME ? SET_MODE.DISTANCE : SET_MODE.REPS;
+  // A completed row must not stay ticked when the new shape has no value to
+  // show (60×8 is not a hold). Switching back to a shape that still carries its
+  // old value keeps completion; nothing typed is ever deleted.
+  const hasValue = next === SET_MODE.TIME ? (Number(set.sec) || 0) > 0
+    : next === SET_MODE.DISTANCE ? (Number(set.dist) || 0) > 0
+    : (parseInt(set.r, 10) || 0) > 0;
+  if (!hasValue) {
+    set.c = false;
+    delete set.isPR;
+  }
+  set.mode = next;
   _saveState(true);
   rerenderWorkout();
 }

@@ -577,7 +577,9 @@ gap in the journey, and is folded into the Phase 6 visual-system work.
 
 ## Phase 2D — Logger upgrade (planned)
 
-**Status: L0 in progress.** The openGym logger was inspected as a reference for
+**Status: L0–L2 done; L3 rest overrides and L4 plate line done.** Remaining:
+per-exercise load defaults, the `+ Drop` shortcut, timer persistence and
+adaptive warm-up rounding. The openGym logger was inspected as a reference for
 CONCEPTS only. No openGym code, media or nested data shape is copied.
 
 **Outcome:** the number the athlete types means what they think it means, and a
@@ -673,10 +675,13 @@ options live in the `⋯` sheets. Nothing appears in two places.
   openGym plan prescriptions may carry it.
 
 ### L2 — Set shapes
-- `failure: true` independent of type; unrated failure reads as RIR 0.
-- Timed holds (`sec`) and loaded carries (`m`) as set modes, with the row
-  switching its second input to time/distance. CSV import stops skipping holds
-  and carries and preserves them.
+- **DONE 2026-11-21 — failure flag**; unrated failure reads as RIR 0.
+- **DONE 2026-11-21 — timed holds (`sec`) and loaded carries (`dist`, metres)**
+  are real set modes. The row swaps its second input to time/distance and the
+  `⋯` sheet cycles Reps → Time → Distance. Volume stays weight × reps, so
+  holds/carries add no invented tonnage; they still count as working sets.
+  CSV import now preserves them instead of skipping them, and a carry name
+  containing “walk” is not turned into a run.
 - A `+ Drop` shortcut that seeds a percentage-lighter linked row (separate rows,
   not openGym's nested `drops`). Rest-pause/cluster stay deferred until real
   use demands them.
@@ -1921,6 +1926,25 @@ testable on its own.
     typecheck, smoke, set-row browser check writes and re-reads all three
     controls through localStorage.
   - Next: timed/distance set shapes.
+- **2026-11-21 — Timed holds and carries are real set shapes.**
+  - `js/set-utils.js` now owns the shape model: legacy reps, `mode:'time'`
+    with `sec`, and `mode:'distance'` with `dist` (metres). Validation accepts
+    `M:SS`/seconds or metres and refuses impossible values inline.
+  - The cockpit renders a time or distance field in place of reps; the row’s
+    `⋯` sheet cycles Reps → Time → Distance, and the per-exercise sheet adds a
+    **Set shape** default. Selection comes from catalogue metadata (carry →
+    distance, plank/hold → time) or the athlete’s override; a stored set’s own
+    shape always wins.
+  - Holds and carries count as working sets for frequency, muscle load, History
+    and recap, but `setVolume` returns 0: tonnage is weight × reps, and
+    inventing reps for a 45-second plank would inflate every volume total.
+    e1RM and PR detection stay rep-only. Comparison, previous values, quick-log,
+    inheritance and the recap all use the set’s own shape.
+  - CSV import stores holds/carries as time/distance sets instead of skipping
+    them; carries keep their metres and never become runs.
+  - Validation: 1,974 node tests, typecheck, smoke, set-row browser check
+    (Time → 1:30 and Distance → 20 m saved through the live cockpit).
+  - Next: per-exercise load default / weight meaning, then the `+ Drop` link.
 - **2026-11-20 — Progress overview: week hero, recent weeks, calendar heatmaps.**
   - The hub now leads with a this-week summary (sessions / planned, volume,
     distance, PRs, adherence bar) and a 12-week session strip, then the four
