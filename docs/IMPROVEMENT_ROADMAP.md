@@ -1896,10 +1896,13 @@ testable on its own.
   - Added a per-set **plate line** for barbell lifts, using the entered/ghost
     weight and the active equipment profile, plus the load change since the
     previous set. It updates live while typing and respects `showPlateHints`.
+  - The session recap now closes the loop per lift: **Last time** (the previous
+    working sets) and **Next time** (the progression suggestion with its
+    rationale). The next line is omitted when the session carries no prescribed
+    rep target, instead of inventing a load.
   - Validation: node tests, typecheck, smoke, settings-nav browser check
     (visible Logging controls/preset/scope), set-row and quick-log tests.
-  - Next: timed/distance sets, per-exercise config sheet and the load
-    explanation/recap closure.
+  - Next: timed/distance sets and the per-exercise config sheet.
 - **2026-11-20 — Progress overview: week hero, recent weeks, calendar heatmaps.**
   - The hub now leads with a this-week summary (sessions / planned, volume,
     distance, PRs, adherence bar) and a 12-week session strip, then the four
