@@ -84,14 +84,16 @@ function unresolvedProgramSession(state, program, weekKey, todayDay, todayISO) {
   return null;
 }
 
-// Calendar-date completion, independent of the program counter. Imported and
-// archived sessions live under `arch:*` keys, so a scan of `weeks[currentWeek]`
-// can never see the workout the athlete actually did today. The date-strict
-// index is the same source Home's rail and Progress use.
-function calendarCompletedToday(state, program, todayISO) {
+// Calendar-date completion from an ARCHIVED/imported slot. Work in the active
+// program slot is owned by completionFor(): treating an off-plan lift there as
+// an "imported completion" replaced Start/Resume with Review and stranded the
+// session (caught by touch-target and performance-baseline). Only a slot the
+// active slot cannot see can prove the day is done.
+function calendarCompletedToday(state, program, todayISO, activeWeekKey) {
   const index = indexSlotsByDate(state);
   const slots = index.allByDate?.get(todayISO) || [];
-  if (!slots.length) return null;
+  const hasForeignSlot = slots.some((slot) => String(slot.weekKey) !== String(activeWeekKey));
+  if (!hasForeignSlot) return null;
   const lookup = (id) => (id && id === state?.activeProgramId ? program : null);
   const summary = buildDayRecap(state, todayISO, index, lookup);
   if (!summary?.hasData) return null;
@@ -271,7 +273,7 @@ export function buildTodayCardModel(options) {
   // Imported/archived work on today's real date. It can never be found by
   // scanning weeks[currentWeek], so without this the card offered "Start
   // workout" while the week rail already showed today as done.
-  const calendarDone = calendarCompletedToday(state, program, todayISO);
+  const calendarDone = calendarCompletedToday(state, program, todayISO, weekKey);
   if (calendarDone && !(todaySlotIsToday && todayCompletion.anyLogged)) {
     const hasStrength = calendarDone.summary.sets > 0 || calendarDone.summary.volume > 0;
     const calendarRunOnly = !hasStrength && calendarDone.summary.distanceKm > 0;
