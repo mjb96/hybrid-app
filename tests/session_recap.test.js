@@ -148,6 +148,31 @@ test('a run without a GPS route says so instead of rendering an empty map', () =
   assert.doesNotMatch(html, /id="recapMapContainer"/);
 });
 
+test('recap closes the loop with Last time and Next time', () => {
+  const state = {
+    settings: { weightUnit: 'kg', progressionIncrement: 2.5 },
+    weeks: {
+      '1': {
+        dates: { mon: '2026-06-23' },
+        lifts: { mon: { 'Bench Press': [{ w: 80, r: 5, c: true, tr: 5 }] } },
+        runs: {},
+      },
+      '2': {
+        dates: { mon: '2026-06-30' },
+        lifts: { mon: { 'Bench Press': [{ w: 85, r: 5, c: true, tr: 5 }] } },
+        runs: {},
+      },
+    },
+  };
+  const r = buildSessionRecap(state, '2', 'mon');
+  assert.equal(r.lifts[0].previous[0].w, 80);
+  assert.ok(r.lifts[0].next, 'a completed target should produce a next-time suggestion');
+  assert.ok(r.lifts[0].next.weight > 85);
+  const html = renderSessionRecapHTML(r);
+  assert.match(html, /Last time: 80kg × 5/);
+  assert.match(html, /Next time:/);
+});
+
 test('failure stays visible in the session recap', () => {
   const wd = {
     dates: { mon: '2026-07-02' },
