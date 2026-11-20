@@ -123,8 +123,10 @@ try {
       await page.click('.nav-item[data-target="workout"]');
       // Train now opens on its landing; this check drives the cockpit's history
       // affordances, so step into the cockpit first.
-      await page.waitForSelector('#trainLanding .tl-today__primary');
-      await page.click('#trainLanding .tl-today__primary');
+      // Open a deterministic planned day from the week rail. Today may be a
+      // rest day, whose landing primary is a wellness action, not the cockpit.
+      await page.waitForSelector('#trainLanding .tl-week__day[data-day="mon"]');
+      await page.click('#trainLanding .tl-week__day[data-day="mon"]');
       await page.waitForSelector('#trainCockpit:not([hidden])');
       await page.click('#cockpitDaySelectorBar .day-pill[data-day="mon"]');
       const card = page.locator('.cockpit-exercise[data-liftname="Bench Press"]');
