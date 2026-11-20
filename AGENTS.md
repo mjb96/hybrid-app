@@ -449,6 +449,8 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   `settings.showPlateHints`. Rest settings also own `restPeriods.warmup`
   (0 disables the warm-up timer), `restAlertSound` and `restAlertVolume`;
   `js/timers.js` receives them through `setRestTiers`/`setRestAlertConfig`.
+  The session recap closes each lift with Last time and a Next-time progression
+  suggestion (omitted when no rep target exists).
 - Session lifecycle: additive `weeks[key].sessionStatus[day]` (`in_progress|finished`)
   and `sessionSummary[day]` sidecars are owned by `js/workout/session-status.js`.
   Deliberate Finish marks the workout finished even below 100% plan adherence; deletion/

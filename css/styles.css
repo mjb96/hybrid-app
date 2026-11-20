@@ -9130,10 +9130,15 @@ html[data-theme="light"] .activity-filter--active { color: #07566b; }
 .recap-insight--alert { --ic: #ef4444; }
 .recap-insight--good  { --ic: #10b981; }
 .recap-insight--info  { --ic: #3b82f6; }
-.recap-lift { display: flex; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 1px solid var(--border, #1f242c); }
+.recap-lift { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 1px solid var(--border, #1f242c); }
 .recap-lift__name { font-weight: 700; color: var(--text-primary, #fff); font-size: 0.9rem; }
 .recap-lift__detail { text-align: right; font-size: 0.82rem; color: var(--text-secondary, #cbd5e1); }
 .recap-lift__e1rm { display: block; font-size: 0.68rem; color: var(--text-muted, #94a3b8); margin-top: 2px; }
+.recap-lift__prev, .recap-lift__next { flex: 1 0 100%; margin-top: 6px; font-size: 0.68rem; line-height: 1.45; }
+.recap-lift__prev { color: var(--text-muted, #94a3b8); }
+.recap-lift__next { color: var(--text-secondary, #cbd5e1); }
+.recap-lift__next b { color: var(--color-green, #10b981); }
+.recap-lift__next small { display: block; margin-top: 1px; color: var(--text-muted, #94a3b8); }
 .recap-pr { font-size: 0.66rem; font-weight: 800; letter-spacing: 0.02em; color: #fbbf24; background: rgba(251, 191, 36, 0.14); border: 1px solid rgba(251, 191, 36, 0.35); border-radius: 6px; padding: 1px 6px; margin-left: 6px; white-space: nowrap; vertical-align: middle; }
 .recap-pacechart { display: flex; flex-direction: column; gap: 5px; padding: 4px 0 2px; }
 .recap-pacerow { display: flex; align-items: center; gap: 10px; }

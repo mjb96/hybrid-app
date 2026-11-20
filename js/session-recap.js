@@ -18,7 +18,8 @@ import { hapticSuccess } from './haptics.js';
 import { muscleCreditsForExercise } from './exercises/catalog.js';
 import { jtStoredRoleTag } from './programs/jt-shed-model.js';
 import { sharePRCard, topPR } from './brain/pr-share.js';
-import { showToast } from './state.js';
+import { showToast, getProgramById } from './state.js';
+import { suggestProgression } from './engine.js';
 import { sanitizeGpsQuality } from './gps/route-quality.js';
 import { estimatedE1rmForSet, isE1rmPr } from './strength/e1rm.js';
 import { exercisePerformanceHistory } from './workout/exercise-history.js';
@@ -44,14 +45,13 @@ let _recapCtx = { week: null, day: null, sessionId: null };
 // Best working-set e1RM for a lift across every OTHER logged session (all
 // weeks/days except the one being recapped). Used to decide if this session set
 // a new personal best. Pure scan of state; tolerates sparse data.
-function priorBestE1rm(state, week, day, liftName) {
+function priorPerformance(state, week, day, liftName) {
   const beforeDate = state?.weeks?.[week]?.dates?.[day];
-  const history = exercisePerformanceHistory(state, liftName, {
+  return exercisePerformanceHistory(state, liftName, {
     scope: 'all',
     exclude: { weekKey: week, day },
     beforeDate,
-  });
-  return Math.max(0, ...history.map((performance) => performance.e1rm));
+  })[0] || null;
 }
 
 function timeToSeconds(t) {
@@ -96,6 +96,7 @@ export function buildSessionRecap(state, week, day, sessionId = null, activityKi
   // ── Strength ──
   let tonnage = 0, workingSets = 0, totalReps = 0;
   const lifts = [];
+  const program = getProgramById(state?.activeProgramId);
   const muscleCredits = {};   // muscle → estimated working-set credits
   for (const name in dayLifts) {
     if (activityKind === 'run') break;
@@ -143,9 +144,35 @@ export function buildSessionRecap(state, week, day, sessionId = null, activityKi
 
     // PR: this session's best e1RM beats the lift's best in every prior session
     // (needs an established previous best — a first-ever lift isn't a "PR").
-    const prior = priorBestE1rm(state, week, day, name);
-    const pr = isE1rmPr(bestE1, prior);
-    lifts.push({ name, sets: done.length, reps: liftReps, volume: Math.round(liftVol), topSet, e1rm: Math.round(bestE1), pr, setList });
+    const priorRow = priorPerformance(state, week, day, name);
+    const priorBest = Math.max(0, Number(priorRow?.e1rm) || 0);
+    const pr = isE1rmPr(bestE1, priorBest);
+
+    // The closure openGym gets right: show what was done last time and what the
+    // current progression would prescribe next time. Only when the session
+    // carries a real prescribed rep target — a free-logged set has no target to
+    // judge progression against, so the next line is omitted rather than
+    // inventing a load.
+    const prescribedReps = done.map((s) => parseInt(s.tr, 10) || 0).filter((v) => v > 0);
+    const repTarget = prescribedReps.length ? Math.min(...prescribedReps) : 0;
+    let next = null;
+    if (repTarget > 0) {
+      const suggestion = suggestProgression(done, repTarget, {
+        increment: state?.settings?.progressionIncrement,
+        style: program?.progressionStyle,
+        weightGoal: state?.settings?.weightGoal,
+      });
+      if (suggestion && suggestion.action !== 'baseline' && Number(suggestion.weight) > 0) next = suggestion;
+    }
+    const previous = (priorRow?.workingSets || []).slice(0, 4).map((set) => ({
+      w: parseFloat(set?.w) || 0,
+      r: parseInt(set?.r, 10) || 0,
+    }));
+
+    lifts.push({
+      name, sets: done.length, reps: liftReps, volume: Math.round(liftVol),
+      topSet, e1rm: Math.round(bestE1), pr, setList, previous, next,
+    });
   }
   lifts.sort((a, b) => b.volume - a.volume);
   const muscles = Object.entries(muscleCredits)
@@ -261,14 +288,25 @@ function _summaryTiles(r) {
 
 function _liftSummaryRows(r) {
   const unit = r.weightUnit || 'kg';
-  return r.lifts.map((l) => `
+  return r.lifts.map((l) => {
+    const previous = Array.isArray(l.previous) && l.previous.length
+      ? `<div class="recap-lift__prev">Last time: ${l.previous
+        .map((set) => `${set.w}${unit} × ${set.r}`).join(' · ')}</div>`
+      : '';
+    const next = l.next
+      ? `<div class="recap-lift__next">Next time: <b>${l.next.weight}${unit} × ${l.next.reps}</b>${l.next.rationale ? `<small>${esc(l.next.rationale)}</small>` : ''}</div>`
+      : '';
+    return `
     <div class="recap-lift">
       <div class="recap-lift__name">${esc(l.name)}${l.pr ? ` <span class="recap-pr" title="New estimated 1RM best">🏆 PR</span>` : ''}</div>
       <div class="recap-lift__detail">
         ${l.topSet ? `${l.topSet.w} ${unit} × ${l.topSet.r}` : `${l.sets} sets`}
         ${l.e1rm > 0 ? `<span class="recap-lift__e1rm">est. 1RM ${l.e1rm} ${unit}</span>` : ''}
       </div>
-    </div>`).join('');
+      ${previous}
+      ${next}
+    </div>`;
+  }).join('');
 }
 
 // Pace-per-km bar chart: bar length relative to the fastest split, coloured by
