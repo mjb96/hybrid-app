@@ -20,6 +20,9 @@ import { moduleEnabled, setModuleEnabled, applyModuleVisibility } from './module
 import * as equipmentProfiles from './equipment-profiles.js';
 import { applyPalette, normalizePalette } from './theme.js';
 import { looksLikeBodyCsv, parseBodyCsv, applyBodyweightCsvImport } from './portability/import-body-csv.js';
+import {
+  looksLikeMeasurementsCsv, parseMeasurementsCsv, applyMeasurementsCsvImport,
+} from './portability/import-measurements-csv.js';
 import { buildFitCandidate, applyFitImports } from './portability/import-fit.js';
 import { parseFitBuffer } from './garmin.js';
 import { upsertRunSession, findImportedRunSession } from './state/run-sessions.js';
@@ -1244,6 +1247,38 @@ export async function handleExternalCsvFile(file) {
     }
     await saveStateToLocalStorage(false);
     showToast(`Imported ${result.added} weigh-in${result.added === 1 ? '' : 's'}${result.skipped ? ` · ${result.skipped} existing skipped` : ''}`);
+    _finishImport();
+    return;
+  }
+
+  if (looksLikeMeasurementsCsv(text)) {
+    let measured;
+    try {
+      measured = parseMeasurementsCsv(text, { unit });
+    } catch (error) {
+      showToast(error?.message || 'That measurements CSV could not be read.', true);
+      return;
+    }
+    const existing = new Set((_getState()?.bodyMeasurements || []).map((e) => e.date));
+    const already = measured.entries.filter((e) => existing.has(e.date)).length;
+    const ok = await confirmModal({
+      title: 'Import body measurements?',
+      message: [
+        `${measured.entries.length} measurement date${measured.entries.length === 1 ? '' : 's'} from ${measured.entries[0].date} to ${measured.entries.at(-1).date}.`,
+        already ? `${already} date${already === 1 ? '' : 's'} already have measurements and will be left unchanged.` : '',
+        '',
+        'Only missing dates are added. Existing measurements are never overwritten.',
+      ].filter(Boolean).join('\n'),
+      confirmLabel: 'Import measurements',
+    });
+    if (!ok) return;
+    const result = applyMeasurementsCsvImport(_getState(), measured);
+    if (!result.added) {
+      showToast('Those measurements are already in your log.');
+      return;
+    }
+    await saveStateToLocalStorage(false);
+    showToast(`Imported ${result.added} measurement date${result.added === 1 ? '' : 's'}${result.skipped ? ` · ${result.skipped} existing skipped` : ''}`);
     _finishImport();
     return;
   }
