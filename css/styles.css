@@ -1291,6 +1291,10 @@ select.native-select {
    weight beside + Working Set and ⇄ Swap for the whole session. Any row can
    still be re-typed to a warm-up from its ⋯ menu. */
 .cockpit-exercise.has-logged-work .btn-append-warmup { display: none; }
+/* A drop set only exists after the set it drops from, so the shortcut stays
+   hidden until a working set is ticked (the same live class that hides Warmup). */
+.btn-append-drop { display: none; }
+.cockpit-exercise.has-logged-work .btn-append-drop { display: block; }
 
 .set-adv-row {
   grid-column: 1 / -1;
@@ -1467,6 +1471,15 @@ input[type="checkbox"].gym-check:checked ~ .gym-check-icon { opacity: 1; }
   border-color: #fbbf24;
   color: #fbbf24;
   background: rgba(251, 191, 36, 0.08);
+}
+.btn-append-drop {
+  border-color: rgba(249, 115, 22, 0.25);
+  color: rgba(249, 115, 22, 0.72);
+}
+.btn-append-drop:hover {
+  border-color: #f97316;
+  color: #f97316;
+  background: rgba(249, 115, 22, 0.08);
 }
 
 .empty-state-card {

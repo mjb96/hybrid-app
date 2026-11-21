@@ -63,15 +63,15 @@ upgrade have landed. In order:
   real shape-aware trend, all-time bests and PR baseline.
 - **Logger** supports reps, timed holds and loaded carries; failure, per-set
   rest/note, plate lines, load basis, effort, per-exercise shape/load/basis
-  defaults, warm-up rest, a rest timer that survives reload/backgrounding, and a
-  Last time / Next time recap.
+  defaults, warm-up rest, a rest timer that survives reload/backgrounding, a
+  `+ Drop` shortcut that seeds a lighter typed row, and a Last time / Next time
+  recap.
 - **Plans** keeps the active plan first, recommends from athlete fit, and has a
   Overview | Structure | Plan detail with week-stepped targets.
 
 Deliberate follow-ups (not regressions): readiness history components,
-per-muscle corridor charts, the `+ Drop` shortcut, adaptive warm-up rounding,
-Android landscape/device checks and the remaining authored exercise-metadata
-batches.
+per-muscle corridor charts, adaptive warm-up rounding, Android
+landscape/device checks and the remaining authored exercise-metadata batches.
 
 ### What holds the experience back
 
@@ -607,8 +607,9 @@ gap in the journey, and is folded into the Phase 6 visual-system work.
 
 ## Phase 2D — Logger upgrade (planned)
 
-**Status: L0–L2 done; L3 rest overrides, L4 plate line and timer persistence
-done.** Remaining: the `+ Drop` shortcut and adaptive warm-up rounding. The openGym logger was inspected as a reference for
+**Status: L0–L2 done; L3 rest overrides, L4 plate line, timer persistence and
+the `+ Drop` shortcut done.** Remaining: adaptive warm-up rounding. The openGym
+logger was inspected as a reference for
 CONCEPTS only. No openGym code, media or nested data shape is copied.
 
 **Outcome:** the number the athlete types means what they think it means, and a
@@ -714,9 +715,12 @@ options live in the `⋯` sheets. Nothing appears in two places.
   holds/carries add no invented tonnage; they still count as working sets.
   CSV import now preserves them instead of skipping them, and a carry name
   containing “walk” is not turned into a run.
-- A `+ Drop` shortcut that seeds a percentage-lighter linked row (separate rows,
-  not openGym's nested `drops`). Rest-pause/cluster stay deferred until real
-  use demands them.
+- **DONE 2026-11-21 — `+ Drop` shortcut.** `appendDropSetRow` appends a separate
+  `type:'D'` row after the prescribed sets, seeded from the last filled non-warm-up
+  set: 80% load rounded to a loadable step (2.5 kg / 5 lb), same shape and reps,
+  and the source's basis/load mode. It is hidden until a working set exists, and a
+  bodyweight/band/assisted source keeps its load instead of inventing a discount.
+  Rest-pause/cluster stay deferred until real use demands them.
 
 ### L3 — Rest and timer
 - Surface the rest tiers that already exist but are hidden (compound/accessory/
@@ -1821,6 +1825,19 @@ Avoid parallel redesign of every screen. Each step should be usable and
 testable on its own.
 
 ## 12. Session log
+
+- **2026-11-21 — `+ Drop` shortcut.**
+  - A drop set is now one tap: the cockpit appends a `type:'D'` row seeded from the
+    last filled non-warm-up set at 80% load, rounded to 2.5 kg / 5 lb, copying the
+    set's shape (reps/time/distance) and its basis/load mode. Nothing is inferred at
+    completion time — the athlete can edit or delete it like any other row.
+  - The shortcut appears only after a working set is logged (the same
+    `.has-logged-work` state that hides `+ Warmup`), sits after the prescribed rows,
+    and keeps bodyweight/band/assisted loads as-is rather than discounting them.
+  - Validation: 3 new row-mutation tests (kg, lb + warm-up skipping, no-source),
+    the browser check at 320/390/412 px asserts visibility, 44px target, seeded
+    weight lighter than the source and the `Drop set` pill, plus the full node suite.
+  - Next: adaptive warm-up rounding or the Android device checklist.
 
 - **2026-11-21 — Rest timer survives reload and backgrounding.**
   - The countdown is persisted to `localStorage` (`hybrid_restTimer_v1`) as an

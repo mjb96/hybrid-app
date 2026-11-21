@@ -133,7 +133,12 @@ try {
       const btn = document.querySelector('.cockpit-exercise:not(.collapsed) [data-action="append-warmup-set"]');
       return !!btn && btn.getBoundingClientRect().height > 0;
     });
+    const dropVisible = () => page.evaluate(() => {
+      const btn = document.querySelector('.cockpit-exercise:not(.collapsed) [data-action="append-drop-set"]');
+      return !!btn && btn.getBoundingClientRect().height > 0;
+    });
     if (!await warmupVisible()) fail(`${tag}: + Warmup hidden before any work is logged, when it is exactly what you want`);
+    if (await dropVisible()) fail(`${tag}: + Drop offered before any working set exists`);
 
     // ---- logging a set starts a rest, attached to the exercise -------------
     await logSet(page, 0);
@@ -153,6 +158,7 @@ try {
     if (t.btnHeight < 44) fail(`${tag}: the pause control is ${t.btnHeight}px, below the 44px target`);
 
     if (await warmupVisible()) fail(`${tag}: + Warmup still offered at equal prominence after a working set was logged`);
+    if (!await dropVisible()) fail(`${tag}: + Drop missing after a working set was logged`);
 
     // ---- a reload resumes the same rest ------------------------------------
     // The bar is pure wall-clock state. Losing it on reload meant the athlete
@@ -224,6 +230,33 @@ try {
     t = await readTimer(page);
     if (t.active) fail(`${tag}: Done did not dismiss the rest timer`);
     if (t.paused) fail(`${tag}: dismissed but still flagged paused`);
+
+    // ---- + Drop seeds a lighter drop row -----------------------------------
+    // The shortcut belongs to the set it follows: it must not appear before
+    // work, and it must copy the shape/reps while discounting only a free
+    // weight. A 20% drop is a starting point, never a hidden prescription.
+    const loggedCard = page.locator('.cockpit-exercise.has-logged-work').first();
+    if (await loggedCard.evaluate((card) => card.classList.contains('collapsed'))) {
+      await loggedCard.locator('.cockpit-header-clickzone').click();
+    }
+    const dropBtn = loggedCard.locator('[data-action="append-drop-set"]');
+    const dropBtnHeight = await dropBtn.evaluate((btn) => Math.round(btn.getBoundingClientRect().height));
+    if (dropBtnHeight < 44) fail(`${tag}: + Drop is ${dropBtnHeight}px, below the 44px target`);
+    await dropBtn.click();
+    await loggedCard.locator('.cockpit-set-row.type-dropset').waitFor();
+    const drop = await loggedCard.evaluate((card) => {
+      const row = card.querySelector('.cockpit-set-row.type-dropset');
+      const weight = row?.querySelector('.input-weight-node');
+      const pill = row?.querySelector('.type-pill');
+      return {
+        weight: parseFloat(weight?.value || '0'),
+        pill: pill?.textContent?.trim() || '',
+      };
+    });
+    console.log(`${tag} drop:`, JSON.stringify(drop));
+    if (!(drop.weight > 0)) fail(`${tag}: the seeded drop row has no weight`);
+    if (!(drop.weight < 60)) fail(`${tag}: the seeded drop row (${drop.weight}) is not lighter than the source set`);
+    if (!/^drop/i.test(drop.pill)) fail(`${tag}: the seeded row is not marked as a drop set ("${drop.pill}")`);
 
     if (await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1)) {
       fail(`${tag}: page-level horizontal overflow`);

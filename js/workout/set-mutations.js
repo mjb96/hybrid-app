@@ -46,6 +46,93 @@ export function appendCustomSetRow(btnNode, liftName) {
   rerenderWorkout();
 }
 
+// A drop set is the same lift at a lighter load, performed immediately after
+// the set it follows. The shortcut only SEEDS the row: 20% off the last
+// working set, rounded to a loadable step, with the shape and reps copied so
+// the athlete can tick it and adjust. Nothing is inferred at completion time.
+const DROP_SET_FACTOR = 0.8;
+const DROP_SET_STEP = { kg: 2.5, lb: 5 };
+
+function _dropSetLoad(weight, unit) {
+  const step = DROP_SET_STEP[unit] || DROP_SET_STEP.kg;
+  const target = weight * DROP_SET_FACTOR;
+  const rounded = Math.round(target / step) * step;
+  // With no lighter rung available (a 2.5 kg dumbbell), keep the source load
+  // rather than inventing a weight the equipment does not have.
+  const next = rounded > 0 && rounded < weight ? rounded : weight;
+  return Number(next.toFixed(2));
+}
+
+// A prescribed card often has blank rows after the one just ticked. Seeding
+// from "the last row" would therefore produce an empty drop; the source is the
+// last row that actually carries work (completed or typed ahead).
+function _hasDropSource(set) {
+  if (!set || set.type === 'W') return false;
+  if (set.c) return true;
+  if (Number.parseFloat(set.w) > 0) return true;
+  return Number(set.sec) > 0 || Number(set.dist) > 0;
+}
+
+/**
+ * Add a drop-set row after the last working row, seeded from it. Drop sets are
+ * separate rows (never a nested `drops` array): the type is `D`, so volume,
+ * history and the type pill already understand it, and the athlete can edit
+ * every seeded value like any other set.
+ */
+export function appendDropSetRow(btnNode, liftName) {
+  const appState = _getState();
+  const selectedDay = activeWorkoutDay(appState, _getSelectedDay());
+  const weekKey = activeWorkoutWeekKey(appState);
+
+  if (!appState.weeks[weekKey].lifts[selectedDay]) appState.weeks[weekKey].lifts[selectedDay] = {};
+  if (!appState.weeks[weekKey].lifts[selectedDay][liftName]) {
+    appState.weeks[weekKey].lifts[selectedDay][liftName] = [];
+  }
+  const sets = appState.weeks[weekKey].lifts[selectedDay][liftName];
+
+  let source = null;
+  for (let i = sets.length - 1; i >= 0; i -= 1) {
+    if (_hasDropSource(sets[i])) { source = sets[i]; break; }
+  }
+  const next = { w: '', r: '', c: false, type: 'D' };
+
+  if (source) {
+    const mode = setModeOf(source);
+    if (mode !== SET_MODE.REPS) next.mode = mode;
+
+    const unit = appState.settings?.weightUnit === 'lbs' ? 'lb' : 'kg';
+    const sourceLoadMode = resolvedLoadMode(source, liftName);
+    const weight = parseFloat(source.w);
+    if (sourceLoadMode === 'weighted' && Number.isFinite(weight) && weight > 0) {
+      next.w = String(_dropSetLoad(weight, unit));
+    } else if (source.w != null && source.w !== '') {
+      // Bodyweight/assisted/banded: the load is not a free weight to discount.
+      next.w = source.w;
+    }
+    if (source.bw) next.bw = true;
+    if (source.band) next.band = source.band;
+    if (source.loadMode) next.loadMode = source.loadMode;
+    if (source.basis) next.basis = source.basis;
+
+    if (mode === SET_MODE.TIME) {
+      if (source.sec != null && source.sec !== '') next.sec = source.sec;
+    } else if (mode === SET_MODE.DISTANCE) {
+      if (source.dist != null && source.dist !== '') next.dist = source.dist;
+    } else if (source.r != null && source.r !== '') {
+      next.r = source.r;
+    }
+  } else {
+    const mode = preferredSetMode(appState, liftName);
+    if (mode !== SET_MODE.REPS) next.mode = mode;
+  }
+
+  // Extra rows belong at the end, after the prescribed sets, not wedged
+  // between rows the plan already owns.
+  sets.push(next);
+  _saveState(true);
+  rerenderWorkout();
+}
+
 export function appendWarmupSetRow(btnNode, liftName) {
   const appState = _getState();
   const selectedDay = activeWorkoutDay(appState, _getSelectedDay());

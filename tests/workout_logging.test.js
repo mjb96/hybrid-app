@@ -104,6 +104,40 @@ test('appendWarmupSetRow inserts a warm-up before the first working set', () => 
   assert.equal(sets('Squat')[1].type, undefined);      // original working set
 });
 
+test('appendDropSetRow seeds a lighter drop row from the last working set', () => {
+  initWith(freshState());
+  workout.appendCustomSetRow(null, 'Squat');
+  sets('Squat')[0].w = '100';
+  sets('Squat')[0].r = '5';
+  sets('Squat')[0].c = true;
+
+  workout.appendDropSetRow(null, 'Squat');
+  assert.equal(sets('Squat').length, 2);
+  assert.deepEqual(sets('Squat')[1], { w: '80', r: '5', c: false, type: 'D' });
+});
+
+test('appendDropSetRow skips warm-ups and rounds to the lb step', () => {
+  const stateWithLb = freshState();
+  stateWithLb.settings.weightUnit = 'lbs';
+  initWith(stateWithLb);
+  workout.appendCustomSetRow(null, 'Squat');
+  sets('Squat')[0].w = '135';
+  sets('Squat')[0].r = '5';
+  sets('Squat')[0].c = true;
+  workout.appendWarmupSetRow(null, 'Squat');   // inserted at the front
+  workout.appendDropSetRow(null, 'Squat');
+
+  assert.deepEqual(sets('Squat').map((set) => set.type), ['W', undefined, 'D']);
+  assert.equal(sets('Squat')[2].w, '110');     // 135 × 0.8 = 108 → 110 lb step
+  assert.equal(sets('Squat')[2].r, '5');
+});
+
+test('appendDropSetRow still adds a typed row with no source', () => {
+  initWith(freshState());
+  workout.appendDropSetRow(null, 'Squat');
+  assert.deepEqual(sets('Squat'), [{ w: '', r: '', c: false, type: 'D' }]);
+});
+
 test('cycleSetType walks ""→W→D→F→"" ', () => {
   initWith(freshState());
   workout.appendCustomSetRow(null, 'OHP');
