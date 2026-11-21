@@ -16,6 +16,13 @@ let _restDuration = 90;       // module-level baseline duration in seconds
 let _restRemaining = 90;      // current countdown remaining
 let _restTotalDuration = 90;  // total for progress bar calculation
 
+// The countdown is mirrored to localStorage as an ABSOLUTE end time, so a
+// reload (or an Android WebView killed in the background) resumes the same
+// rest instead of silently losing it. Only state transitions write; the 250ms
+// tick never touches storage.
+export const REST_TIMER_STORAGE_KEY = 'hybrid_restTimer_v1';
+const REST_TIMER_MAX_AGE_MS = 2 * 60 * 60 * 1000;
+
 // ==========================================
 // EXERCISE-TYPE REST PRESCRIPTION
 // ==========================================
@@ -135,6 +142,46 @@ function playRestDoneBeep() {
   } catch(e) { /* Web Audio not supported */ }
 }
 
+function _restStorage() {
+  try {
+    return typeof localStorage !== 'undefined' ? localStorage : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function _persistRestTimer() {
+  const storage = _restStorage();
+  if (!storage) return;
+  try {
+    const now = Date.now();
+    storage.setItem(REST_TIMER_STORAGE_KEY, JSON.stringify({
+      v: 1,
+      lift: _currentLift,
+      working: _currentWorking,
+      duration: _restDuration,
+      total: _restTotalDuration,
+      paused: _restPaused,
+      remaining: Math.max(0, Math.round(_restRemaining)),
+      endsAt: _restPaused ? null : now + Math.max(0, _restRemaining) * 1000,
+      savedAt: now,
+    }));
+  } catch (_) {
+    // Quota / private mode: the countdown still runs in memory.
+  }
+}
+
+function _clearRestTimerPersistence() {
+  const storage = _restStorage();
+  if (!storage) return;
+  try { storage.removeItem(REST_TIMER_STORAGE_KEY); } catch (_) { /* ignore */ }
+}
+
+/** Remove any persisted rest (used by Reset all data). */
+export function clearRestTimerPersistence() {
+  _clearRestTimerPersistence();
+}
+
 function _updateRestTimerDisplay(remaining, total) {
   const clockDisplay = document.getElementById('cockpitTimerClock');
   const progressFill = document.getElementById('restProgressFill');
@@ -169,6 +216,7 @@ function _startRestCountdown() {
     if (remaining <= 0) {
       clearInterval(restTimerInt);
       restTimerInt = null;
+      _clearRestTimerPersistence();
       playRestDoneBeep();
       hapticRestDone();
       // When the screen is off / app backgrounded, Web Audio + haptics are
@@ -259,6 +307,7 @@ export function triggerRestTimerEngine(liftName, setRpe, setType, planRestSec = 
 
   _updateRestTimerDisplay(duration, duration);
   moveRestTimerToActiveExercise();
+  _persistRestTimer();
   _startRestCountdown();
 }
 
@@ -301,6 +350,7 @@ export function toggleRestPause() {
     _startRestCountdown();
   }
   _syncRestPauseUi();
+  _persistRestTimer();
   return _restPaused;
 }
 
@@ -315,6 +365,7 @@ export function adjustRestDuration(delta) {
   _restRemaining = Math.min(newTotal, Math.max(0, _restRemaining + delta));
   _updateRestTimerDisplay(_restRemaining, _restTotalDuration);
   if (restTimerInt !== null) _startRestCountdown();
+  _persistRestTimer();
 
   // Remember the adjustment for this exercise (working sets only) so it
   // auto-applies next set and next session.
@@ -327,6 +378,7 @@ export function adjustRestDuration(delta) {
 export function dismissRestTimer() {
   clearInterval(restTimerInt);
   restTimerInt = null;
+  _clearRestTimerPersistence();
   _restRemaining = _restDuration;
   // Dismissing ends the rest entirely, so a held pause ends with it — otherwise
   // the next set's timer would inherit a "PAUSED" label it never earned.
@@ -352,6 +404,71 @@ export function dismissRestTimer() {
   }
   if (progressFill) progressFill.style.width = '100%';
   _syncRestPauseUi();
+}
+
+/**
+ * Resume the rest that was running when the page last unloaded. The snapshot
+ * is an absolute end time, so time spent backgrounded still counts; a paused
+ * rest keeps its held remaining. A rest that already elapsed is discarded
+ * rather than resurrected at 0:00.
+ * @returns {boolean} whether a rest was restored
+ */
+export function restoreRestTimer() {
+  const storage = _restStorage();
+  if (!storage) return false;
+  let raw = null;
+  try { raw = storage.getItem(REST_TIMER_STORAGE_KEY); } catch (_) { return false; }
+  if (!raw) return false;
+
+  let saved;
+  try { saved = JSON.parse(raw); } catch (_) { _clearRestTimerPersistence(); return false; }
+
+  const now = Date.now();
+  const savedAt = Number(saved?.savedAt);
+  const total = Number(saved?.total);
+  const age = now - savedAt;
+  if (!saved || saved.v !== 1 || !Number.isFinite(savedAt) || age < 0 ||
+      age > REST_TIMER_MAX_AGE_MS || !Number.isFinite(total) || total <= 0 || total > 600) {
+    _clearRestTimerPersistence();
+    return false;
+  }
+
+  const paused = saved.paused === true;
+  let remaining;
+  if (paused) {
+    remaining = Math.round(Number(saved.remaining));
+  } else {
+    const endsAt = Number(saved.endsAt);
+    if (!Number.isFinite(endsAt)) { _clearRestTimerPersistence(); return false; }
+    // Same rounding as the live tick, so restoring can never show MORE time
+    // than the bar showed a moment before the reload.
+    remaining = Math.round((endsAt - now) / 1000);
+  }
+  if (!Number.isFinite(remaining) || remaining <= 0) {
+    // The rest finished while the app was closed. There is nothing to wait
+    // for, so do not resurrect a countdown at 0:00.
+    _clearRestTimerPersistence();
+    return false;
+  }
+
+  const duration = Number(saved.duration);
+  _currentLift = typeof saved.lift === 'string' ? saved.lift : null;
+  _currentWorking = saved.working === true;
+  _restDuration = Number.isFinite(duration) && duration > 0 && duration <= 600 ? duration : total;
+  _restTotalDuration = total;
+  _restRemaining = Math.min(remaining, total);
+  _restPaused = paused;
+
+  const timerBar = document.getElementById('cockpitTimerBar');
+  if (timerBar) {
+    timerBar.classList.add('active');
+    timerBar.classList.remove('rest-warning', 'rest-done');
+  }
+  _updateRestTimerDisplay(_restRemaining, _restTotalDuration);
+  moveRestTimerToActiveExercise();
+  _syncRestPauseUi();
+  if (!paused) _startRestCountdown();
+  return true;
 }
 
 // ==========================================

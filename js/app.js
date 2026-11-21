@@ -67,7 +67,7 @@ import {
   activeWorkoutTimerKey,
 } from './workout.js';
 
-import { startWorkoutTimer, dismissRestTimer, toggleRestPause, checkActiveTimerOnLoad } from './timers.js';
+import { startWorkoutTimer, dismissRestTimer, toggleRestPause, checkActiveTimerOnLoad, restoreRestTimer } from './timers.js';
 import { saveMapToDB } from './db.js';
 import { initGarminRunImport, initGarminGymImport } from './garmin.js';
 import { initRunLogger, openRunLogger, closeRunLogger, saveManualRun } from './run-logger.js';
@@ -1947,6 +1947,9 @@ async function bootstrapApp() {
     checkActiveTimerOnLoad(activeWorkoutTimerKey());
     window._hybridGetProgram = () => getProgramById(appState.activeProgramId);
     applySettingsOnBoot(appState);
+    // A rest that was running when the page unloaded resumes from its absolute
+    // end time — backgrounding or a reload must not silently end the countdown.
+    restoreRestTimer();
     applyModuleVisibility(appState);
     checkForAutomaticWeekAdvance();
     initNotifications(() => appState);

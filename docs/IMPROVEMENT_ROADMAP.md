@@ -63,14 +63,15 @@ upgrade have landed. In order:
   real shape-aware trend, all-time bests and PR baseline.
 - **Logger** supports reps, timed holds and loaded carries; failure, per-set
   rest/note, plate lines, load basis, effort, per-exercise shape/load/basis
-  defaults, warm-up rest, and a Last time / Next time recap.
+  defaults, warm-up rest, a rest timer that survives reload/backgrounding, and a
+  Last time / Next time recap.
 - **Plans** keeps the active plan first, recommends from athlete fit, and has a
   Overview | Structure | Plan detail with week-stepped targets.
 
 Deliberate follow-ups (not regressions): readiness history components,
-per-muscle corridor charts, the `+ Drop` shortcut, rest-timer persistence
-across reload/background, adaptive warm-up rounding, Android landscape/device
-checks and the remaining authored exercise-metadata batches.
+per-muscle corridor charts, the `+ Drop` shortcut, adaptive warm-up rounding,
+Android landscape/device checks and the remaining authored exercise-metadata
+batches.
 
 ### What holds the experience back
 
@@ -606,8 +607,8 @@ gap in the journey, and is folded into the Phase 6 visual-system work.
 
 ## Phase 2D — Logger upgrade (planned)
 
-**Status: L0–L2 done; L3 rest overrides and L4 plate line done.** Remaining:
-the `+ Drop` shortcut, timer persistence and adaptive warm-up rounding. The openGym logger was inspected as a reference for
+**Status: L0–L2 done; L3 rest overrides, L4 plate line and timer persistence
+done.** Remaining: the `+ Drop` shortcut and adaptive warm-up rounding. The openGym logger was inspected as a reference for
 CONCEPTS only. No openGym code, media or nested data shape is copied.
 
 **Outcome:** the number the athlete types means what they think it means, and a
@@ -1820,6 +1821,19 @@ Avoid parallel redesign of every screen. Each step should be usable and
 testable on its own.
 
 ## 12. Session log
+
+- **2026-11-21 — Rest timer survives reload and backgrounding.**
+  - The countdown is persisted to `localStorage` (`hybrid_restTimer_v1`) as an
+    absolute end time, written only on state transitions — never on the 250 ms
+    tick. A reload or a WebView killed in the background resumes the same rest
+    with the time spent away already deducted.
+  - A paused rest restores paused with its held remaining; adjusting ±30 s
+    rewrites the snapshot. Expired rests are discarded rather than resurrected
+    at 0:00, stale snapshots (>2 h) are ignored, and Reset all data clears it.
+  - Validation: 7 new persistence unit tests, rest-timer browser check now
+    reloads mid-rest at 320/390/412 px and proves the clock resumes, plus the
+    full node suite (1,996), typecheck and smoke.
+  - Next: the `+ Drop` shortcut or the Android device checklist.
 
 - **2026-11-21 — Overhaul verification complete.**
   - All major Home/Train/History/Progress/Logger gaps identified in the audits

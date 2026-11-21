@@ -154,6 +154,35 @@ try {
 
     if (await warmupVisible()) fail(`${tag}: + Warmup still offered at equal prominence after a working set was logged`);
 
+    // ---- a reload resumes the same rest ------------------------------------
+    // The bar is pure wall-clock state. Losing it on reload meant the athlete
+    // had to guess the remaining time, which is the opposite of a rest timer.
+    const beforeReload = t.clock;
+    // Spend real time resting before the reload, so the assertion can tell
+    // "resumed from an absolute end time" apart from "restarted the clock".
+    await page.waitForTimeout(1500);
+    await page.reload({ waitUntil: 'load' });
+    await enterCockpit(page);
+    await page.waitForSelector('#cockpitTimerBar.active');
+    const restored = await readTimer(page);
+    console.log(`${tag} reload:`, JSON.stringify({ beforeReload, after: restored.clock, paused: restored.paused }));
+    if (!restored.active) fail(`${tag}: reloading lost the running rest timer`);
+    if (restored.paused) fail(`${tag}: the restored rest came back paused`);
+    const clockSeconds = (clock) => {
+      const [m, sec] = String(clock).split(':').map((n) => parseInt(n, 10) || 0);
+      return (m * 60) + sec;
+    };
+    if (clockSeconds(restored.clock) >= clockSeconds(beforeReload)) {
+      fail(`${tag}: the restored rest ignored time spent reloading (${beforeReload} -> ${restored.clock})`);
+    }
+    if (clockSeconds(restored.clock) < clockSeconds(beforeReload) - 6) {
+      fail(`${tag}: the restored rest lost more time than the reload took (${beforeReload} -> ${restored.clock})`);
+    }
+    await page.waitForTimeout(1500);
+    if ((await readTimer(page)).clock === restored.clock) {
+      fail(`${tag}: the restored rest never resumed counting`);
+    }
+
     // ---- pause actually holds the clock ------------------------------------
     await page.click('#restPauseBtn');
     await page.waitForTimeout(150);
