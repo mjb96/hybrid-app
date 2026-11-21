@@ -10208,6 +10208,36 @@ html[data-module-recovery="off"] [data-module="recovery"] {
   color: var(--text-muted); font-size: .72rem; font-weight: 700;
 }
 
+/* Body measurements — the slow signal beside the scale. */
+.bw-measurements { margin-bottom: var(--space-4); }
+.bw-ms-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.bw-ms-heading { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.bw-ms-title { font-size: .82rem; }
+.bw-ms-head .text-muted { font-size: .66rem; }
+/* The card header sits outside the 12-surface touch walk, so size the control
+   itself: 44px each, adjacent boxes, no expanded overlay that could overlap. */
+.bw-ms-head .settings-toggle-btn { min-height: var(--touch-target); min-width: var(--touch-target); }
+.bw-ms-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
+.bw-ms-site {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 8px 10px; border-radius: 12px;
+  border: 1px solid var(--border-subtle); background: var(--overlay-md);
+}
+.bw-ms-site span { color: var(--text-muted); font-size: .66rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+.bw-ms-site strong { color: var(--text-primary); font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+.bw-ms-site small { color: var(--text-muted); font-size: .66rem; font-weight: 700; }
+.bw-ms-delta { color: var(--color-cyan); font-size: .68rem; font-style: normal; font-weight: 700; }
+.bw-ms-delta--none { color: var(--text-muted); font-weight: 600; }
+.ms-sheet-unit { color: var(--text-muted); font-size: .72rem; font-weight: 800; margin-left: auto; margin-right: 8px; }
+.ms-sheet-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 4px 0 10px; }
+.ms-sheet-field { display: flex; flex-direction: column; gap: 4px; }
+.ms-sheet-field span { color: var(--text-muted); font-size: .68rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.ms-sheet-field input {
+  min-height: 44px; width: 100%; border-radius: 12px; border: 1px solid var(--border-medium);
+  background: var(--bg-input); color: var(--text-primary); font-size: 1rem; font-weight: 700;
+  padding: 0 10px; font-variant-numeric: tabular-nums;
+}
+
 /* ============================================================================
    THEME PALETTES
    Midnight is the icon palette and the default for dark/system users. Slate is

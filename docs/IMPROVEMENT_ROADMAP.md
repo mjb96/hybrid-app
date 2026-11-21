@@ -58,7 +58,8 @@ upgrade have landed. In order:
   source filter, a calendar day sheet, exact detail, lossless editing
   (add/remove exercise and set), delete/undo and Repeat workout.
 - **Progress** leads with a this-week hero and 12-week strip, then Strength,
-  Running, Recovery and Review. Calendar-week attribution is used throughout;
+  Running, Recovery and Review, with body measurements (waist, chest, hips,
+  arm, thigh, neck) beside the bodyweight trend. Calendar-week attribution is used throughout;
   the Training Report covers 30 days or 12 months; the exercise drilldown has a
   real shape-aware trend, all-time bests and PR baseline.
 - **Logger** supports reps, timed holds and loaded carries; failure, per-set
@@ -1829,6 +1830,23 @@ Avoid parallel redesign of every screen. Each step should be usable and
 testable on its own.
 
 ## 12. Session log
+
+- **2026-11-21 — Body measurements.**
+  - The bodyweight view now carries a Measurements card: waist, chest, hips,
+    arm, thigh and neck, stored canonically in centimetres with one record per
+    date and any site optional. It shows each site's latest reading, the change
+    since that site was last measured, and the last four dates.
+  - A cm/in toggle changes the reading only — stored values are never rewritten.
+    `settings.measurementUnit` is seeded from the athlete's kg/lb choice by
+    v12→v13, and the raw centimetres export as their own CSV.
+  - The sheet prefills an existing date exactly; a different date starts blank
+    with the last reading as a placeholder, because copying today's numbers to
+    yesterday would record a measurement that was never taken.
+  - Validation: 10 new measurement/CSV tests, a v13 migration test, and the
+    bodyweight browser check now logs, edits, unit-toggles and deletes
+    measurements in the real app.
+  - Next: a measurements CSV importer (export exists, the reader does not), then
+    progress photos, which need a storage decision.
 
 - **2026-11-21 — Adaptive warm-up ramp.**
   - The auto ramp now covers dumbbells, which the settings copy has promised all

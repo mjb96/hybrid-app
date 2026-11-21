@@ -92,6 +92,8 @@ export interface AppState {
   customExercises: any[];
   customPrograms: any[];
   bodyWeightLog: Array<{ weight: number; date?: string }>;
+  /** Canonical centimetres, one record per date; any site may be absent. */
+  bodyMeasurements: Array<{ date: string; waist?: number; chest?: number; hips?: number; arm?: number; thigh?: number; neck?: number }>;
   thresholdPaceSeconds: number | null;
   deloadApplied: any;
   _deloadDismissedWeek: string | null;

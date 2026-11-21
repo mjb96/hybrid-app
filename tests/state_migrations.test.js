@@ -135,6 +135,28 @@ test('v12 seeds Home/Progress card preferences without hiding anything', () => {
   assert.deepEqual(state.settings.ui, { home: { hidden: [] }, progress: { hidden: [] } });
 });
 
+test('v13 seeds an empty measurement log and a unit from the weight choice', () => {
+  const pounds = { schemaVersion: 12, settings: { weightUnit: 'lbs' }, weekStartedAt: '2026-11-16' };
+  migrateState(pounds);
+  assert.equal(pounds.schemaVersion, CURRENT_SCHEMA_VERSION);
+  assert.deepEqual(pounds.bodyMeasurements, []);
+  assert.equal(pounds.settings.measurementUnit, 'in');
+
+  const kilos = { schemaVersion: 12, settings: { weightUnit: 'kg' }, weekStartedAt: '2026-11-16' };
+  migrateState(kilos);
+  assert.equal(kilos.settings.measurementUnit, 'cm');
+
+  // A chosen unit and existing records survive a re-run untouched.
+  const chosen = {
+    schemaVersion: 12,
+    settings: { weightUnit: 'kg', measurementUnit: 'in' },
+    bodyMeasurements: [{ date: '2026-11-01', waist: 84 }],
+  };
+  migrateState(chosen);
+  assert.equal(chosen.settings.measurementUnit, 'in');
+  assert.deepEqual(chosen.bodyMeasurements, [{ date: '2026-11-01', waist: 84 }]);
+});
+
 test('migrateState is idempotent — already-current state is untouched', () => {
   const state = {
     schemaVersion: CURRENT_SCHEMA_VERSION,

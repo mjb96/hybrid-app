@@ -8,6 +8,7 @@
 // ==========================================
 import { renderBodyWeightWithMA } from '../charts.js';
 import { buildBodyweightModel } from '../../metrics/bodyweight.js';
+import { buildMeasurementModel, cmToDisplay, roundDisplay } from '../../metrics/measurements.js';
 import { formatDayMonth, todayKey } from '../../dates.js';
 
 let rangeDays = 90;
@@ -97,6 +98,56 @@ function weeklyHtml(model) {
 }
 
 /**
+ * Progress → Body weight → Measurements. The tape is the slow signal the scale
+ * hides, so it sits beside the trend rather than in its own destination. Only
+ * measured sites render: an unmeasured neck is not a zero.
+ * @param {ReturnType<typeof buildMeasurementModel>} model
+ */
+function measurementsHtml(model) {
+  const unit = model.unit;
+  const toggle = `<div class="settings-toggle-group" role="group" aria-label="Measurement unit">
+      <button type="button" class="settings-toggle-btn${unit === 'cm' ? ' active' : ''}" data-action="measurement-unit" data-unit="cm">cm</button>
+      <button type="button" class="settings-toggle-btn${unit === 'in' ? ' active' : ''}" data-action="measurement-unit" data-unit="in">in</button>
+    </div>`;
+  const head = `<div class="bw-ms-head">
+      <div class="bw-ms-heading">
+        <strong class="bw-ms-title">Measurements</strong>
+        <small class="text-muted">${model.count
+          ? `Updated ${formatDayMonth(model.latestDate)} · ${model.count} ${model.count === 1 ? 'entry' : 'entries'}`
+          : 'Waist, chest, arm and more'}</small>
+      </div>
+      ${toggle}
+    </div>`;
+  const logButton = '<button type="button" class="btn-action-block btn-blue" data-action="open-ms-sheet">Log measurements</button>';
+
+  if (!model.count) {
+    return `<article class="card-dark p-3 bw-measurements">
+      ${head}
+      <p class="bw-summary__note">Changes in the mirror often arrive before changes on the scale. Measure the same spots at the same time of day.</p>
+      ${logButton}
+    </article>`;
+  }
+
+  const cells = model.tracked.map((site) => {
+    const value = roundDisplay(cmToDisplay(site.latest.cm, unit), unit);
+    const delta = site.delta == null
+      ? '<em class="bw-ms-delta bw-ms-delta--none">first reading</em>'
+      : `<em class="bw-ms-delta">${site.delta > 0 ? '+' : ''}${roundDisplay(site.delta, unit)}</em>`;
+    return `<div class="bw-ms-site">
+      <span>${site.label}</span>
+      <strong>${value.toFixed(1)} <small>${unit}</small></strong>
+      ${delta}
+    </div>`;
+  }).join('');
+
+  return `<article class="card-dark p-3 bw-measurements">
+    ${head}
+    <div class="bw-ms-grid">${cells}</div>
+    ${logButton}
+  </article>`;
+}
+
+/**
  * @param {any} model
  * @param {any} state
  */
@@ -130,6 +181,9 @@ export function renderBodyWeightAnalytics(_data, getState) {
 
   const weekly = document.getElementById('bwWeeklyStats');
   if (weekly) weekly.innerHTML = weeklyHtml(model);
+
+  const measurements = document.getElementById('bwMeasurements');
+  if (measurements) measurements.innerHTML = measurementsHtml(buildMeasurementModel(state));
 
   const date = document.getElementById('analyticsBwDate');
   if (date && !date.value) date.value = todayKey();

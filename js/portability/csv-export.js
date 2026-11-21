@@ -4,6 +4,7 @@
 
 import { runSessionsForDay } from '../state/run-sessions.js';
 import { normalizeWeighIns } from '../metrics/bodyweight.js';
+import { MEASUREMENT_SITES, normalizeMeasurements } from '../metrics/measurements.js';
 
 export function csvCell(value) {
   const text = value == null ? '' : String(value);
@@ -43,6 +44,19 @@ export function buildBodyweightCsv(state) {
   let csv = row(['Date', 'Weight']);
   for (const entry of normalizeWeighIns(state?.bodyWeightLog)) {
     csv += row([entry.date, entry.weight]);
+  }
+  return csv;
+}
+
+/**
+ * Body measurements, canonical centimetres, one row per date. Blank sites are
+ * empty cells rather than zeros.
+ * @param {any} state
+ */
+export function buildMeasurementsCsv(state) {
+  let csv = row(['Date', ...MEASUREMENT_SITES.map((site) => `${site.label} (cm)`)]);
+  for (const entry of normalizeMeasurements(state?.bodyMeasurements)) {
+    csv += row([entry.date, ...MEASUREMENT_SITES.map((site) => entry[site.key] ?? '')]);
   }
   return csv;
 }

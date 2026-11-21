@@ -106,6 +106,16 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   The view lives in `js/analytics/views/view-bodyweight.js`, the SVG chart in
   `js/analytics/charts.js`, and the prefilled weigh-in sheet (steppers, date,
   recent edit/delete) in `js/bodyweight-sheet.js`.
+- Body measurements: `js/metrics/measurements.js` is the pure model behind the
+  Measurements card beside the bodyweight trend — waist, chest, hips, arm,
+  thigh and neck, stored canonically in CENTIMETRES with one record per date
+  and any site optional (`bodyMeasurements: [{ date, waist?, … }]`). A unit
+  toggle reads cm/in without rewriting stored values; `settings.measurementUnit`
+  is seeded by v12→v13 from the existing weight unit. The sheet
+  (`js/measurements-sheet.js`) prefills an existing date exactly and leaves a
+  new date blank (the last reading is only a placeholder) — changing the date
+  must reload the fields. `buildMeasurementsCsv` exports the raw centimetres
+  from Settings → Data.
 - Warm-up ramp: `js/workout/warmup-ramp.js` builds editable warm-up rows above
   the working weight. Barbells ramp 40/60/80% above the bar, rounded to the
   active profile's plates and pair counts; dumbbells have no bar, so each rung
