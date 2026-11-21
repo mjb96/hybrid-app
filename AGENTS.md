@@ -438,8 +438,12 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
 - Workout cockpit: in-session **exercise swap** (`js/workout/substitutions.js` +
   pure `applyExerciseSwap` in `workout-order.js`; re-keys the sets array to preserve
   target+logged data), per-side **plate math** (`js/workout/plates.js`), swipe
-  between days (`neighborDay`). Coach: deterministic **ask-the-coach** Q&A
-  (`js/brain/coach-qa.js`, chips on the briefing) + PR share card (`js/brain/pr-share.js`).
+  between days (`neighborDay`). `+ Drop` (`appendDropSetRow`) appends a separate
+  `type:'D'` row seeded from the last FILLED non-warm-up set at 80% load rounded
+  to 2.5 kg / 5 lb, copying its shape/reps; it is hidden until a working set is
+  logged and never discounts a bodyweight/band load. Coach: deterministic
+  **ask-the-coach** Q&A (`js/brain/coach-qa.js`, chips on the briefing) + PR share
+  card (`js/brain/pr-share.js`).
 - Bands do TWO opposite jobs (`js/workout/load-mode.js`): on a bodyweight movement a
   band ASSISTS (`w = bodyweight − band`, `loadMode: 'assisted'`); on anything else the
   band IS the load (`w = band`, `loadMode: 'banded'`). `bandRole()` decides from the

@@ -74,7 +74,7 @@ import {
   commitRunLogging, handleRunLoggingInput,
 } from './workout/run-logging.js';
 import {
-  appendCustomSetRow, appendWarmupSetRow, removeCustomSetRow, cycleSetType, cycleSetMode,
+  appendCustomSetRow, appendWarmupSetRow, appendDropSetRow, removeCustomSetRow, cycleSetType, cycleSetMode,
   setSetLoadMode, cycleSetLoad, setPerSetRir, toggleSetFailure, toggleLoadBasis,
   editSetRest, clearSetRest, editSetNote,
   currentBodyweight as _currentBodyweight,
@@ -82,7 +82,7 @@ import {
 // Re-exported for js/app.js, which imports these from here.
 export { openConfirmResetModal, closeConfirmResetModal, executeResetActiveDayMetrics };
 export {
-  appendCustomSetRow, appendWarmupSetRow, removeCustomSetRow, cycleSetType, cycleSetMode,
+  appendCustomSetRow, appendWarmupSetRow, appendDropSetRow, removeCustomSetRow, cycleSetType, cycleSetMode,
   setSetLoadMode, cycleSetLoad, setPerSetRir, toggleSetFailure, toggleLoadBasis,
   editSetRest, clearSetRest, editSetNote,
 };
@@ -2108,6 +2108,7 @@ document.addEventListener('click', (e) => {
   else if (action === 'use-previous-values') usePreviousValues(liftName);
   else if (action === 'append-set') appendCustomSetRow(target, liftName);
   else if (action === 'append-warmup-set') appendWarmupSetRow(target, liftName);
+  else if (action === 'append-drop-set') appendDropSetRow(target, liftName);
   else if (action === 'remove-set') removeCustomSetRow(liftName, sIdx);
   else if (action === 'toggle-set-adv') target.closest('.cockpit-set-row')?.classList.toggle('adv-open');
   else if (action === 'cycle-set-type') cycleSetType(liftName, sIdx);
