@@ -115,7 +115,10 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   (`js/measurements-sheet.js`) prefills an existing date exactly and leaves a
   new date blank (the last reading is only a placeholder) — changing the date
   must reload the fields. `buildMeasurementsCsv` exports the raw centimetres
-  from Settings → Data.
+  from Settings → Data, and `js/portability/import-measurements-csv.js` reads
+  that shape back (`date,waist_cm,…`, `_in` columns converted): rows for the
+  same date merge site by site, implausible readings are skipped, and an
+  existing date is never overwritten.
 - Warm-up ramp: `js/workout/warmup-ramp.js` builds editable warm-up rows above
   the working weight. Barbells ramp 40/60/80% above the bar, rounded to the
   active profile's plates and pair counts; dumbbells have no bar, so each rung

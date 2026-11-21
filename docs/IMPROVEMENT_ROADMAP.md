@@ -1845,8 +1845,11 @@ testable on its own.
   - Validation: 10 new measurement/CSV tests, a v13 migration test, and the
     bodyweight browser check now logs, edits, unit-toggles and deletes
     measurements in the real app.
-  - Next: a measurements CSV importer (export exists, the reader does not), then
-    progress photos, which need a storage decision.
+  - The CSV export now round-trips: `import-measurements-csv.js` reads the same
+    shape (cm or inch columns), merges same-date rows, skips implausible
+    readings and never overwrites an existing date. Settings → Data auto-detects
+    it beside the bodyweight reader.
+  - Next: progress photos, which need a storage decision.
 
 - **2026-11-21 — Adaptive warm-up ramp.**
   - The auto ramp now covers dumbbells, which the settings copy has promised all
