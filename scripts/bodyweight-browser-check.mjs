@@ -133,6 +133,70 @@ try {
   await page.waitForFunction((key) => JSON.parse(localStorage.getItem(key) || '{}')?.settings?.targetWeight === 79, STORAGE_KEY);
   ok(/Goal 79 kg/.test(await page.locator('#bwChartContainer').innerHTML()), 'the goal weight updates the graph');
 
+  // ---- body measurements --------------------------------------------------
+  // The tape is the slow signal beside the scale: shared sheet, canonical cm,
+  // a unit toggle that never rewrites stored data, and a date that cannot
+  // inherit the previous day's numbers.
+  await page.click('#analytics-bodyweight [data-action="open-ms-sheet"]');
+  await page.waitForSelector('#measurementsSheet.active');
+  ok((await page.locator('#measurementsSheetTitle').innerText()) === 'Log measurements', 'the measurements sheet opens in log mode');
+  await page.fill('#msSheet_waist', '84.5');
+  await page.fill('#msSheet_chest', '102');
+  await page.click('[data-action="save-measurements-sheet"]');
+  await page.waitForFunction((key) => {
+    const stored = JSON.parse(localStorage.getItem(key) || '{}');
+    const day = stored.bodyMeasurements?.find((entry) => entry.date === '2026-11-19');
+    return Number(day?.waist) === 84.5 && Number(day?.chest) === 102;
+  }, STORAGE_KEY);
+  await page.waitForFunction(() => !document.getElementById('measurementsSheet')?.classList.contains('active'));
+  const cardText = () => page.locator('#bwMeasurements').innerText();
+  const msTargets = await page.evaluate(() => {
+    const box = (el) => (el ? Math.round(el.getBoundingClientRect().height) : 0);
+    return {
+      toggle: box(document.querySelector('#bwMeasurements [data-action="measurement-unit"][data-unit="cm"]')),
+      log: box(document.querySelector('#bwMeasurements [data-action="open-ms-sheet"]')),
+    };
+  });
+  ok(msTargets.toggle >= 44, `the unit toggle is ${msTargets.toggle}px, at least 44px`);
+  ok(msTargets.log >= 44, `the Log measurements button is ${msTargets.log}px, at least 44px`);
+  ok(/84\.5 cm/.test(await cardText()), 'the card shows the saved waist in centimetres');
+  ok(/102\.0 cm/.test(await cardText()), 'the card shows the saved chest');
+
+  await page.click('#analytics-bodyweight [data-action="open-ms-sheet"]');
+  await page.waitForSelector('#measurementsSheet.active');
+  ok((await page.locator('#msSheet_waist').inputValue()) === '84.5', 'an existing date prefills its own numbers');
+  ok((await page.locator('#measurementsSheetTitle').innerText()) === 'Edit measurements', 'an existing date opens in edit mode');
+  await page.fill('#msSheetDate', '2026-11-10');
+  await page.locator('#msSheetDate').dispatchEvent('change');
+  ok((await page.locator('#msSheet_waist').inputValue()) === '', 'another date starts blank instead of copying today');
+  ok((await page.locator('#measurementsSheetTitle').innerText()) === 'Log measurements', 'another date opens in log mode');
+  await page.fill('#msSheet_waist', '85.5');
+  await page.click('[data-action="save-measurements-sheet"]');
+  await page.waitForFunction((key) => {
+    const stored = JSON.parse(localStorage.getItem(key) || '{}');
+    return stored.bodyMeasurements?.length === 2;
+  }, STORAGE_KEY);
+  ok(/2 entries/.test(await cardText()), 'the card counts both measurement dates');
+
+  await page.click('#bwMeasurements [data-action="measurement-unit"][data-unit="in"]');
+  await page.waitForFunction((key) => JSON.parse(localStorage.getItem(key) || '{}')?.settings?.measurementUnit === 'in', STORAGE_KEY);
+  ok(/33\.3 in/.test(await cardText()), 'the card reads inches after the unit toggle');
+  const storedCm = await page.evaluate((key) => {
+    const stored = JSON.parse(localStorage.getItem(key) || '{}');
+    return stored.bodyMeasurements?.find((entry) => entry.date === '2026-11-19')?.waist;
+  }, STORAGE_KEY);
+  ok(storedCm === 84.5, 'changing the unit never rewrites stored centimetres');
+
+  await page.click('#analytics-bodyweight [data-action="open-ms-sheet"]');
+  await page.waitForSelector('#measurementsSheet.active');
+  ok((await page.locator('#msSheetRecent .bw-sheet-recent-row').count()) >= 1, 'other measurement dates are one tap away');
+  await page.click('[data-action="delete-ms-row"]');
+  await page.waitForSelector('.cmodal [data-cm="ok"]');
+  await page.click('.cmodal [data-cm="ok"]');
+  await page.waitForFunction((key) => JSON.parse(localStorage.getItem(key) || '{}')?.bodyMeasurements?.length === 1, STORAGE_KEY);
+  ok(true, 'delete removes a measurement date');
+  await page.waitForFunction(() => !document.getElementById('measurementsSheet')?.classList.contains('active'));
+
   ok(errors.length === 0, `no page errors (${errors.join('; ') || 'none'})`);
   await context.close();
 } finally {
@@ -143,4 +207,4 @@ if (failures.length) {
   console.error(`bodyweight-browser-check: FAIL — ${failures.length} failure(s)`);
   process.exit(1);
 }
-console.log('bodyweight-browser-check: PASS — graph, goal line, weekly rate, range and entry.');
+console.log('bodyweight-browser-check: PASS — graph, goal line, weekly rate, range, weight entry and measurements.');

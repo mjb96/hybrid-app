@@ -7,7 +7,7 @@
 // left as a trap for a future button.
 // =============================================================================
 import { showToast } from '../toast.js';
-import { buildBodyweightCsv, buildTrainingCsv } from '../portability/csv-export.js';
+import { buildBodyweightCsv, buildMeasurementsCsv, buildTrainingCsv } from '../portability/csv-export.js';
 import { exportResultMessage, saveTextExport } from '../portability/export-service.js';
 
 let _getState = null;
@@ -39,5 +39,17 @@ export async function triggerBodyweightCSVExport() {
     mime: 'text/csv',
   });
   const copy = exportResultMessage(result, 'Bodyweight CSV');
+  showToast(copy.message, copy.error);
+}
+
+export async function triggerMeasurementsCSVExport() {
+  const appState = _getState();
+  if (!appState) return;
+  const result = await saveTextExport({
+    filename: 'openhybrid-measurements-export.csv',
+    content: buildMeasurementsCsv(appState),
+    mime: 'text/csv',
+  });
+  const copy = exportResultMessage(result, 'Measurements CSV');
   showToast(copy.message, copy.error);
 }

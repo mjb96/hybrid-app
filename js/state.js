@@ -12,7 +12,7 @@ export { showToast } from './toast.js';
 import { showToast } from './toast.js';
 import { secureRandomSuffix } from './util/secure-id.js';
 import { recomputeLoadMetrics } from './brain/load_models.js';
-import { initImportExport, triggerCSVExport, triggerBodyweightCSVExport } from './state/import-export.js';
+import { initImportExport, triggerCSVExport, triggerBodyweightCSVExport, triggerMeasurementsCSVExport } from './state/import-export.js';
 import { migrateState } from './state/migrations.js';
 import { showMigrationRecovery } from './state/migration-recovery-ui.js';
 import { preserveCorruptState, recoveryRawState } from './state/corrupt-state.js';
@@ -30,7 +30,7 @@ import {
   isRecoveryGatePending,
 } from './state/recovery-gate.js';
 
-export { triggerCSVExport, triggerBodyweightCSVExport };
+export { triggerCSVExport, triggerBodyweightCSVExport, triggerMeasurementsCSVExport };
 
 export const STORAGE_KEY = 'hybrid_engine_v2_state';
 // Written beside the state so the native mirror can tell which copy is newer.
@@ -51,6 +51,7 @@ export let appState = {
   customExercises: [],
   customPrograms: [],
   bodyWeightLog: [],
+  bodyMeasurements: [],
   thresholdPaceSeconds: null,
   deloadApplied: null,
   _deloadDismissedWeek: null,

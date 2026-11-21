@@ -32,6 +32,7 @@ import {
   pullEngineDataFromStorage,
   triggerCSVExport,
   triggerBodyweightCSVExport,
+  triggerMeasurementsCSVExport,
   showToast,
   savePersonalRating,
   getPersonalRating,
@@ -52,6 +53,10 @@ import { buildTrainLanding } from './train/train-landing.js';
 import { renderTrainLanding } from './train/view-train-landing.js';
 import { initAnalytics, renderAnalytics, saveThresholdPace, saveBodyweightGoal, setBodyweightRangeAction, setAnalyticsContext, shareScoreCard } from './analytics.js';
 import { initBodyweightSheet, openBodyweightSheet, closeBodyweightSheet, stepBodyweight, saveBodyweightSheet, deleteBodyweightEntry } from './bodyweight-sheet.js';
+import {
+  initMeasurementsSheet, openMeasurementsSheet, closeMeasurementsSheet, saveMeasurementsSheet,
+  deleteMeasurementEntry, setMeasurementUnit,
+} from './measurements-sheet.js';
 import { initSessionRecap, openSessionRecap, closeSessionRecap, isSessionRecapOpen, sharePRFromRecap } from './session-recap.js';
 import { initDragDrop } from './dragdrop.js';
 import {
@@ -1340,6 +1345,13 @@ else if (action === 'export-bodyweight-csv') triggerBodyweightCSVExport();
   else if (action === 'save-bw-sheet') saveBodyweightSheet();
   else if (action === 'edit-bw-row') openBodyweightSheet(target.getAttribute('data-date') || undefined);
   else if (action === 'delete-bw-row') deleteBodyweightEntry(target.getAttribute('data-date') || '');
+  else if (action === 'open-ms-sheet') openMeasurementsSheet(target.getAttribute('data-date') || undefined);
+  else if (action === 'close-measurements-sheet') closeMeasurementsSheet();
+  else if (action === 'save-measurements-sheet') saveMeasurementsSheet();
+  else if (action === 'edit-ms-row') openMeasurementsSheet(target.getAttribute('data-date') || undefined);
+  else if (action === 'delete-ms-row') deleteMeasurementEntry(target.getAttribute('data-date') || '');
+  else if (action === 'measurement-unit') setMeasurementUnit(target.getAttribute('data-unit') || 'cm');
+  else if (action === 'export-measurements-csv') triggerMeasurementsCSVExport();
   else if (action === 'bw-range') setBodyweightRangeAction(target.getAttribute('data-days'));
   else if (action === 'save-bw-goal') saveBodyweightGoal();
 
@@ -1540,6 +1552,10 @@ initEngine(getState, getDays);
 initHome(getState, getSelectedDay, getDays);
 initAnalytics(getState, getDays);
 initBodyweightSheet(() => {
+  renderAnalytics();
+  if (document.getElementById('view-home')?.classList.contains('active')) renderHome();
+});
+initMeasurementsSheet(() => {
   renderAnalytics();
   if (document.getElementById('view-home')?.classList.contains('active')) renderHome();
 });

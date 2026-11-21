@@ -1037,6 +1037,7 @@
             </div>
           </details>
         </article>
+        <div id="bwMeasurements"></div>
         <div id="bwWeeklyStats"></div>
       </div>
 
@@ -1825,6 +1826,7 @@
           <button class="settings-action-btn" data-action="export-data">Export Training Data (JSON)</button>
           <button class="settings-action-btn" data-action="export-csv">Export Spreadsheet (CSV)</button>
           <button class="settings-action-btn" data-action="export-bodyweight-csv">Export Bodyweight (CSV)</button>
+          <button class="settings-action-btn" data-action="export-measurements-csv">Export Measurements (CSV)</button>
           <button class="settings-action-btn" data-action="import-data">Import Backup File</button>
           <button class="settings-action-btn" id="settingsRestoreBackupBtn" data-action="restore-import-backup" style="display:none;">Restore Previous Import Backup</button>
           <input type="file" id="settingsImportFile" aria-label="Choose backup file to import" accept=".json" class="hidden-input">
@@ -2249,6 +2251,32 @@
       <button type="button" class="btn-action-block btn-blue mt-0" style="width:100%;" data-action="save-bw-sheet">Save</button>
     </div>
     <div id="bwSheetRecent" class="bw-sheet-recent"></div>
+  </div>
+
+  <div id="measurementsSheetBackdrop" class="sheet-backdrop" data-action="close-measurements-sheet"></div>
+  <div id="measurementsSheet" class="bottom-sheet" role="dialog" aria-labelledby="measurementsSheetTitle" data-modal-root data-modal-close-action="close-measurements-sheet" data-modal-companion="#measurementsSheetBackdrop" inert aria-hidden="true">
+    <div class="bottom-sheet-handle"></div>
+    <div class="bottom-sheet-header">
+      <h3 id="measurementsSheetTitle" class="bottom-sheet-title">Log measurements</h3>
+      <span id="msSheetUnit" class="ms-sheet-unit">cm</span>
+      <button class="sheet-close-btn" data-action="close-measurements-sheet" aria-label="Close">✕</button>
+    </div>
+    <div class="ms-sheet-grid">
+        <label class="ms-sheet-field"><span>Waist</span><input id="msSheet_waist" type="number" step="0.1" min="0" inputmode="decimal" aria-label="Waist"></label>
+        <label class="ms-sheet-field"><span>Chest</span><input id="msSheet_chest" type="number" step="0.1" min="0" inputmode="decimal" aria-label="Chest"></label>
+        <label class="ms-sheet-field"><span>Hips</span><input id="msSheet_hips" type="number" step="0.1" min="0" inputmode="decimal" aria-label="Hips"></label>
+        <label class="ms-sheet-field"><span>Arm</span><input id="msSheet_arm" type="number" step="0.1" min="0" inputmode="decimal" aria-label="Arm"></label>
+        <label class="ms-sheet-field"><span>Thigh</span><input id="msSheet_thigh" type="number" step="0.1" min="0" inputmode="decimal" aria-label="Thigh"></label>
+        <label class="ms-sheet-field"><span>Neck</span><input id="msSheet_neck" type="number" step="0.1" min="0" inputmode="decimal" aria-label="Neck"></label>
+    </div>
+    <div class="settings-row">
+      <label class="settings-row-label" for="msSheetDate">Date</label>
+      <input type="date" class="settings-input" id="msSheetDate">
+    </div>
+    <div class="settings-profile-actions">
+      <button type="button" class="btn-action-block btn-blue mt-0" style="width:100%;" data-action="save-measurements-sheet">Save</button>
+    </div>
+    <div id="msSheetRecent" class="bw-sheet-recent"></div>
   </div>
 
   <!-- Quick-start sheet — opened from Train; start another workout, run, walk or fast. -->

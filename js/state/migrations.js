@@ -382,9 +382,21 @@ const MIGRATIONS = [
     }
     state.settings.ui = normalizeUi(state.settings.ui);
   },
+  // v12 → v13: body measurements are additive and stored in centimetres. The
+  // display unit follows the athlete's existing kg/lb choice until they change
+  // it; nothing is written back in inches.
+  (state) => {
+    if (!Array.isArray(state.bodyMeasurements)) state.bodyMeasurements = [];
+    if (!state.settings || typeof state.settings !== 'object' || Array.isArray(state.settings)) {
+      state.settings = {};
+    }
+    if (state.settings.measurementUnit !== 'cm' && state.settings.measurementUnit !== 'in') {
+      state.settings.measurementUnit = state.settings.weightUnit === 'lbs' ? 'in' : 'cm';
+    }
+  },
 ];
 
-export const CURRENT_SCHEMA_VERSION = MIGRATIONS.length; // 12
+export const CURRENT_SCHEMA_VERSION = MIGRATIONS.length; // 13
 
 /** Error raised when a state upgrade cannot safely commit. */
 export class StateMigrationError extends Error {
