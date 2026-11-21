@@ -106,10 +106,16 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   The view lives in `js/analytics/views/view-bodyweight.js`, the SVG chart in
   `js/analytics/charts.js`, and the prefilled weigh-in sheet (steppers, date,
   recent edit/delete) in `js/bodyweight-sheet.js`.
-- Warm-up ramp: `js/workout/warmup-ramp.js` builds editable 40/60/80% warm-up
-  rows above the bar, rounded to the active profile's plates and pair counts.
-  `settings.autoWarmupRamp` is opt-in (v8→v9 seeds false); the first working
-  weight triggers it once and `liftMeta[day][lift].autoRamp` prevents resurrection.
+- Warm-up ramp: `js/workout/warmup-ramp.js` builds editable warm-up rows above
+  the working weight. Barbells ramp 40/60/80% above the bar, rounded to the
+  active profile's plates and pair counts; dumbbells have no bar, so each rung
+  snaps DOWN to the heaviest bell the profile's ladder owns (a `total`/Both
+  entry ramps in pair space, `each`/`per-side` per bell) and an unconfigured
+  ladder yields no ramp instead of inventing weights. `rampSetsFor` gives
+  compound lifts the three-rung ladder and single-joint work two rungs (50/75%);
+  bodyweight-only movements never ramp. `settings.autoWarmupRamp` is opt-in
+  (v8→v9 seeds false); the first working weight triggers it once and
+  `liftMeta[day][lift].autoRamp` prevents resurrection.
 - Muscle load: `js/analytics/muscle-load.js` reuses the Volume Guide's per-muscle
   weekly credits and adds last-trained recovery labels; the view is
   `js/analytics/views/view-muscle-load.js`, reached from Progress.
