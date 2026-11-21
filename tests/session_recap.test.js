@@ -95,6 +95,11 @@ test('flags a PR when a lift beats its best from every prior session', () => {
   // The 🏆 badge renders only for the PR session.
   assert.ok(renderSessionRecapHTML(r2).includes('🏆'));
   assert.ok(!renderSessionRecapHTML(r1).includes('🏆'));
+
+  // Sharing the whole workout is offered in the recap, but History renders
+  // this same HTML and owns its own share action — the row must be opt-out.
+  assert.ok(renderSessionRecapHTML(r2).includes('Share workout'));
+  assert.ok(!renderSessionRecapHTML(r2, [], null, 'summary', { share: false }).includes('Share workout'));
 });
 
 test('PR comparison carries canonical exercise aliases across programs', () => {

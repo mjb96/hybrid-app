@@ -57,7 +57,7 @@ import {
   initMeasurementsSheet, openMeasurementsSheet, closeMeasurementsSheet, saveMeasurementsSheet,
   deleteMeasurementEntry, setMeasurementUnit,
 } from './measurements-sheet.js';
-import { initSessionRecap, openSessionRecap, closeSessionRecap, isSessionRecapOpen, sharePRFromRecap } from './session-recap.js';
+import { initSessionRecap, openSessionRecap, closeSessionRecap, isSessionRecapOpen, sharePRFromRecap, shareWorkoutFromRecap } from './session-recap.js';
 import { initDragDrop } from './dragdrop.js';
 import {
   initWorkout, renderWorkout, scrollCockpitToActiveExercise,
@@ -1282,6 +1282,7 @@ document.addEventListener('click', (e) => {
   else if (action === 'recap-open-history') { closeSessionRecap(); openActivities({}); }
   else if (action === 'recap-open-progress') { closeSessionRecap(); openAnalyticsView('hub'); }
   else if (action === 'share-pr-card') { sharePRFromRecap(); }
+  else if (action === 'share-workout-card') { shareWorkoutFromRecap(); }
   else if (action === 'gps-start')  {
     const dayIdx = DEFAULT_DAYS.indexOf(selectedDay);
     const localDate = appState.weeks?.[appState.currentWeek]?.dates?.[selectedDay]

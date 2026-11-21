@@ -13,6 +13,7 @@ import {
   restoreRunActivity, restoreStrengthActivity,
 } from './activities/mutations.js';
 import { buildSessionRecap, renderSessionRecapHTML } from './session-recap.js';
+import { shareWorkoutCard } from './share/workout-share.js';
 import { openSavedWorkoutEditor, closeSavedWorkoutEditor, saveSavedWorkoutEditor } from './workout/edit-saved.js';
 import { deleteMapFromDB } from './db.js';
 import { renderRunMap } from './workout-map.js';
@@ -367,11 +368,12 @@ function paintDetail() {
     : '';
   content.innerHTML = `
     <div class="activity-action-menu" id="activityActionMenu" hidden>
+      <button data-action="share-activity">Share workout</button>
       <button data-action="edit-activity">Edit ${_selected.kind === 'run' ? 'run' : 'strength workout'}</button>
       <button data-action="delete-activity" class="activity-action-delete">Delete ${_selected.kind === 'run' ? _selected.title.toLowerCase() : 'strength workout'}</button>
     </div>
     ${_selected.kind === 'strength' ? `<button type="button" class="btn-action-block activity-repeat" data-action="copy-past-workout" data-activity-id="${esc(_selected.id)}">🔁 Repeat this workout</button>` : ''}
-    <div class="activity-detail-shell">${provenance}${renderSessionRecapHTML(recap, [], state.thresholdPaceSeconds || null, _detailTab)}</div>`;
+    <div class="activity-detail-shell">${provenance}${renderSessionRecapHTML(recap, [], state.thresholdPaceSeconds || null, _detailTab, { share: false })}</div>`;
   content.querySelectorAll('[data-recap-tab]').forEach((button) => {
     button.addEventListener('click', () => {
       _detailTab = button.getAttribute('data-recap-tab') || 'summary';
@@ -460,6 +462,18 @@ async function deleteSelectedActivity() {
 }
 
 export function handleActivityAction(action, element) {
+  if (action === 'share-activity') {
+    const state = _getState?.();
+    if (state && _selected) {
+      const recap = buildSessionRecap(
+        state, _selected.week, _selected.day,
+        _selected.kind === 'run' ? _selected.sessionId : null,
+        _selected.kind,
+      );
+      shareWorkoutCard(recap, { title: _selected.title, showToast });
+    }
+    return true;
+  }
   if (action === 'open-activities') { openActivities(); return true; }
   if (action === 'close-activities') { closeActivities(); return true; }
   if (action === 'filter-activities') {

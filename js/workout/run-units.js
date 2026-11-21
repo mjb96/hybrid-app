@@ -51,6 +51,32 @@ export function _paceFromDistTime(distKm, timeStr) {
   return `${m}:${s}`;
 }
 
+/**
+ * Human distance in the athlete's unit, two decimals — the format the recap and
+ * share card both show. Display only; storage stays km.
+ * @param {number|string} km
+ * @param {'km'|'mi'|string} unit
+ */
+export function formatRunDistance(km, unit) {
+  const value = unit === 'mi' ? (Number(km) || 0) * KM_TO_MI : (Number(km) || 0);
+  return `${value.toFixed(2)} ${unit}`;
+}
+
+/**
+ * Human pace from an already-formatted per-km pace (`"5:00"`), converted for
+ * miles when asked. Display only.
+ * @param {string|null|undefined} pacePerKm
+ * @param {'km'|'mi'|string} unit
+ */
+export function formatRunPace(pacePerKm, unit) {
+  if (!pacePerKm) return '';
+  const match = String(pacePerKm).match(/^(\d+):(\d{2})$/);
+  if (!match) return `${pacePerKm} /${unit}`;
+  const secsPerKm = Number(match[1]) * 60 + Number(match[2]);
+  const secs = unit === 'mi' ? secsPerKm / KM_TO_MI : secsPerKm;
+  return `${Math.floor(secs / 60)}:${String(Math.round(secs % 60)).padStart(2, '0')} /${unit}`;
+}
+
 export function _timeFromPaceDist(paceStr, distKm) {
   const dist = parseFloat(distKm);
   if (!dist || dist <= 0 || !paceStr) return '';

@@ -462,7 +462,12 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   to 2.5 kg / 5 lb, copying its shape/reps; it is hidden until a working set is
   logged and never discounts a bodyweight/band load. Coach: deterministic
   **ask-the-coach** Q&A (`js/brain/coach-qa.js`, chips on the briefing) + PR share
-  card (`js/brain/pr-share.js`).
+  card (`js/brain/pr-share.js`). Share workout (`js/share/workout-share.js`)
+  draws the WHOLE session from the same `buildSessionRecap` model the recap and
+  History detail render — never from re-derived numbers — and is reachable from
+  both surfaces. `shareImageCanvas` (pr-share.js) is the single
+  navigator.share → download path for every card; run distance/pace formatting
+  lives in `js/workout/run-units.js` so the recap and card cannot drift.
 - Bands do TWO opposite jobs (`js/workout/load-mode.js`): on a bodyweight movement a
   band ASSISTS (`w = bodyweight − band`, `loadMode: 'assisted'`); on anything else the
   band IS the load (`w = band`, `loadMode: 'banded'`). `bandRole()` decides from the

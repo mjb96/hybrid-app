@@ -21,6 +21,8 @@ import { hapticSuccess } from './haptics.js';
 import { muscleCreditsForExercise } from './exercises/catalog.js';
 import { jtStoredRoleTag } from './programs/jt-shed-model.js';
 import { sharePRCard, topPR } from './brain/pr-share.js';
+import { shareWorkoutCard } from './share/workout-share.js';
+import { formatRunDistance, formatRunPace } from './workout/run-units.js';
 import { showToast, getProgramById } from './state.js';
 import { suggestProgression } from './engine.js';
 import { sanitizeGpsQuality } from './gps/route-quality.js';
@@ -39,6 +41,19 @@ export function sharePRFromRecap() {
   const pr = topPR(recap.lifts);
   if (!pr) { showToast('No PR to share from this session'); return; }
   sharePRCard(pr, state, { showToast });
+}
+
+// Share the WHOLE session, not only a PR. The card is built from the same recap
+// model this screen renders.
+export function shareWorkoutFromRecap() {
+  const state = _getState?.();
+  if (!state) return;
+  const { week, day, sessionId } = _recapCtx;
+  const recap = buildSessionRecap(state, week, day, sessionId);
+  const weekData = state.weeks?.[week] || {};
+  const program = getProgramById(weekData.programId || state.activeProgramId);
+  const title = weekData.sessionTitle || program?.days?.[day]?.title || 'Workout';
+  shareWorkoutCard(recap, { title, showToast });
 }
 
 // V2 — Summary | Breakdown, remembered across a single recap's open lifetime.
@@ -265,22 +280,6 @@ function fmtPace(secs) {
 }
 
 const ZONE_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#f97316', '#ef4444'];
-const KM_TO_MI = 0.621371;
-
-function displayDistance(km, unit) {
-  const value = unit === 'mi' ? (Number(km) || 0) * KM_TO_MI : (Number(km) || 0);
-  return `${value.toFixed(2)} ${unit}`;
-}
-
-function displayPace(pacePerKm, unit) {
-  if (!pacePerKm) return '';
-  const match = String(pacePerKm).match(/^(\d+):(\d{2})$/);
-  if (!match) return `${pacePerKm} /${unit}`;
-  const secsPerKm = Number(match[1]) * 60 + Number(match[2]);
-  const secs = unit === 'mi' ? secsPerKm / KM_TO_MI : secsPerKm;
-  return `${Math.floor(secs / 60)}:${String(Math.round(secs % 60)).padStart(2, '0')} /${unit}`;
-}
-
 function _summaryTiles(r) {
   const unit = r.weightUnit || 'kg';
   const distUnit = r.distanceUnit || 'km';
@@ -292,8 +291,8 @@ function _summaryTiles(r) {
     r.gymHR ? statTile('Avg HR', `${r.gymHR} bpm`) : '',
     r.gymCals ? statTile('Calories', r.gymCals) : '',
     r.gymTE ? statTile('Training effect', r.gymTE) : '',
-    r.run ? statTile('Distance', r.run.distKm > 0 ? displayDistance(r.run.distKm, distUnit) : '') : '',
-    r.run ? statTile('Pace', displayPace(r.run.pace, distUnit)) : '',
+    r.run ? statTile('Distance', r.run.distKm > 0 ? formatRunDistance(r.run.distKm, distUnit) : '') : '',
+    r.run ? statTile('Pace', formatRunPace(r.run.pace, distUnit)) : '',
     r.run ? statTile('Run time', r.run.time) : '',
     r.run && r.run.avgHR ? statTile('Avg HR', `${r.run.avgHR} bpm`) : '',
     r.run?.gpsQuality ? statTile('GPS quality', esc(r.run.gpsQuality.confidence)) : '',
@@ -468,17 +467,25 @@ function _gpsQualityAudit(r) {
 // V2 — Summary (the story + essentials) | Breakdown (every set · muscle focus ·
 // full run detail). All from data we already capture — the front got leaner, the
 // depth got deeper. `tab` selects which face to render.
-export function renderSessionRecapHTML(r, insights = [], thresholdSec = null, tab = 'summary') {
+export function renderSessionRecapHTML(r, insights = [], thresholdSec = null, tab = 'summary', options = {}) {
   if (r.empty) {
     return `<div class="recap-empty">Nothing logged for this day yet.</div>`;
   }
+  // The share row posts `share-workout-card`, which reads the RECAP modal's
+  // context. History already owns a share action in its own menu, and reusing
+  // this row there would share whatever session the recap last opened — so the
+  // caller can opt out.
+  const showShareRow = options.share !== false;
   const hasPR = (r.lifts || []).some(l => l.pr);
   const head = `
     <div class="recap-head">
       <div class="recap-date">${fmtDate(r.dateISO)}</div>
       <div class="recap-badges">${r.types.map(typeBadge).join('')}</div>
     </div>
-    ${hasPR ? `<button class="recap-share-pr tactile-scale" data-action="share-pr-card" style="display:flex;align-items:center;gap:8px;justify-content:center;width:100%;margin:6px 0 4px;background:color-mix(in srgb, var(--accent-blue, #8b5cf6) 14%, transparent);border:1px solid color-mix(in srgb, var(--accent-blue, #8b5cf6) 40%, transparent);color:var(--text-inverse);border-radius:12px;padding:11px;font-weight:700;font-size:0.9rem;cursor:pointer;">🏆 Share your PR</button>` : ''}`;
+    ${showShareRow ? `<div class="recap-share-row">
+      ${hasPR ? '<button class="recap-share-btn tactile-scale" data-action="share-pr-card">🏆 Share your PR</button>' : ''}
+      <button class="recap-share-btn tactile-scale" data-action="share-workout-card">📤 Share workout</button>
+    </div>` : ''}`;
   const tabBar = `
     <div class="an-tabbar recap-tabbar">
       <button class="an-tab ${tab === 'summary' ? 'an-tab--active' : ''}" data-recap-tab="summary">Summary</button>

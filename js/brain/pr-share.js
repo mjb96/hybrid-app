@@ -64,6 +64,31 @@ export function drawPRCard(ctx, W, H, pr, state) {
   ctx.fillText('OPENHYBRID', W / 2, 1280);
 }
 
+/**
+ * Share (or download) an already-drawn canvas. The ONE place the
+ * navigator.share → download fallback lives, so every card behaves the same.
+ * @param {HTMLCanvasElement} canvas
+ * @param {{ filename: string, caption?: string, title?: string, toast?: Function, savedMessage?: string }} opts
+ */
+export function shareImageCanvas(canvas, { filename, caption = '', title = '', toast = () => {}, savedMessage = 'Card saved' } = /** @type {any} */ ({})) {
+  const fname = filename || 'openhybrid-card.png';
+  const finish = (blob) => {
+    const file = blob && typeof File !== 'undefined' ? new File([blob], fname, { type: 'image/png' }) : null;
+    if (file && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], title, text: caption }).catch(() => {});
+    } else {
+      try {
+        const a = document.createElement('a');
+        a.href = canvas.toDataURL('image/png');
+        a.download = fname;
+        a.click();
+        toast(savedMessage);
+      } catch (_) { toast('Could not create the card'); }
+    }
+  };
+  if (canvas.toBlob) canvas.toBlob(finish, 'image/png'); else finish(null);
+}
+
 /** @param {any} pr @param {any} state @param {{showToast?:Function}} [opts] */
 export function sharePRCard(pr, state, { showToast } = {}) {
   const toast = showToast || (() => {});
@@ -77,21 +102,11 @@ export function sharePRCard(pr, state, { showToast } = {}) {
   try { drawPRCard(ctx, W, H, pr, state); }
   catch (_) { toast('Could not create the card'); return; }
 
-  const caption = prShareCaption(pr, state);
-  const fname = 'openhybrid-pr.png';
-  const finish = (blob) => {
-    const file = blob && typeof File !== 'undefined' ? new File([blob], fname, { type: 'image/png' }) : null;
-    if (file && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-      navigator.share({ files: [file], title: 'New PR', text: caption }).catch(() => {});
-    } else {
-      try {
-        const a = document.createElement('a');
-        a.href = canvas.toDataURL('image/png');
-        a.download = fname;
-        a.click();
-        toast('PR card saved');
-      } catch (_) { toast('Could not create the card'); }
-    }
-  };
-  if (canvas.toBlob) canvas.toBlob(finish, 'image/png'); else finish(null);
+  shareImageCanvas(canvas, {
+    filename: 'openhybrid-pr.png',
+    caption: prShareCaption(pr, state),
+    title: 'New PR',
+    toast,
+    savedMessage: 'PR card saved',
+  });
 }

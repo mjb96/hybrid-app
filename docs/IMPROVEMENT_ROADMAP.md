@@ -56,7 +56,7 @@ upgrade have landed. In order:
   Start/Resume), not a second Home.
 - **History** is a full destination: Calendar | List, search, provenance, a
   source filter, a calendar day sheet, exact detail, lossless editing
-  (add/remove exercise and set), delete/undo and Repeat workout.
+  (add/remove exercise and set), delete/undo, Repeat workout and Share workout.
 - **Progress** leads with a this-week hero and 12-week strip, then Strength,
   Running, Recovery and Review, with body measurements (waist, chest, hips,
   arm, thigh, neck) beside the bodyweight trend. Calendar-week attribution is used throughout;
@@ -1830,6 +1830,21 @@ Avoid parallel redesign of every screen. Each step should be usable and
 testable on its own.
 
 ## 12. Session log
+
+- **2026-11-21 — Share any workout.**
+  - A session can be shared as an image from the finished recap and from
+    History's detail menu, not only when a PR happens. The card is built from
+    the same `buildSessionRecap` model both surfaces render, so it cannot claim
+    a volume, set count, distance or PR the app does not show.
+  - Strength cards carry volume, working sets, time and the top three lifts
+    (with holds shown as time and carries as metres); run cards carry distance
+    and pace in the athlete's unit; mixed days name both.
+  - The navigator.share → download fallback now lives in one helper
+    (`shareImageCanvas`), and run display formatting moved into
+    `js/workout/run-units.js` so the recap and the card cannot drift.
+  - Validation: 6 summary/caption tests, 4 formatter tests, and the History
+    browser check stubs `navigator.share` to prove a real PNG with the session
+    title and caption is handed to the OS.
 
 - **2026-11-21 — Body measurements.**
   - The bodyweight view now carries a Measurements card: waist, chest, hips,
