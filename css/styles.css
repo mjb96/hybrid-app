@@ -10210,6 +10210,16 @@ html[data-module-recovery="off"] [data-module="recovery"] {
 
 /* Body measurements — the slow signal beside the scale. */
 .bw-measurements { margin-bottom: var(--space-4); }
+/* Session share row: PR and whole-workout share sit side by side. */
+.recap-share-row { display: flex; gap: 8px; margin: 6px 0 4px; }
+.recap-share-btn {
+  flex: 1; min-height: 44px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  background: color-mix(in srgb, var(--accent-blue, #8b5cf6) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent-blue, #8b5cf6) 40%, transparent);
+  color: var(--text-inverse); border-radius: 12px; padding: 11px;
+  font-weight: 700; font-size: 0.9rem; cursor: pointer;
+}
 .bw-ms-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
 .bw-ms-heading { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .bw-ms-title { font-size: .82rem; }

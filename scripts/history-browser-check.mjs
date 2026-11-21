@@ -96,6 +96,20 @@ try {
   await context.addInitScript((seed) => {
     localStorage.setItem('hybrid_engine_v2_state', JSON.stringify(seed));
   }, state);
+  // Capture the shared card instead of downloading it. The app must hand
+  // navigator.share a real PNG File, not just a data URL.
+  await context.addInitScript(() => {
+    Object.defineProperty(navigator, 'canShare', { configurable: true, value: () => true });
+    Object.defineProperty(navigator, 'share', {
+      configurable: true,
+      value: (data) => {
+        window.__sharedFiles = data.files;
+        window.__sharedText = data.text;
+        window.__sharedTitle = data.title;
+        return Promise.resolve();
+      },
+    });
+  });
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
@@ -152,6 +166,25 @@ try {
   await page.waitForSelector('.recap-no-route');
   check((await page.locator('.recap-no-route').textContent()).includes('No GPS route'), 'missing-route copy is not shown');
   check((await page.locator('.activity-detail-source').textContent()).includes('Imported from CSV'), 'detail provenance is missing');
+
+  // Share the session itself, not only a PR. The card is drawn from the same
+  // recap the detail shows, so its caption must name this activity.
+  await page.click('[data-action="toggle-activity-menu"]');
+  await page.click('[data-action="share-activity"]');
+  await page.waitForFunction(() => window.__sharedFiles && window.__sharedFiles.length > 0);
+  const shared = await page.evaluate(() => ({
+    name: window.__sharedFiles[0].name,
+    type: window.__sharedFiles[0].type,
+    size: window.__sharedFiles[0].size,
+    caption: window.__sharedText,
+    title: window.__sharedTitle,
+  }));
+  check(shared.name === 'openhybrid-workout.png', `shared card has the wrong filename (${shared.name})`);
+  check(shared.type === 'image/png', `shared card is not a PNG (${shared.type})`);
+  check(shared.size > 1000, 'the shared workout card is empty');
+  check(/Treadmill/.test(shared.caption), 'the shared caption lost the session title');
+  check(/#openHybrid/.test(shared.caption), 'the shared caption lost the wordmark');
+  check(/Treadmill/.test(shared.title), 'the shared card lost its title');
 
   // Repeat a stored strength workout: History closes, a blank one-off copy opens
   // in the cockpit, and the logged sets are not re-completed in the copy.

@@ -15,7 +15,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   KM_TO_MI, _runDistUnit, _kmToDisplayDist, _displayDistToKm,
-  _paceFromDistTime, _timeFromPaceDist,
+  _paceFromDistTime, _timeFromPaceDist, formatRunDistance, formatRunPace,
 } from '../js/workout/run-units.js';
 
 const st = (distanceUnit) => ({ settings: { distanceUnit } });
@@ -97,4 +97,16 @@ test('pace and time are inverses at whole values', () => {
     const time = _timeFromPaceDist(pace, dist);
     assert.equal(_paceFromDistTime(dist, time), pace, `${pace} @ ${dist}km round trip`);
   }
+});
+
+test('the shared display formatters agree with the stored-unit contract', () => {
+  // The recap and the share card both use these; two decimals is the promise.
+  assert.equal(formatRunDistance(10, 'km'), '10.00 km');
+  assert.equal(formatRunDistance(10, 'mi'), '6.21 mi');
+  assert.equal(formatRunDistance('', 'km'), '0.00 km');
+
+  assert.equal(formatRunPace('5:00', 'km'), '5:00 /km');
+  assert.equal(formatRunPace('5:00', 'mi'), '8:03 /mi');
+  assert.equal(formatRunPace(null, 'km'), '');
+  assert.equal(formatRunPace('nonsense', 'km'), 'nonsense /km');
 });
