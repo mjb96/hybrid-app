@@ -28,13 +28,13 @@ import { escapeHtml } from './util.js';
 import { buildEmptyWorkoutCard, buildSetRow, buildExerciseCard } from './templates.js';
 import { buildSessionOutline, outlineSummaryLine } from './workout/session-outline.js';
 import { plannedSetsForLift } from './workout/set-plan.js';
-import { addWarmupRamp } from './workout/warmup-ramp.js';
+import { addWarmupRamp, rampSetsFor } from './workout/warmup-ramp.js';
 import { buildSessionReview } from './workout/session-review.js';
 import { activeSessionLiftNames, applyExerciseSwap, neighborDay, pickInheritedSet } from './workout-order.js';
 import { getSubstitutions } from './workout/substitutions.js';
 import { plateHint } from './workout/plates.js';
 import { applyPlateHint, refreshCardSetPlateLines } from './workout/plate-hint-dom.js';
-import { getActivePlateSetup } from './equipment-profiles.js';
+import { getActivePlateSetup, getActiveDumbbells } from './equipment-profiles.js';
 import { resolveExercise } from './exercises/catalog.js';
 import { deleteMapFromDB } from './db.js';
 import { hapticTick, hapticSuccess } from './haptics.js';
@@ -1279,14 +1279,27 @@ export function updateInputState(inputNode) {
     // Opt-in auto ramp: after the first working weight is entered, add an
     // editable ladder above it once. The liftMeta stamp means deleting a
     // warm-up does not bring it back on the next edit.
-    if (shouldAutoWarmup(appState, liftName)
-      && resolveExercise(liftName)?.equipment?.includes('barbell')) {
+    const rampExercise = resolveExercise(liftName);
+    const rampEquipment = rampExercise?.equipment || [];
+    const isBarbellLift = rampEquipment.includes('barbell');
+    // Dumbbells have no bar to subtract, so they ramp on the owned ladder
+    // instead. An unconfigured ladder yields no ramp rather than inventing
+    // weights the athlete does not own.
+    const isDumbbellLift = !isBarbellLift && rampEquipment.includes('dumbbells');
+    if (shouldAutoWarmup(appState, liftName) && (isBarbellLift || isDumbbellLift)) {
       const sets = appState.weeks[wk].lifts[selectedDay][liftName];
       const firstWorking = sets.findIndex((set) => !isWarmupSet(set));
       if (sIdx === firstWorking) {
         const unit = appState.settings?.weightUnit || 'kg';
-        const setup = getActivePlateSetup(appState, unit);
-        if (addWarmupRamp(appState.weeks[wk], selectedDay, liftName, inputNode.value, { ...setup, unit })) {
+        const setup = isBarbellLift
+          ? getActivePlateSetup(appState, unit)
+          : {
+            dumbbells: getActiveDumbbells(appState, unit),
+            basis: setObj.basis || preferredLoadBasis(appState, liftName),
+          };
+        if (addWarmupRamp(appState.weeks[wk], selectedDay, liftName, inputNode.value, {
+          ...setup, unit, rungs: rampSetsFor(rampExercise),
+        })) {
           _saveState(true);
           renderWorkout();
           return;

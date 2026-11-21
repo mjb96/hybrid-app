@@ -70,8 +70,8 @@ upgrade have landed. In order:
   Overview | Structure | Plan detail with week-stepped targets.
 
 Deliberate follow-ups (not regressions): readiness history components,
-per-muscle corridor charts, adaptive warm-up rounding, Android
-landscape/device checks and the remaining authored exercise-metadata batches.
+per-muscle corridor charts, Android landscape/device checks and the remaining
+authored exercise-metadata batches.
 
 ### What holds the experience back
 
@@ -607,9 +607,9 @@ gap in the journey, and is folded into the Phase 6 visual-system work.
 
 ## Phase 2D — Logger upgrade (planned)
 
-**Status: L0–L2 done; L3 rest overrides, L4 plate line, timer persistence and
-the `+ Drop` shortcut done.** Remaining: adaptive warm-up rounding. The openGym
-logger was inspected as a reference for
+**Status: L0–L4 done.** The logger has the truth fixes, set shapes, rest
+overrides, plate line, timer persistence, `+ Drop` and the adaptive warm-up
+ramp. The openGym logger was inspected as a reference for
 CONCEPTS only. No openGym code, media or nested data shape is copied.
 
 **Outcome:** the number the athlete types means what they think it means, and a
@@ -735,8 +735,12 @@ options live in the `⋯` sheets. Nothing appears in two places.
 ### L4 — Plates and warm-ups
 - Inline per-set plate line (per side) with a "short" warning and delta chips
   between consecutive loads; bar weight per equipment type.
-- Warm-up rungs round down to the plates/dumbbells actually owned, adapting to
-  compound/isolation/bodyweight instead of the fixed 40/60/80 ladder.
+- **DONE 2026-11-21 — warm-up rungs adapt to the equipment and the movement.**
+  Dumbbell lifts now ramp on the profile's owned ladder (each rung rounds DOWN
+  to a bell the rack has, and an unconfigured ladder produces no ramp rather
+  than barbell math). `rampSetsFor` gives compound lifts the three-rung
+  40/60/80 ladder and single-joint work two rungs (50/75%); bodyweight-only
+  movements never ramp because there is no external load to build up.
 
 ### L5 — Polish
 - Per-set note (140 chars), RIR/RPE display choice, planned-vs-last prefill
@@ -1825,6 +1829,19 @@ Avoid parallel redesign of every screen. Each step should be usable and
 testable on its own.
 
 ## 12. Session log
+
+- **2026-11-21 — Adaptive warm-up ramp.**
+  - The auto ramp now covers dumbbells, which the settings copy has promised all
+    along: there is no bar to subtract, so each rung rounds DOWN to the heaviest
+    bell in the active profile's ladder. `each`/`per-side` weights ramp per bell;
+    a `total`/Both weight ramps in pair space and doubles back. An unconfigured
+    ladder produces no ramp (and no `autoRamp` stamp) instead of inventing a bar.
+  - `rampSetsFor` adapts the ladder to the movement: compound lifts keep
+    40/60/80 (5/3/2 reps), single-joint work gets 50/75 (5/3), and bodyweight-only
+    movements never ramp.
+  - Validation: 6 new ramp tests (snap-down, pair space, empty ladder, rung
+    selection, insert/stamp), the full node suite (2,005), typecheck, smoke and
+    the live cockpit check.
 
 - **2026-11-21 — `+ Drop` shortcut.**
   - A drop set is now one tap: the cockpit appends a `type:'D'` row seeded from the
