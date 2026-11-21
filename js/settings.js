@@ -12,6 +12,7 @@ import { CURRENT_SCHEMA_VERSION, isStateMigrationError, migrateState } from './s
 import { APP_VERSION } from './constants.js';
 import {
   setRestTiers, setRestTimerEnabled, setRestOverrides, initRestPersistence, setRestAlertConfig,
+  clearRestTimerPersistence,
 } from './timers.js';
 import { todayKey, startOfProgramWeek } from './dates.js';
 import { parseWorkoutCsv, applyWorkoutCsvImport, CSV_IMPORT_LIMITS, decodeCsvBytes } from './portability/import-workout-csv.js';
@@ -1409,6 +1410,7 @@ export async function confirmResetAllData() {
   localStorage.removeItem(STORAGE_KEY + '_backup');
   localStorage.removeItem(STORAGE_KEY + '_active_gps_session');
   localStorage.removeItem(SAVED_AT_KEY);
+  clearRestTimerPersistence();
   try { await clearRouteDatabase(); } catch { /* best-effort */ }
   await clearMirror();
   showToast('Data cleared — reloading…');

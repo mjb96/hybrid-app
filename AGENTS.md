@@ -474,6 +474,10 @@ framework; ~15k CSS; service-worker PWA). This file is auto-loaded every session
   `settings.showPlateHints`. Rest settings also own `restPeriods.warmup`
   (0 disables the warm-up timer), `restAlertSound` and `restAlertVolume`;
   `js/timers.js` receives them through `setRestTiers`/`setRestAlertConfig`.
+  The rest countdown is mirrored to `localStorage` (`hybrid_restTimer_v1`) as an
+  absolute end time, so a reload or a killed/backgrounded WebView resumes the
+  same rest; a paused rest keeps its held remaining, and expired or stale
+  (>2 h) snapshots are discarded instead of resurrecting at 0:00.
   A set has one of three SHAPES (`js/set-utils.js`): legacy reps, `mode:'time'`
   (`sec`), or `mode:'distance'` (`dist`, metres). `setVolume` returns 0 for
   holds/carries — tonnage is weight × reps and inventing reps would inflate
